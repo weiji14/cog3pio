@@ -11,5 +11,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 ndarray = "0.15.6"
+numpy = "0.20.0"
 pyo3 = { version = "0.20.3", features = ["abi3-py310"] }
 tiff = "0.9.1"
