@@ -11,3 +11,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.20.3", features = ["abi3-py310"] }
+tiff = "0.9.1"
