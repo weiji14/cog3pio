@@ -16,6 +16,11 @@ classifiers = [
 ]
 dynamic = ["version"]
 
+[project.optional-dependencies]
+tests = [
+    "pytest",
+]
+
 [tool.maturin]
 python-source = "python"
 features = ["pyo3/extension-module"]
