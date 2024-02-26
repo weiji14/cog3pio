@@ -45,9 +45,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          pip install cog3pio --find-links dist --force-reinstall
-          pip install pytest
-          pytest
+          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pytest --verbose
       - name: pytest
         if: ${{ !startsWith(matrix.target, 'x86') && matrix.target != 'ppc64' }}
         uses: uraimo/run-on-arch-action@517085f0367c8256bcfa753e3e13e1550af09954  # v2.7.1
@@ -62,7 +61,7 @@ jobs:
           run: |
             set -e
             pip3 install cog3pio --find-links dist --force-reinstall
-            pytest
+            pytest --verbose
 
   windows:
     runs-on: windows-2022
@@ -91,9 +90,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          pip install cog3pio --find-links dist --force-reinstall
-          pip install pytest
-          pytest
+          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pytest --verbose
 
   macos:
     runs-on: macos-14
@@ -121,9 +119,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          pip install cog3pio --find-links dist --force-reinstall
-          pip install pytest
-          pytest
+          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pytest --verbose
 
   sdist:
     runs-on: ubuntu-22.04
