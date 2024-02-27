@@ -1,5 +1,6 @@
 //! A reader for [Cloud Optimized GeoTIFF (COG)](https://www.cogeo.org) files.
 pub mod io;
+use std::fs::File;
 
 use ndarray::Dim;
 use numpy::{PyArray, ToPyArray};
@@ -23,8 +24,10 @@ fn read_geotiff_py<'py>(
     path: &str,
     py: Python<'py>,
 ) -> PyResult<&'py PyArray<f32, Dim<[usize; 2]>>> {
+    // Open TIFF file from path
+    let file = File::open(path).expect("Cannot find GeoTIFF file");
     // Get image pixel data as an ndarray
-    let vec_data = io::geotiff::read_geotiff(path).expect("Cannot read GeoTIFF");
+    let vec_data = io::geotiff::read_geotiff(file).expect("Cannot read GeoTIFF");
     // Convert from ndarray (Rust) to numpy ndarray (Python)
     Ok(vec_data.to_pyarray(py))
 }

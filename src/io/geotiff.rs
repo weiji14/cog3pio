@@ -1,13 +1,12 @@
-use ndarray::{Array2, ShapeError};
-use std::fs::File;
+use std::io::{Read, Seek};
 
+use ndarray::{Array2, ShapeError};
 use tiff::decoder::{DecodingResult, Limits};
 
 /// Read a GeoTIFF file to an [`ndarray::Array`]
-pub fn read_geotiff(path: &str) -> Result<Array2<f32>, ShapeError> {
-    // Open TIFF file with decoder
-    let file = File::open(path).expect("Cannot find GeoTIFF file");
-    let mut decoder = tiff::decoder::Decoder::new(file).expect("Cannot create tiff decoder");
+pub fn read_geotiff<R: Read + Seek>(stream: R) -> Result<Array2<f32>, ShapeError> {
+    // Open TIFF stream with decoder
+    let mut decoder = tiff::decoder::Decoder::new(stream).expect("Cannot create tiff decoder");
     decoder = decoder.with_limits(Limits::unlimited());
 
     // Get image dimensions
