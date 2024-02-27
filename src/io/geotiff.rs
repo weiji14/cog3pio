@@ -25,3 +25,37 @@ pub fn read_geotiff<R: Read + Seek>(stream: R) -> Result<Array2<f32>, ShapeError
 
     Ok(vec_data)
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io::{Seek, SeekFrom};
+    use tempfile::tempfile;
+
+    use crate::io::geotiff::read_geotiff;
+    use tiff::encoder::{colortype, TiffEncoder};
+
+    #[test]
+    fn test_read_geotiff() {
+        // Generate some data
+        let mut image_data = Vec::new();
+        for x in 0..20 {
+            for y in 0..20 {
+                let val = x + y;
+                image_data.push(val as f32);
+            }
+        }
+
+        // Write a BigTIFF file
+        let mut file = tempfile().unwrap();
+        let mut bigtiff = TiffEncoder::new_big(&mut file).unwrap();
+        bigtiff
+            .write_image::<colortype::Gray32Float>(20, 20, &image_data)
+            .unwrap();
+
+        // Read a BigTIFF file
+        file.seek(SeekFrom::Start(0)).unwrap();
+        let arr = read_geotiff(file).unwrap();
+        assert_eq!(arr.dim(), (20, 20));
+        assert_eq!(arr.mean(), Some(19.0));
+    }
+}
