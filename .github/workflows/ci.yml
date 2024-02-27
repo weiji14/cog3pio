@@ -57,8 +57,8 @@ jobs:
           install: |
             apt update
             apt install -y --no-install-recommends \
-                        gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config \
-                        python3-pip python3-dev
+                        gcc g++ gfortran libopenblas-dev liblapack-dev ninja-build \
+                        pkg-config python3-pip python3-dev
             pip3 install -U pip pytest
           run: |
             set -e
