@@ -55,9 +55,10 @@ jobs:
           distro: ubuntu22.04
           githubToken: ${{ github.token }}
           install: |
-            apt-get update
-            apt-get install -y --no-install-recommends python3 python3-pip
-            apt build-dep numpy
+            apt update
+            apt install -y --no-install-recommends \
+                        gcc g++ gfortran libopenblas-dev liblapack-dev pkg-config \
+                        python3-pip python3-dev
             pip3 install -U pip pytest
           run: |
             set -e
