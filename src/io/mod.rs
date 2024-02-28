@@ -1,2 +1,2 @@
-//! Read and write to GeoTIFF files
+/// Read and write GeoTIFF files
 pub mod geotiff;

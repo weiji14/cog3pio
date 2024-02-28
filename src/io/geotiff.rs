@@ -3,7 +3,7 @@ use std::io::{Read, Seek};
 use ndarray::{Array2, ShapeError};
 use tiff::decoder::{DecodingResult, Limits};
 
-/// Read a GeoTIFF file to an [`ndarray::Array`]
+/// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
 pub fn read_geotiff<R: Read + Seek>(stream: R) -> Result<Array2<f32>, ShapeError> {
     // Open TIFF stream with decoder
     let mut decoder = tiff::decoder::Decoder::new(stream).expect("Cannot create tiff decoder");
@@ -29,10 +29,11 @@ pub fn read_geotiff<R: Read + Seek>(stream: R) -> Result<Array2<f32>, ShapeError
 #[cfg(test)]
 mod tests {
     use std::io::{Seek, SeekFrom};
+
     use tempfile::tempfile;
+    use tiff::encoder::{colortype, TiffEncoder};
 
     use crate::io::geotiff::read_geotiff;
-    use tiff::encoder::{colortype, TiffEncoder};
 
     #[test]
     fn test_read_geotiff() {
@@ -51,9 +52,9 @@ mod tests {
         bigtiff
             .write_image::<colortype::Gray32Float>(20, 20, &image_data)
             .unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
 
         // Read a BigTIFF file
-        file.seek(SeekFrom::Start(0)).unwrap();
         let arr = read_geotiff(file).unwrap();
         assert_eq!(arr.dim(), (20, 20));
         assert_eq!(arr.mean(), Some(19.0));

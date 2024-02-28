@@ -1,5 +1,17 @@
+#![warn(missing_docs)]
+//! # Cloud-optimized GeoTIFF ... Parallel I/O
+//!
 //! A reader for [Cloud Optimized GeoTIFF (COG)](https://www.cogeo.org) files.
+//!
+//! Uses [`tiff`] to decode TIFF images, storing the pixel data in [`ndarray`] structs.
+//!
+//! **Note**: For Python users, there are also bindings (via [`pyo3`]) to read GeoTIFF files into
+//! `numpy.ndarray` objects (i.e. similar to [`rasterio`](https://github.com/rasterio/rasterio)).
+//! This is done via the [`numpy`] crate which enables passing data from Rust to Python.
+
+/// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
+
 use std::fs::File;
 
 use ndarray::Dim;
