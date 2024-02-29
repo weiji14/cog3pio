@@ -16,8 +16,7 @@ on:
   # performance analysis in order to generate initial data.
   workflow_dispatch:
   release:
-    types:
-      - published
+    types: [ published ]
 
 jobs:
   benchmarks:
