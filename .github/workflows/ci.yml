@@ -9,9 +9,9 @@ on:
   push:
     branches: [ "main" ]
   release:
-    types: [published]
+    types: [ published ]
   pull_request:
-    types: [opened, ready_for_review, reopened, synchronize]
+    types: [ opened, reopened, synchronize ]
     branches: [ "main" ]
 
 permissions:

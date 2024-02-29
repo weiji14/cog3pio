@@ -23,7 +23,8 @@ def fixture_geotiff_path():
         yield geotiff_path
 
 
-def test_read_geotiff(geotiff_path):
+@pytest.mark.benchmark
+def test_read_geotiff_local(geotiff_path):
     """
     Read a GeoTIFF file from a local file path.
     """
