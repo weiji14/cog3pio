@@ -20,6 +20,7 @@ use object_store::{parse_url, ObjectStore};
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
 use pyo3::wrap_pyfunction;
 use tokio;
+use url::ParseError;
 use url::Url;
 
 /// Read a GeoTIFF file from a path on disk into an ndarray
@@ -46,6 +47,18 @@ fn read_geotiff_py<'py>(
     path: &str,
     py: Python<'py>,
 ) -> PyResult<&'py PyArray<f32, Dim<[usize; 2]>>> {
+    // Parse URL, prepend file:// for local filepaths
+    let url = match Url::parse(path) {
+        Ok(url) => url,
+        Err(ParseError::RelativeUrlWithoutBase) => {
+            let new_path = "file://".to_owned() + path;
+            let url = Url::parse(new_path.as_str()).expect(&format!("Cannot parse path: {path}"));
+            url
+        }
+        Err(e) => Err(format!("{}", e)).unwrap(),
+    };
+    let (store, location) = parse_url(&url).expect(&format!("Cannot parse url: {url}"));
+
     // Initialize async runtime
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -53,13 +66,9 @@ fn read_geotiff_py<'py>(
 
     // Get TIFF file stream asynchronously
     let stream = runtime.block_on(async {
-        // Parse URL
-        let url = Url::parse(path).expect(&format!("Cannot parse path: {path}"));
-        let (store, location) = parse_url(&url).expect(&format!("Cannot parse url: {url}"));
-
-        // Return cursor to in-memory buffer
         let result = store.get(&location).await.unwrap();
         let bytes = result.bytes().await.unwrap();
+        // Return cursor to in-memory buffer
         Cursor::new(bytes)
     });
 
