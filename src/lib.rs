@@ -12,34 +12,59 @@
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
 
-use std::fs::File;
+use std::io::Cursor;
 
 use ndarray::Dim;
 use numpy::{PyArray, ToPyArray};
+use object_store::{parse_url, ObjectStore};
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
 use pyo3::wrap_pyfunction;
+use tokio;
+use url::Url;
 
 /// Read a GeoTIFF file from a path on disk into an ndarray
 ///
 /// Parameters
 /// ----------
 /// path : str
-///     The path to the file.
+///     The path to the file, or a url to a remote file.
 ///
 /// Returns
 /// -------
 /// array : np.ndarray
 ///     2D array containing the GeoTIFF pixel data.
+///
+/// Examples
+/// --------
+/// from cog3pio import read_geotiff
+///
+/// array = read_geotiff("https://github.com/pka/georaster/raw/v0.1.0/data/tiff/float32.tif")
+/// assert array.shape == (20, 20)
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(
     path: &str,
     py: Python<'py>,
 ) -> PyResult<&'py PyArray<f32, Dim<[usize; 2]>>> {
-    // Open TIFF file from path
-    let file = File::open(path).expect("Cannot find GeoTIFF file");
+    // Initialize async runtime
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+
+    // Get TIFF file stream asynchronously
+    let stream = runtime.block_on(async {
+        // Parse URL
+        let url = Url::parse(path).expect(&format!("Cannot parse path: {path}"));
+        let (store, location) = parse_url(&url).expect(&format!("Cannot parse url: {url}"));
+
+        // Return cursor to in-memory buffer
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        Cursor::new(bytes)
+    });
+
     // Get image pixel data as an ndarray
-    let vec_data = io::geotiff::read_geotiff(file).expect("Cannot read GeoTIFF");
+    let vec_data = io::geotiff::read_geotiff(stream).expect("Cannot read GeoTIFF");
     // Convert from ndarray (Rust) to numpy ndarray (Python)
     Ok(vec_data.to_pyarray(py))
 }
