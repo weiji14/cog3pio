@@ -17,10 +17,9 @@ use std::io::Cursor;
 use ndarray::Dim;
 use numpy::{PyArray, ToPyArray};
 use object_store::{parse_url, ObjectStore};
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
 use pyo3::wrap_pyfunction;
-use tokio;
-use url::ParseError;
 use url::Url;
 
 /// Read a GeoTIFF file from a path on disk into an ndarray
@@ -47,17 +46,15 @@ fn read_geotiff_py<'py>(
     path: &str,
     py: Python<'py>,
 ) -> PyResult<&'py PyArray<f32, Dim<[usize; 2]>>> {
-    // Parse URL, prepend file:// for local filepaths
-    let url = match Url::parse(path) {
-        Ok(url) => url,
-        Err(ParseError::RelativeUrlWithoutBase) => {
-            let new_path = "file://".to_owned() + path;
-            let url = Url::parse(new_path.as_str()).expect(&format!("Cannot parse path: {path}"));
-            url
+    // Parse URL into ObjectStore and path
+    let file_or_url = match Url::from_file_path(path) {
+        Ok(filepath) => filepath,
+        Err(_) => {
+            Url::parse(path).map_err(|_| PyValueError::new_err("Cannot parse path: {path}"))?
         }
-        Err(e) => Err(format!("{}", e)).unwrap(),
     };
-    let (store, location) = parse_url(&url).expect(&format!("Cannot parse url: {url}"));
+    let (store, location) = parse_url(&file_or_url)
+        .map_err(|_| PyValueError::new_err("Cannot parse url: {file_or_url}"))?;
 
     // Initialize async runtime
     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -73,7 +70,9 @@ fn read_geotiff_py<'py>(
     });
 
     // Get image pixel data as an ndarray
-    let vec_data = io::geotiff::read_geotiff(stream).expect("Cannot read GeoTIFF");
+    let vec_data = io::geotiff::read_geotiff(stream)
+        .map_err(|_| PyValueError::new_err("Cannot read GeoTIFF"))?;
+
     // Convert from ndarray (Rust) to numpy ndarray (Python)
     Ok(vec_data.to_pyarray(py))
 }
