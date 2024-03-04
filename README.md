@@ -55,6 +55,7 @@ async fn main() {
 
     let arr: Array2<f32> = read_geotiff(stream).unwrap();
     assert_eq!(arr.dim(), (549, 549));
+    assert_eq!(arr[[500, 500]], 0.13482364);
 }
 ```
 
