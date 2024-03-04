@@ -10,6 +10,7 @@ name = "cog3pio"
 crate-type = ["cdylib"]
 
 [dependencies]
+bytes = "1.5.0"
 ndarray = "0.15.6"
 numpy = "0.20.0"
 object_store = { version = "0.9.0", features = ["http"] }

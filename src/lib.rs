@@ -14,12 +14,13 @@ pub mod io;
 
 use std::io::Cursor;
 
+use bytes::Bytes;
 use ndarray::Dim;
 use numpy::{PyArray, ToPyArray};
 use object_store::{parse_url, ObjectStore};
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
-use pyo3::wrap_pyfunction;
+use pyo3::{wrap_pyfunction, PyErr};
 use url::Url;
 
 /// Read a GeoTIFF file from a path on disk into an ndarray
@@ -48,13 +49,14 @@ fn read_geotiff_py<'py>(
 ) -> PyResult<&'py PyArray<f32, Dim<[usize; 2]>>> {
     // Parse URL into ObjectStore and path
     let file_or_url = match Url::from_file_path(path) {
+        // Parse local filepath
         Ok(filepath) => filepath,
-        Err(_) => {
-            Url::parse(path).map_err(|_| PyValueError::new_err("Cannot parse path: {path}"))?
-        }
+        // Parse remote URL
+        Err(_) => Url::parse(path)
+            .map_err(|_| PyValueError::new_err(format!("Cannot parse path: {path}")))?,
     };
     let (store, location) = parse_url(&file_or_url)
-        .map_err(|_| PyValueError::new_err("Cannot parse url: {file_or_url}"))?;
+        .map_err(|_| PyValueError::new_err(format!("Cannot parse url: {file_or_url}")))?;
 
     // Initialize async runtime
     let runtime = tokio::runtime::Builder::new_current_thread()
@@ -63,15 +65,20 @@ fn read_geotiff_py<'py>(
 
     // Get TIFF file stream asynchronously
     let stream = runtime.block_on(async {
-        let result = store.get(&location).await.unwrap();
-        let bytes = result.bytes().await.unwrap();
+        let result = store
+            .get(&location)
+            .await
+            .map_err(|_| PyFileNotFoundError::new_err(format!("Cannot find file: {path}")))?;
+        let bytes = result.bytes().await.map_err(|_| {
+            PyBufferError::new_err(format!("Failed to stream data from {path} into bytes."))
+        })?;
         // Return cursor to in-memory buffer
-        Cursor::new(bytes)
-    });
+        Ok::<Cursor<Bytes>, PyErr>(Cursor::new(bytes))
+    })?;
 
     // Get image pixel data as an ndarray
     let vec_data = io::geotiff::read_geotiff(stream)
-        .map_err(|_| PyValueError::new_err("Cannot read GeoTIFF"))?;
+        .map_err(|err| PyValueError::new_err(format!("Cannot read GeoTIFF because: {err}")))?;
 
     // Convert from ndarray (Rust) to numpy ndarray (Python)
     Ok(vec_data.to_pyarray(py))

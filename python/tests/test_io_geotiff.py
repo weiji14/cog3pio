@@ -43,3 +43,45 @@ def test_read_geotiff_remote():
     )
     assert array.shape == (20, 20)
     assert array.dtype == "float32"
+
+
+def test_read_geotiff_invalid_filepath():
+    """
+    Check that a ValueError is raised when an invalid filepath is passed to read_geotiff.
+    """
+    with pytest.raises(ValueError, match=r"Cannot parse path: \\invalid\\path"):
+        read_geotiff(path=r"\invalid\path")
+
+
+def test_read_geotiff_invalid_remote_url():
+    """
+    Check that a ValueError is raised when an invalid remote url is passed to read_geotiff.
+    """
+    with pytest.raises(ValueError, match="Cannot parse url: protocol://file.ext"):
+        read_geotiff(path="protocol://file.ext")
+
+
+def test_read_geotiff_missing_url():
+    """
+    Check that a FileNotFoundError is raised when a url pointing to a non-existent file
+    is passed to read_geotiff.
+    """
+    with pytest.raises(
+        FileNotFoundError, match="Cannot find file: https://example.com/geo.tif"
+    ):
+        read_geotiff(path="https://example.com/geo.tif")
+
+
+def test_read_geotiff_unsupported_dtype():
+    """
+    Check that a ValueError is raised when an unsupported GeoTIFF (of ComplexInt16 type)
+    is passed to read_geotiff.
+    """
+    with pytest.raises(
+        ValueError,
+        match="Cannot read GeoTIFF because: "
+        "The Decoder does not support the image format ",
+    ):
+        read_geotiff(
+            path="https://github.com/corteva/rioxarray/raw/0.15.1/test/test_data/input/cint16.tif"
+        )

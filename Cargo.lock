@@ -123,6 +123,7 @@ dependencies = [
 name = "cog3pio"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "ndarray",
  "numpy",
  "object_store",
