@@ -10,10 +10,14 @@ name = "cog3pio"
 crate-type = ["cdylib"]
 
 [dependencies]
+bytes = "1.5.0"
 ndarray = "0.15.6"
 numpy = "0.20.0"
+object_store = { version = "0.9.0", features = ["http"] }
 pyo3 = { version = "0.20.3", features = ["abi3-py310", "extension-module"] }
 tiff = "0.9.1"
+tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
+url = "2.5.0"
 
 [dev-dependencies]
 tempfile = "3.10.1"
