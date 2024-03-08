@@ -11,7 +11,7 @@ pub fn read_geotiff<R: Read + Seek>(stream: R) -> Result<Array2<f32>, TiffError>
     decoder = decoder.with_limits(Limits::unlimited());
 
     // Get image dimensions
-    let (width, height): (u32, u32) = decoder.dimensions()?;
+    let (height, width): (u32, u32) = decoder.dimensions()?;
 
     // Get image pixel data
     let DecodingResult::F32(img_data) = decoder.read_image()? else {
@@ -38,9 +38,9 @@ mod tests {
     fn test_read_geotiff() {
         // Generate some data
         let mut image_data = Vec::new();
-        for x in 0..20 {
-            for y in 0..20 {
-                let val = x + y;
+        for y in 0..10 {
+            for x in 0..20 {
+                let val = y + x;
                 image_data.push(val as f32);
             }
         }
@@ -49,13 +49,16 @@ mod tests {
         let mut file = tempfile().unwrap();
         let mut bigtiff = TiffEncoder::new_big(&mut file).unwrap();
         bigtiff
-            .write_image::<colortype::Gray32Float>(20, 20, &image_data)
+            .write_image::<colortype::Gray32Float>(20, 10, &image_data)
             .unwrap();
         file.seek(SeekFrom::Start(0)).unwrap();
 
         // Read a BigTIFF file
         let arr = read_geotiff(file).unwrap();
-        assert_eq!(arr.dim(), (20, 20));
-        assert_eq!(arr.mean(), Some(19.0));
+        assert_eq!(arr.ndim(), 2);
+        assert_eq!(arr.dim(), (20, 10));  // (height, width)
+        assert_eq!(arr.nrows(), 20);  // y-axis
+        assert_eq!(arr.ncols(), 10);  // x-axis
+        assert_eq!(arr.mean(), Some(14.0));
     }
 }
