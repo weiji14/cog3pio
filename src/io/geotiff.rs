@@ -49,16 +49,16 @@ mod tests {
         let mut file = tempfile().unwrap();
         let mut bigtiff = TiffEncoder::new_big(&mut file).unwrap();
         bigtiff
-            .write_image::<colortype::Gray32Float>(10, 20, &image_data) // width, height, data
+            .write_image::<colortype::Gray32Float>(20, 10, &image_data) // width, height, data
             .unwrap();
         file.seek(SeekFrom::Start(0)).unwrap();
 
         // Read a BigTIFF file
         let arr = read_geotiff(file).unwrap();
         assert_eq!(arr.ndim(), 2);
-        assert_eq!(arr.dim(), (20, 10)); // (height, width)
-        assert_eq!(arr.nrows(), 20); // y-axis
-        assert_eq!(arr.ncols(), 10); // x-axis
+        assert_eq!(arr.dim(), (10, 20)); // (height, width)
+        assert_eq!(arr.nrows(), 10); // y-axis
+        assert_eq!(arr.ncols(), 20); // x-axis
         assert_eq!(arr.mean(), Some(14.0));
     }
 }
