@@ -1,20 +1,35 @@
 use std::io::{Read, Seek};
 
 use ndarray::Array2;
-use tiff::decoder::{DecodingResult, Limits};
-use tiff::{TiffError, TiffFormatError};
+use tiff::decoder::{Decoder, DecodingResult, Limits};
+use tiff::{TiffFormatError, TiffResult};
+
+/// Cloud-optimized GeoTIFF reader
+struct CogReader<R: Read + Seek> {
+    decoder: Decoder<R>,
+}
+
+impl<R: Read + Seek> CogReader<R> {
+    /// Create a new GeoTIFF decoder that decodes from a stream buffer
+    fn new(stream: R) -> TiffResult<Self> {
+        // Open TIFF stream with decoder
+        let mut decoder = Decoder::new(stream)?;
+        decoder = decoder.with_limits(Limits::unlimited());
+
+        Ok(Self { decoder })
+    }
+}
 
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
-pub fn read_geotiff<R: Read + Seek>(stream: R) -> Result<Array2<f32>, TiffError> {
+pub fn read_geotiff<R: Read + Seek>(stream: R) -> TiffResult<Array2<f32>> {
     // Open TIFF stream with decoder
-    let mut decoder = tiff::decoder::Decoder::new(stream)?;
-    decoder = decoder.with_limits(Limits::unlimited());
+    let mut reader = CogReader::new(stream)?;
 
     // Get image dimensions
-    let (width, height): (u32, u32) = decoder.dimensions()?;
+    let (width, height): (u32, u32) = reader.decoder.dimensions()?;
 
     // Get image pixel data
-    let DecodingResult::F32(img_data) = decoder.read_image()? else {
+    let DecodingResult::F32(img_data) = reader.decoder.read_image()? else {
         panic!("Cannot read band data")
     };
 
