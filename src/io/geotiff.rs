@@ -21,7 +21,27 @@ impl<R: Read + Seek> CogReader<R> {
         Ok(Self { decoder })
     }
 
-    // Affine transformation
+    /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
+    /// image pixel (row, col) coordinates to and from geographic/projected (x, y) coordinates.
+    ///
+    /// ```text
+    /// | x' |   | a b c | | x |
+    /// | y' | = | d e f | | y |
+    /// | 1  |   | 0 0 1 | | 1 |
+    /// ```
+    ///
+    /// where (`x'` and `y'`) are world coordinates, and (`x`, `y) are the pixel's image
+    /// coordinates. Letters a to f represent:
+    ///
+    /// - `a` - width of a pixel (x-resolution)
+    /// - `b` - row rotation (typically zero)
+    /// - `c` - x-coordinate of the *center* of the upper-left pixel (x-origin)
+    /// - `d` - column rotation (typically zero)
+    /// - `e` - height of a pixel (y-resolution, typically negative)
+    /// - `f` - y-coordinate of the *center* of the upper-left pixel (y-origin)
+    ///
+    /// References:
+    /// - <https://docs.ogc.org/is/19-008r4/19-008r4.html#_coordinate_transformations>
     fn transform(&mut self) -> TiffResult<AffineTransform<f64>> {
         // Get pixel size in x and y direction
         let pixel_scale: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelPixelScaleTag)?;
@@ -31,12 +51,12 @@ impl<R: Read + Seek> CogReader<R> {
 
         // Get x and y coordinates of upper left pixel
         let tie_points: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelTiepointTag)?;
-        let [_i, _j, _k, origin_x, origin_y, _origin_z] = tie_points[0..6] else {
+        let [_i, _j, _k, x_origin, y_origin, _z_origin] = tie_points[0..6] else {
             return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
         };
 
         // Create affine transformation matrix
-        let transform = AffineTransform::new(x_scale, 0.0, origin_x, 0.0, -y_scale, origin_y);
+        let transform = AffineTransform::new(x_scale, 0.0, x_origin, 0.0, -y_scale, y_origin);
 
         Ok(transform)
     }
