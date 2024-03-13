@@ -43,6 +43,13 @@ impl<R: Read + Seek> CogReader<R> {
     /// References:
     /// - <https://docs.ogc.org/is/19-008r4/19-008r4.html#_coordinate_transformations>
     fn transform(&mut self) -> TiffResult<AffineTransform<f64>> {
+        // Get x and y axis rotation (not yet implemented)
+        let (x_rotation, y_rotation): (f64, f64) =
+            match self.decoder.get_tag_f64_vec(Tag::ModelTransformationTag) {
+                Ok(_model_transformation) => unimplemented!("Non-zero rotation is not handled yet"),
+                Err(_) => (0.0, 0.0),
+            };
+
         // Get pixel size in x and y direction
         let pixel_scale: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelPixelScaleTag)?;
         let [x_scale, y_scale, _z_scale] = pixel_scale[0..3] else {
@@ -56,7 +63,9 @@ impl<R: Read + Seek> CogReader<R> {
         };
 
         // Create affine transformation matrix
-        let transform = AffineTransform::new(x_scale, 0.0, x_origin, 0.0, -y_scale, y_origin);
+        let transform = AffineTransform::new(
+            x_scale, x_rotation, x_origin, y_rotation, -y_scale, y_origin,
+        );
 
         Ok(transform)
     }
@@ -123,7 +132,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_get_transform() {
+    async fn test_cogreader_transform() {
         let cog_url: &str =
             "https://github.com/cogeotiff/rio-tiler/raw/6.4.0/tests/fixtures/cog_nodata_nan.tif";
         let tif_url = Url::parse(cog_url).unwrap();
