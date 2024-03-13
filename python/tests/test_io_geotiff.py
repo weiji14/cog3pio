@@ -1,12 +1,14 @@
 """
 Test I/O on GeoTIFF files.
 """
+import os
 import tempfile
 import urllib.request
-import os
+
 import pytest
 
 from cog3pio import read_geotiff
+
 
 # %%
 @pytest.fixture(scope="module", name="geotiff_path")
