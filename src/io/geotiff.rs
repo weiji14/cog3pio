@@ -21,14 +21,23 @@ impl<R: Read + Seek> CogReader<R> {
         Ok(Self { decoder })
     }
 
-    /// Decode GeoTIFF image to a Vec
-    fn as_vec(&mut self) -> TiffResult<Vec<f32>> {
+    /// Decode GeoTIFF image to an [`ndarray::Array`]
+    fn ndarray(&mut self) -> TiffResult<Array2<f32>> {
+        // Get image dimensions
+        let (width, height): (u32, u32) = self.decoder.dimensions()?;
+
+        // Get image pixel data
         let decode_result = self.decoder.read_image()?;
         let image_data: Vec<f32> = match decode_result {
             DecodingResult::F32(img_data) => img_data,
             _ => unimplemented!("Data types other than float32 are not yet supported."),
         };
-        Ok(image_data)
+
+        // Put image pixel data into an ndarray
+        let vec_data = Array2::from_shape_vec((height as usize, width as usize), image_data)
+            .map_err(|_| TiffFormatError::InvalidDimensions(height, width))?;
+
+        Ok(vec_data)
     }
 
     /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
@@ -86,15 +95,8 @@ pub fn read_geotiff<R: Read + Seek>(stream: R) -> TiffResult<Array2<f32>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
 
-    // Get image dimensions
-    let (width, height): (u32, u32) = reader.decoder.dimensions()?;
-
-    // Get image pixel data
-    let img_data: Vec<f32> = reader.as_vec()?;
-
-    // Put image pixel data into an ndarray
-    let vec_data = Array2::from_shape_vec((height as usize, width as usize), img_data)
-        .map_err(|_| TiffFormatError::InvalidDimensions(height, width))?;
+    // Decode TIFF into ndarray
+    let vec_data: Array2<f32> = reader.ndarray()?;
 
     Ok(vec_data)
 }
@@ -104,6 +106,7 @@ mod tests {
     use std::io::{Cursor, Seek, SeekFrom};
 
     use geo::AffineTransform;
+    use ndarray::array;
     use object_store::parse_url;
     use tempfile::tempfile;
     use tiff::encoder::{colortype, TiffEncoder};
@@ -137,6 +140,23 @@ mod tests {
         assert_eq!(arr.nrows(), 10); // y-axis
         assert_eq!(arr.ncols(), 20); // x-axis
         assert_eq!(arr.mean(), Some(14.0));
+    }
+
+    #[tokio::test]
+    async fn test_cogreader_ndarray() {
+        let cog_url: &str = "https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        let stream = Cursor::new(bytes);
+
+        let mut reader = CogReader::new(stream).unwrap();
+        let array = reader.ndarray().unwrap();
+
+        assert_eq!(array.shape(), [2, 3]);
+        assert_eq!(array, array![[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]])
     }
 
     #[tokio::test]
