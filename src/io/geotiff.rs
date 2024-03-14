@@ -21,6 +21,16 @@ impl<R: Read + Seek> CogReader<R> {
         Ok(Self { decoder })
     }
 
+    /// Decode GeoTIFF image to a Vec
+    fn as_vec(&mut self) -> TiffResult<Vec<f32>> {
+        let decode_result = self.decoder.read_image()?;
+        let image_data: Vec<f32> = match decode_result {
+            DecodingResult::F32(img_data) => img_data,
+            _ => unimplemented!("Data types other than float32 are not yet supported."),
+        };
+        Ok(image_data)
+    }
+
     /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
     /// image pixel (row, col) coordinates to and from geographic/projected (x, y) coordinates.
     ///
@@ -80,9 +90,7 @@ pub fn read_geotiff<R: Read + Seek>(stream: R) -> TiffResult<Array2<f32>> {
     let (width, height): (u32, u32) = reader.decoder.dimensions()?;
 
     // Get image pixel data
-    let DecodingResult::F32(img_data) = reader.decoder.read_image()? else {
-        panic!("Cannot read band data")
-    };
+    let img_data: Vec<f32> = reader.as_vec()?;
 
     // Put image pixel data into an ndarray
     let vec_data = Array2::from_shape_vec((height as usize, width as usize), img_data)
