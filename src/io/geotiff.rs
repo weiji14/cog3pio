@@ -1,7 +1,7 @@
 use std::io::{Read, Seek};
 
 use geo::AffineTransform;
-use ndarray::Array2;
+use ndarray::Array3;
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
 use tiff::{TiffError, TiffFormatError, TiffResult};
@@ -22,7 +22,7 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Decode GeoTIFF image to an [`ndarray::Array`]
-    fn ndarray(&mut self) -> TiffResult<Array2<f32>> {
+    fn ndarray(&mut self) -> TiffResult<Array3<f32>> {
         // Get image dimensions
         let (width, height): (u32, u32) = self.decoder.dimensions()?;
 
@@ -34,7 +34,7 @@ impl<R: Read + Seek> CogReader<R> {
         };
 
         // Put image pixel data into an ndarray
-        let vec_data = Array2::from_shape_vec((height as usize, width as usize), image_data)
+        let vec_data = Array3::from_shape_vec((1, height as usize, width as usize), image_data)
             .map_err(|_| TiffFormatError::InvalidDimensions(height, width))?;
 
         Ok(vec_data)
@@ -91,12 +91,12 @@ impl<R: Read + Seek> CogReader<R> {
 }
 
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
-pub fn read_geotiff<R: Read + Seek>(stream: R) -> TiffResult<Array2<f32>> {
+pub fn read_geotiff<R: Read + Seek>(stream: R) -> TiffResult<Array3<f32>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
 
     // Decode TIFF into ndarray
-    let vec_data: Array2<f32> = reader.ndarray()?;
+    let vec_data: Array3<f32> = reader.ndarray()?;
 
     Ok(vec_data)
 }
@@ -106,7 +106,7 @@ mod tests {
     use std::io::{Cursor, Seek, SeekFrom};
 
     use geo::AffineTransform;
-    use ndarray::array;
+    use ndarray::{array, s};
     use object_store::parse_url;
     use tempfile::tempfile;
     use tiff::encoder::{colortype, TiffEncoder};
@@ -135,10 +135,11 @@ mod tests {
 
         // Read a BigTIFF file
         let arr = read_geotiff(file).unwrap();
-        assert_eq!(arr.ndim(), 2);
-        assert_eq!(arr.dim(), (10, 20)); // (height, width)
-        assert_eq!(arr.nrows(), 10); // y-axis
-        assert_eq!(arr.ncols(), 20); // x-axis
+        assert_eq!(arr.ndim(), 3);
+        assert_eq!(arr.dim(), (1, 10, 20)); // (channels, height, width)
+        let first_band = arr.slice(s![0, .., ..]);
+        assert_eq!(first_band.nrows(), 10); // y-axis
+        assert_eq!(first_band.ncols(), 20); // x-axis
         assert_eq!(arr.mean(), Some(14.0));
     }
 
@@ -155,8 +156,8 @@ mod tests {
         let mut reader = CogReader::new(stream).unwrap();
         let array = reader.ndarray().unwrap();
 
-        assert_eq!(array.shape(), [2, 3]);
-        assert_eq!(array, array![[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]])
+        assert_eq!(array.shape(), [1, 2, 3]);
+        assert_eq!(array, array![[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]])
     }
 
     #[tokio::test]

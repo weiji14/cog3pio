@@ -34,7 +34,7 @@ use std::io::Cursor;
 
 use bytes::Bytes;
 use cog3pio::io::geotiff::read_geotiff;
-use ndarray::Array2;
+use ndarray::Array3;
 use object_store::path::Path;
 use object_store::{parse_url, GetResult, ObjectStore};
 use tokio;
@@ -53,9 +53,9 @@ async fn main() {
         Cursor::new(bytes)
     };
 
-    let arr: Array2<f32> = read_geotiff(stream).unwrap();
-    assert_eq!(arr.dim(), (549, 549));
-    assert_eq!(arr[[500, 500]], 0.13482364);
+    let arr: Array3<f32> = read_geotiff(stream).unwrap();
+    assert_eq!(arr.dim(), (1, 549, 549));
+    assert_eq!(arr[[0, 500, 500]], 0.13482364);
 }
 ```
 
@@ -68,7 +68,7 @@ from cog3pio import read_geotiff
 array: np.ndarray = read_geotiff(
     path="https://github.com/cogeotiff/rio-tiler/raw/6.4.0/tests/fixtures/cog_nodata_nan.tif"
 )
-assert array.shape == (549, 549)
+assert array.shape == (1, 549, 549)  # bands, height, width
 assert array.dtype == "float32"
 ```
 
