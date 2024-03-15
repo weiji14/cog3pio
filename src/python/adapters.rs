@@ -1,7 +1,7 @@
 use std::io::Cursor;
 
 use bytes::Bytes;
-use numpy::{PyArray2, ToPyArray};
+use numpy::{PyArray3, ToPyArray};
 use object_store::{parse_url, ObjectStore};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
 use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
@@ -44,7 +44,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
     Ok(stream)
 }
 
-/// Read a GeoTIFF file from a path on disk into an ndarray
+/// Read a GeoTIFF file from a path on disk or a url into an ndarray
 ///
 /// Parameters
 /// ----------
@@ -64,7 +64,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// assert array.shape == (20, 20)
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
-fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<&'py PyArray2<f32>> {
+fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<&'py PyArray3<f32>> {
     // Parse URL into byte stream
     let stream = path_to_stream(path)?;
 

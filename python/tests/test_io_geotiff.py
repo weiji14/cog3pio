@@ -31,7 +31,7 @@ def test_read_geotiff_local(geotiff_path):
     Read a GeoTIFF file from a local file path.
     """
     array = read_geotiff(path=geotiff_path)
-    assert array.shape == (20, 20)
+    assert array.shape == (1, 20, 20)
     assert array.dtype == "float32"
 
 
@@ -43,7 +43,7 @@ def test_read_geotiff_remote():
     array = read_geotiff(
         path="https://github.com/pka/georaster/raw/v0.1.0/data/tiff/float32.tif"
     )
-    assert array.shape == (20, 20)
+    assert array.shape == (1, 20, 20)
     assert array.dtype == "float32"
 
 
