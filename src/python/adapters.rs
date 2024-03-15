@@ -1,15 +1,46 @@
 use std::io::Cursor;
 
 use bytes::Bytes;
+use ndarray::Array3;
 use numpy::{PyArray3, ToPyArray};
 use object_store::{parse_url, ObjectStore};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
-use pyo3::prelude::{pyfunction, pymodule, PyModule, PyResult, Python};
+use pyo3::prelude::{pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python};
 use pyo3::wrap_pyfunction;
 use pyo3::PyErr;
 use url::Url;
 
-use crate::io::geotiff::read_geotiff;
+use crate::io::geotiff::CogReader;
+
+/// Python class interface to the Cloud-optimized GeoTIFF reader struct
+#[pyclass]
+#[pyo3(name = "CogReader")]
+struct PyCogReader {
+    inner: CogReader<Cursor<Bytes>>,
+}
+
+#[pymethods]
+impl PyCogReader {
+    #[new]
+    fn new(path: &str) -> PyResult<Self> {
+        let stream: Cursor<Bytes> = path_to_stream(path)?;
+        let reader =
+            CogReader::new(stream).map_err(|err| PyValueError::new_err(err.to_string()))?;
+
+        Ok(Self { inner: reader })
+    }
+
+    /// Get image pixel data from GeoTIFF as a numpy.ndarray
+    fn data<'py>(&mut self, py: Python<'py>) -> PyResult<&'py PyArray3<f32>> {
+        let array_data: Array3<f32> = self
+            .inner
+            .ndarray()
+            .map_err(|err| PyValueError::new_err(err.to_string()))?;
+
+        // Convert from ndarray (Rust) to numpy ndarray (Python)
+        Ok(array_data.to_pyarray(py))
+    }
+}
 
 /// Read from a filepath or url into a byte stream
 fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
@@ -65,15 +96,13 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<&'py PyArray3<f32>> {
-    // Parse URL into byte stream
-    let stream = path_to_stream(path)?;
+    // Open URL with TIFF decoder
+    let mut reader = PyCogReader::new(path)?;
 
-    // Get image pixel data as an ndarray
-    let vec_data = read_geotiff(stream)
-        .map_err(|err| PyValueError::new_err(format!("Cannot read GeoTIFF because: {err}")))?;
+    // Decode TIFF into numpy ndarray
+    let array_data = reader.data(py)?;
 
-    // Convert from ndarray (Rust) to numpy ndarray (Python)
-    Ok(vec_data.to_pyarray(py))
+    Ok(array_data)
 }
 
 /// A Python module implemented in Rust. The name of this function must match
@@ -81,6 +110,8 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<&'py PyArray3<f
 /// import the module.
 #[pymodule]
 fn cog3pio(_py: Python, m: &PyModule) -> PyResult<()> {
+    // Register Python classes
+    m.add_class::<PyCogReader>()?;
     // Register Python functions
     m.add_function(wrap_pyfunction!(read_geotiff_py, m)?)?;
     Ok(())

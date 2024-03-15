@@ -81,8 +81,7 @@ def test_read_geotiff_unsupported_dtype():
     """
     with pytest.raises(
         ValueError,
-        match="Cannot read GeoTIFF because: "
-        "The Decoder does not support the image format ",
+        match="The Decoder does not support the image format ",
     ):
         read_geotiff(
             path="https://github.com/corteva/rioxarray/raw/0.15.1/test/test_data/input/cint16.tif"
