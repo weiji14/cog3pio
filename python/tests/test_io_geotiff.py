@@ -5,9 +5,10 @@ import os
 import tempfile
 import urllib.request
 
+import numpy as np
 import pytest
 
-from cog3pio import read_geotiff
+from cog3pio import CogReader, read_geotiff
 
 
 # %%
@@ -86,3 +87,20 @@ def test_read_geotiff_unsupported_dtype():
         read_geotiff(
             path="https://github.com/corteva/rioxarray/raw/0.15.1/test/test_data/input/cint16.tif"
         )
+
+
+def test_CogReader_data():
+    """
+    Ensure that the CogReader class's `data` method produces a numpy.ndarray output.
+    """
+    reader = CogReader(
+        path="https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif"
+    )
+    array = reader.data()
+    assert array.shape == (1, 2, 3)  # band, height, width
+    np.testing.assert_equal(
+        actual=array,
+        desired=np.array(
+            [[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]], dtype=np.float32
+        ),
+    )
