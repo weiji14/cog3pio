@@ -12,7 +12,31 @@ use url::Url;
 
 use crate::io::geotiff::CogReader;
 
-/// Python class interface to the Cloud-optimized GeoTIFF reader struct
+/// Python class interface to a Cloud-optimized GeoTIFF reader.
+///
+/// Parameters
+/// ----------
+/// path : str
+///     The path to the file, or a url to a remote file.
+///
+/// Returns
+/// -------
+/// reader : cog3pio.CogReader
+///     A new CogReader instance for decoding GeoTIFF files.
+///
+/// Examples
+/// --------
+/// >>> import numpy as np
+/// >>> from cog3pio import CogReader
+/// >>>
+/// >>> reader = CogReader(
+/// >>>     path="https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif"
+/// >>> )
+/// >>> array: np.ndarray = reader.data()
+/// >>> array.shape
+/// >>> (1, 12, 13)
+/// >>> array.dtype
+/// >>> dtype('float32')
 #[pyclass]
 #[pyo3(name = "CogReader")]
 struct PyCogReader {
@@ -31,6 +55,11 @@ impl PyCogReader {
     }
 
     /// Get image pixel data from GeoTIFF as a numpy.ndarray
+    ///
+    /// Returns
+    /// -------
+    /// array : np.ndarray
+    ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
     fn data<'py>(&mut self, py: Python<'py>) -> PyResult<&'py PyArray3<f32>> {
         let array_data: Array3<f32> = self
             .inner
@@ -85,7 +114,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// Returns
 /// -------
 /// array : np.ndarray
-///     2D array containing the GeoTIFF pixel data.
+///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
 ///
 /// Examples
 /// --------
