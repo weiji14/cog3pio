@@ -83,7 +83,7 @@ assert array.dtype == "float32"
 Short term (Q1 2024):
 - [ ] Implement single-band GeoTIFF reader to
       [`ndarray`](https://github.com/rust-ndarray/ndarray)
-- [ ] Multi-band reader (relying on
+- [x] Multi-band reader (relying on
       [`image-tiff`](https://github.com/image-rs/image-tiff))
 - [x] Read from remote storage (using
       [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
