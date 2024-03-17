@@ -89,14 +89,14 @@ def test_read_geotiff_unsupported_dtype():
         )
 
 
-def test_CogReader_data():
+def test_CogReader_to_numpy():
     """
-    Ensure that the CogReader class's `data` method produces a numpy.ndarray output.
+    Ensure that the CogReader class's `to_numpy` method produces a numpy.ndarray output.
     """
     reader = CogReader(
         path="https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif"
     )
-    array = reader.data()
+    array = reader.to_numpy()
     assert array.shape == (1, 2, 3)  # band, height, width
     np.testing.assert_equal(
         actual=array,
