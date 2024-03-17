@@ -7,13 +7,14 @@ use tiff::tags::Tag;
 use tiff::{TiffError, TiffFormatError, TiffResult};
 
 /// Cloud-optimized GeoTIFF reader
-struct CogReader<R: Read + Seek> {
-    decoder: Decoder<R>,
+pub(crate) struct CogReader<R: Read + Seek> {
+    /// TIFF decoder
+    pub decoder: Decoder<R>,
 }
 
 impl<R: Read + Seek> CogReader<R> {
     /// Create a new GeoTIFF decoder that decodes from a stream buffer
-    fn new(stream: R) -> TiffResult<Self> {
+    pub fn new(stream: R) -> TiffResult<Self> {
         // Open TIFF stream with decoder
         let mut decoder = Decoder::new(stream)?;
         decoder = decoder.with_limits(Limits::unlimited());
@@ -22,7 +23,7 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Decode GeoTIFF image to an [`ndarray::Array`]
-    fn ndarray(&mut self) -> TiffResult<Array3<f32>> {
+    pub fn ndarray(&mut self) -> TiffResult<Array3<f32>> {
         // Get image dimensions
         let (width, height): (u32, u32) = self.decoder.dimensions()?;
 
@@ -34,10 +35,10 @@ impl<R: Read + Seek> CogReader<R> {
         };
 
         // Put image pixel data into an ndarray
-        let vec_data = Array3::from_shape_vec((1, height as usize, width as usize), image_data)
+        let array_data = Array3::from_shape_vec((1, height as usize, width as usize), image_data)
             .map_err(|_| TiffFormatError::InvalidDimensions(height, width))?;
 
-        Ok(vec_data)
+        Ok(array_data)
     }
 
     /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
@@ -96,9 +97,9 @@ pub fn read_geotiff<R: Read + Seek>(stream: R) -> TiffResult<Array3<f32>> {
     let mut reader = CogReader::new(stream)?;
 
     // Decode TIFF into ndarray
-    let vec_data: Array3<f32> = reader.ndarray()?;
+    let array_data: Array3<f32> = reader.ndarray()?;
 
-    Ok(vec_data)
+    Ok(array_data)
 }
 
 #[cfg(test)]
