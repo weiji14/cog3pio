@@ -29,7 +29,7 @@ def fixture_geotiff_path():
 @pytest.mark.benchmark
 def test_read_geotiff_local(geotiff_path):
     """
-    Read a GeoTIFF file from a local file path.
+    Read a single-band GeoTIFF file from a local file path.
     """
     array = read_geotiff(path=geotiff_path)
     assert array.shape == (1, 20, 20)
@@ -39,12 +39,24 @@ def test_read_geotiff_local(geotiff_path):
 @pytest.mark.benchmark
 def test_read_geotiff_remote():
     """
-    Read a GeoTIFF file from a remote URL.
+    Read a single-band GeoTIFF file from a remote URL.
     """
     array = read_geotiff(
         path="https://github.com/pka/georaster/raw/v0.1.0/data/tiff/float32.tif"
     )
     assert array.shape == (1, 20, 20)
+    assert array.dtype == "float32"
+
+
+@pytest.mark.benchmark
+def test_read_geotiff_multi_band():
+    """
+    Read a multi-band GeoTIFF file from a remote URL.
+    """
+    array = read_geotiff(
+        path="https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif"
+    )
+    assert array.shape == (2, 512, 512)
     assert array.dtype == "float32"
 
 
