@@ -4,7 +4,7 @@ use geo::AffineTransform;
 use ndarray::Array3;
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
-use tiff::{ColorType, TiffError, TiffFormatError, TiffResult};
+use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
 
 /// Cloud-optimized GeoTIFF reader
 pub(crate) struct CogReader<R: Read + Seek> {
@@ -24,16 +24,6 @@ impl<R: Read + Seek> CogReader<R> {
 
     /// Decode GeoTIFF image to an [`ndarray::Array`]
     pub fn ndarray(&mut self) -> TiffResult<Array3<f32>> {
-        // Get image dimensions
-        let (width, height): (u32, u32) = self.decoder.dimensions()?;
-
-        // Get image pixel data
-        let decode_result = self.decoder.read_image()?;
-        let image_data: Vec<f32> = match decode_result {
-            DecodingResult::F32(img_data) => img_data,
-            _ => unimplemented!("Data types other than float32 are not yet supported."),
-        };
-
         // Count number of bands
         let color_type = self.decoder.colortype()?;
         let num_bands: usize = match color_type {
@@ -42,7 +32,25 @@ impl<R: Read + Seek> CogReader<R> {
                 num_samples,
             } => num_samples as usize,
             ColorType::Gray(_) => 1,
-            _ => unimplemented!("{color_type:?} is not yet supported"),
+            _ => {
+                return Err(TiffError::UnsupportedError(
+                    TiffUnsupportedError::UnsupportedColorType(color_type),
+                ))
+            }
+        };
+
+        // Get image dimensions
+        let (width, height): (u32, u32) = self.decoder.dimensions()?;
+
+        // Get image pixel data
+        let decode_result = self.decoder.read_image()?;
+        let image_data: Vec<f32> = match decode_result {
+            DecodingResult::F32(img_data) => img_data,
+            _ => {
+                return Err(TiffError::UnsupportedError(
+                    TiffUnsupportedError::UnsupportedDataType,
+                ))
+            }
         };
 
         // Put image pixel data into an ndarray

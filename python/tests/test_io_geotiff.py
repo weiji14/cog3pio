@@ -87,6 +87,21 @@ def test_read_geotiff_missing_url():
         read_geotiff(path="https://example.com/geo.tif")
 
 
+def test_read_geotiff_unsupported_colortype():
+    """
+    Check that a ValueError is raised when an unsupported GeoTIFF (with ColorType::RGB)
+    is passed to read_geotiff.
+    """
+    with pytest.raises(
+        ValueError,
+        match="The Decoder does not support the image format "
+        r"`RGBPalette with \[8\] bits per sample is unsupported",
+    ):
+        read_geotiff(
+            path="https://github.com/GenericMappingTools/gmtserver-admin/raw/caf0dbd015f0154687076dd31dc8baff62c95040/cache/earth_day_HD.tif"
+        )
+
+
 def test_read_geotiff_unsupported_dtype():
     """
     Check that a ValueError is raised when an unsupported GeoTIFF (of ComplexInt16 type)
@@ -94,7 +109,8 @@ def test_read_geotiff_unsupported_dtype():
     """
     with pytest.raises(
         ValueError,
-        match="The Decoder does not support the image format ",
+        match="The Decoder does not support the image format "
+        r"`Sample format \[Unknown\(5\)\] is unsupported",
     ):
         read_geotiff(
             path="https://github.com/corteva/rioxarray/raw/0.15.1/test/test_data/input/cint16.tif"
