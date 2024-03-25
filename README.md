@@ -89,7 +89,7 @@ Short term (Q1 2024):
       [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
 
 Medium term (Q2 2024):
-- [ ] Integration with `xarray` as a
+- [x] Integration with `xarray` as a
       [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
 - [ ] Parallel reader (TBD on multi-threaded or asynchronous)
 - [ ] Direct-to-GPU loading
