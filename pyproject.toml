@@ -16,6 +16,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.23",
+    "xarray>=2022.6.0",
 ]
 dynamic = ["version"]
 
