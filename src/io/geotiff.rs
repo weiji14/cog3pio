@@ -1,7 +1,7 @@
 use std::io::{Read, Seek};
 
 use geo::AffineTransform;
-use ndarray::Array3;
+use ndarray::{Array, Array1, Array3};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
 use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
@@ -108,6 +108,27 @@ impl<R: Read + Seek> CogReader<R> {
         );
 
         Ok(transform)
+    }
+
+    /// Get list of x and y coordinates
+    pub fn xy_coords(&mut self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
+        let transform = self.transform()?; // affine transformation matrix
+
+        let x_origin: &f64 = transform.xoff();
+        let y_origin: &f64 = transform.yoff();
+
+        let x_res: &f64 = transform.a();
+        let y_res: &f64 = transform.e();
+
+        let (x_pixels, y_pixels): (u32, u32) = self.decoder.dimensions()?;
+
+        let x_end: f64 = x_origin + x_res * x_pixels as f64;
+        let y_end: f64 = y_origin + y_res * y_pixels as f64;
+
+        let x_coords = Array::range(x_origin.to_owned(), x_end, x_res.to_owned());
+        let y_coords = Array::range(y_origin.to_owned(), y_end, y_res.to_owned());
+
+        Ok((x_coords, y_coords))
     }
 }
 

@@ -32,14 +32,15 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
         reader = CogReader(path=filename_or_obj)
 
         array: np.ndarray = reader.to_numpy()
+        x_coords, y_coords = reader.xy_coords()
 
         channels, height, width = array.shape
         dataarray: xr.DataArray = xr.DataArray(
             data=array,
             coords={
                 "band": np.arange(stop=channels, dtype=np.uint8),
-                "y": np.linspace(start=height, stop=0, num=height),
-                "x": np.linspace(start=0, stop=width, num=width),
+                "y": y_coords,
+                "x": x_coords,
             },
             name=None,
             attrs=None,

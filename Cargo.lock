@@ -369,8 +369,7 @@ dependencies = [
 [[package]]
 name = "geo"
 version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f811f663912a69249fa620dcd2a005db7254529da2d8a0b23942e81f47084501"
+source = "git+https://github.com/weiji14/geo.git?branch=affinetransform-index#0bd04a57d66fc1ff7d19524b16a03d9af8fe29a9"
 dependencies = [
  "earcutr",
  "float_next_after",
