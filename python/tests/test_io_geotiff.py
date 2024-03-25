@@ -29,7 +29,7 @@ def fixture_geotiff_path():
 @pytest.mark.benchmark
 def test_read_geotiff_local(geotiff_path):
     """
-    Read a GeoTIFF file from a local file path.
+    Read a single-band GeoTIFF file from a local file path.
     """
     array = read_geotiff(path=geotiff_path)
     assert array.shape == (1, 20, 20)
@@ -39,12 +39,24 @@ def test_read_geotiff_local(geotiff_path):
 @pytest.mark.benchmark
 def test_read_geotiff_remote():
     """
-    Read a GeoTIFF file from a remote URL.
+    Read a single-band GeoTIFF file from a remote URL.
     """
     array = read_geotiff(
         path="https://github.com/pka/georaster/raw/v0.1.0/data/tiff/float32.tif"
     )
     assert array.shape == (1, 20, 20)
+    assert array.dtype == "float32"
+
+
+@pytest.mark.benchmark
+def test_read_geotiff_multi_band():
+    """
+    Read a multi-band GeoTIFF file from a remote URL.
+    """
+    array = read_geotiff(
+        path="https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif"
+    )
+    assert array.shape == (2, 512, 512)
     assert array.dtype == "float32"
 
 
@@ -75,6 +87,21 @@ def test_read_geotiff_missing_url():
         read_geotiff(path="https://example.com/geo.tif")
 
 
+def test_read_geotiff_unsupported_colortype():
+    """
+    Check that a ValueError is raised when an unsupported GeoTIFF (with ColorType::RGB)
+    is passed to read_geotiff.
+    """
+    with pytest.raises(
+        ValueError,
+        match="The Decoder does not support the image format "
+        r"`RGBPalette with \[8\] bits per sample is unsupported",
+    ):
+        read_geotiff(
+            path="https://github.com/GenericMappingTools/gmtserver-admin/raw/caf0dbd015f0154687076dd31dc8baff62c95040/cache/earth_day_HD.tif"
+        )
+
+
 def test_read_geotiff_unsupported_dtype():
     """
     Check that a ValueError is raised when an unsupported GeoTIFF (of ComplexInt16 type)
@@ -82,7 +109,8 @@ def test_read_geotiff_unsupported_dtype():
     """
     with pytest.raises(
         ValueError,
-        match="The Decoder does not support the image format ",
+        match="The Decoder does not support the image format "
+        r"`Sample format \[Unknown\(5\)\] is unsupported",
     ):
         read_geotiff(
             path="https://github.com/corteva/rioxarray/raw/0.15.1/test/test_data/input/cint16.tif"

@@ -1433,8 +1433,7 @@ dependencies = [
 [[package]]
 name = "tiff"
 version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba1310fcea54c6a9a4fd1aad794ecc02c31682f6bfbecdf460bf19533eed1e3e"
+source = "git+https://github.com/image-rs/image-tiff.git?rev=0c54a18e2130bd8e3e897009e1fb59eaaf607c6c#0c54a18e2130bd8e3e897009e1fb59eaaf607c6c"
 dependencies = [
  "flate2",
  "jpeg-decoder",

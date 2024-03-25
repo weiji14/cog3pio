@@ -4,7 +4,7 @@ use geo::AffineTransform;
 use ndarray::Array3;
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
-use tiff::{TiffError, TiffFormatError, TiffResult};
+use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
 
 /// Cloud-optimized GeoTIFF reader
 pub(crate) struct CogReader<R: Read + Seek> {
@@ -24,6 +24,21 @@ impl<R: Read + Seek> CogReader<R> {
 
     /// Decode GeoTIFF image to an [`ndarray::Array`]
     pub fn ndarray(&mut self) -> TiffResult<Array3<f32>> {
+        // Count number of bands
+        let color_type = self.decoder.colortype()?;
+        let num_bands: usize = match color_type {
+            ColorType::Multiband {
+                bit_depth: _,
+                num_samples,
+            } => num_samples as usize,
+            ColorType::Gray(_) => 1,
+            _ => {
+                return Err(TiffError::UnsupportedError(
+                    TiffUnsupportedError::UnsupportedColorType(color_type),
+                ))
+            }
+        };
+
         // Get image dimensions
         let (width, height): (u32, u32) = self.decoder.dimensions()?;
 
@@ -31,12 +46,17 @@ impl<R: Read + Seek> CogReader<R> {
         let decode_result = self.decoder.read_image()?;
         let image_data: Vec<f32> = match decode_result {
             DecodingResult::F32(img_data) => img_data,
-            _ => unimplemented!("Data types other than float32 are not yet supported."),
+            _ => {
+                return Err(TiffError::UnsupportedError(
+                    TiffUnsupportedError::UnsupportedDataType,
+                ))
+            }
         };
 
         // Put image pixel data into an ndarray
-        let array_data = Array3::from_shape_vec((1, height as usize, width as usize), image_data)
-            .map_err(|_| TiffFormatError::InvalidDimensions(height, width))?;
+        let array_data =
+            Array3::from_shape_vec((num_bands, height as usize, width as usize), image_data)
+                .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
 
         Ok(array_data)
     }
@@ -142,6 +162,24 @@ mod tests {
         assert_eq!(first_band.nrows(), 10); // y-axis
         assert_eq!(first_band.ncols(), 20); // x-axis
         assert_eq!(arr.mean(), Some(14.0));
+    }
+
+    #[tokio::test]
+    async fn test_read_geotiff_multi_band() {
+        let cog_url: &str =
+            "https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        let stream = Cursor::new(bytes);
+
+        let mut reader = CogReader::new(stream).unwrap();
+        let array = reader.ndarray().unwrap();
+
+        assert_eq!(array.dim(), (2, 512, 512));
+        assert_eq!(array.mean(), Some(225.17654));
     }
 
     #[tokio::test]

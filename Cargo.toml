@@ -16,7 +16,7 @@ ndarray = "0.15.6"
 numpy = "0.20.0"
 object_store = { version = "0.9.0", features = ["http"] }
 pyo3 = { version = "0.20.3", features = ["abi3-py310", "extension-module"] }
-tiff = "0.9.1"
+tiff = { git = "https://github.com/image-rs/image-tiff.git", version = "0.9.1", rev = "0c54a18e2130bd8e3e897009e1fb59eaaf607c6c" }  # https://github.com/image-rs/image-tiff/pull/224
 tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = "2.5.0"
 

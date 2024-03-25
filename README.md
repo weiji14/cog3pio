@@ -73,17 +73,17 @@ assert array.dtype == "float32"
 ```
 
 > [!NOTE]
-> Currently, this crate/library only supports reading single-band float32 GeoTIFF files,
-> i.e. multi-band and other dtypes (e.g. uint16) don't work yet. See roadmap below on
+> Currently, this crate/library only supports reading single or multi-band float32
+> GeoTIFF files, i.e. other dtypes (e.g. uint16) don't work yet. See roadmap below on
 > future plans.
 
 
 ## Roadmap
 
 Short term (Q1 2024):
-- [ ] Implement single-band GeoTIFF reader to
+- [ ] Implement single-band GeoTIFF reader (for uint/int/float dtypes) to
       [`ndarray`](https://github.com/rust-ndarray/ndarray)
-- [ ] Multi-band reader (relying on
+- [x] Multi-band reader (relying on
       [`image-tiff`](https://github.com/image-rs/image-tiff))
 - [x] Read from remote storage (using
       [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
