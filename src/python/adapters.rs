@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use bytes::Bytes;
 use ndarray::Array3;
-use numpy::{PyArray3, ToPyArray};
+use numpy::{PyArray1, PyArray3, ToPyArray};
 use object_store::{parse_url, ObjectStore};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
 use pyo3::prelude::{pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python};
@@ -68,6 +68,19 @@ impl PyCogReader {
 
         // Convert from ndarray (Rust) to numpy ndarray (Python)
         Ok(array_data.to_pyarray(py))
+    }
+
+    /// Get x and y coordinates as numpy.ndarray
+    fn xy_coords<'py>(
+        &mut self,
+        py: Python<'py>,
+    ) -> PyResult<(&'py PyArray1<f64>, &'py PyArray1<f64>)> {
+        let (x_coords, y_coords) = self
+            .inner
+            .xy_coords()
+            .map_err(|err| PyValueError::new_err(err.to_string()))?;
+
+        Ok((x_coords.to_pyarray(py), y_coords.to_pyarray(py)))
     }
 }
 
