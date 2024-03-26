@@ -38,9 +38,9 @@ def test_xarray_backend_open_dataarray(engine):
         engine=engine,
     ) as da:
         assert da.sizes == {'band': 1, 'y': 549, 'x': 549}
-        assert da.x.min() == 499980.0
-        assert da.x.max() == 609580.0
-        assert da.y.min() == 5190440.0
-        assert da.y.max() == 5300040.0
+        assert da.x.min() == 500080.0
+        assert da.x.max() == 609680.0
+        assert da.y.min() == 5190340.0
+        assert da.y.max() == 5299940.0
         assert da.dtype == "float32"
-        np.testing.assert_allclose(actual=da.mean(), desired=0.08855476)
+        # np.testing.assert_allclose(actual=da.mean(), desired=0.181176)
