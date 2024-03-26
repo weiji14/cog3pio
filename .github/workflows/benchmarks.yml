@@ -48,7 +48,7 @@ jobs:
       - name: Install the package
         run: |
           set -e
-          python -m pip install cog3pio[tests] --find-links dist --force-reinstall
+          python -m pip install cog3pio[benchmark,tests] --find-links dist --force-reinstall
           python -m pip list
 
       # Run the benchmark tests

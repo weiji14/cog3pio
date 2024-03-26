@@ -21,9 +21,12 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
+benchmark = [
+    "pytest-codspeed",
+    "rioxarray",
+]
 tests = [
     "pytest",
-    "pytest-codspeed",
 ]
 
 [project.entry-points."xarray.backends"]
