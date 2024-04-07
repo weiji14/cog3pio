@@ -6,8 +6,7 @@ use numpy::{PyArray3, ToPyArray};
 use object_store::{parse_url, ObjectStore};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
 use pyo3::prelude::{pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python};
-use pyo3::wrap_pyfunction;
-use pyo3::PyErr;
+use pyo3::{wrap_pyfunction, Bound, PyErr};
 use url::Url;
 
 use crate::io::geotiff::CogReader;
@@ -60,14 +59,14 @@ impl PyCogReader {
     /// -------
     /// array : np.ndarray
     ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
-    fn to_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<&'py PyArray3<f32>> {
+    fn to_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
         let array_data: Array3<f32> = self
             .inner
             .ndarray()
             .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
         // Convert from ndarray (Rust) to numpy ndarray (Python)
-        Ok(array_data.to_pyarray(py))
+        Ok(array_data.to_pyarray_bound(py))
     }
 }
 
@@ -124,7 +123,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// assert array.shape == (20, 20)
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
-fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<&'py PyArray3<f32>> {
+fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
     // Open URL with TIFF decoder
     let mut reader = PyCogReader::new(path)?;
 
@@ -138,7 +137,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<&'py PyArray3<f
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-fn cog3pio(_py: Python, m: &PyModule) -> PyResult<()> {
+fn cog3pio<'py>(_py: Python, m: &Bound<'py, PyModule>) -> PyResult<()> {
     // Register Python classes
     m.add_class::<PyCogReader>()?;
     // Register Python functions
