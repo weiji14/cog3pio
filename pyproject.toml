@@ -16,14 +16,21 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.23",
+    "xarray>=2022.6.0",
 ]
 dynamic = ["version"]
 
 [project.optional-dependencies]
+benchmark = [
+    "pytest-codspeed",
+    "rioxarray",
+]
 tests = [
     "pytest",
-    "pytest-codspeed",
 ]
+
+[project.entry-points."xarray.backends"]
+cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
 
 [tool.maturin]
 python-source = "python"

@@ -1,7 +1,7 @@
 use std::io::{Read, Seek};
 
 use geo::AffineTransform;
-use ndarray::Array3;
+use ndarray::{Array, Array1, Array3};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
 use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
@@ -108,6 +108,32 @@ impl<R: Read + Seek> CogReader<R> {
         );
 
         Ok(transform)
+    }
+
+    /// Get list of x and y coordinates
+    pub fn xy_coords(&mut self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
+        let transform = self.transform()?; // affine transformation matrix
+
+        // Get spatial resolution in x and y dimensions
+        let x_res: &f64 = &transform.a();
+        let y_res: &f64 = &transform.e();
+
+        // Get xy coordinate of the center of the top left pixel
+        let x_origin: &f64 = &(transform.xoff() + x_res / 2.0);
+        let y_origin: &f64 = &(transform.yoff() + y_res / 2.0);
+
+        // Get number of pixels along the x and y dimensions
+        let (x_pixels, y_pixels): (u32, u32) = self.decoder.dimensions()?;
+
+        // Get xy coordinate of the center of the bottom right pixel
+        let x_end: f64 = x_origin + x_res * x_pixels as f64;
+        let y_end: f64 = y_origin + y_res * y_pixels as f64;
+
+        // Get array of x-coordinates and y-coordinates
+        let x_coords = Array::range(x_origin.to_owned(), x_end, x_res.to_owned());
+        let y_coords = Array::range(y_origin.to_owned(), y_end, y_res.to_owned());
+
+        Ok((x_coords, y_coords))
     }
 }
 

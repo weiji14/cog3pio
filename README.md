@@ -53,6 +53,7 @@ async fn main() {
         Cursor::new(bytes)
     };
 
+    // Read GeoTIFF into an ndarray::Array
     let arr: Array3<f32> = read_geotiff(stream).unwrap();
     assert_eq!(arr.dim(), (1, 549, 549));
     assert_eq!(arr[[0, 500, 500]], 0.13482364);
@@ -61,15 +62,32 @@ async fn main() {
 
 ### Python
 
+#### NumPy
+
 ```python
 import numpy as np
 from cog3pio import read_geotiff
 
+# Read GeoTIFF into a numpy array
 array: np.ndarray = read_geotiff(
     path="https://github.com/cogeotiff/rio-tiler/raw/6.4.0/tests/fixtures/cog_nodata_nan.tif"
 )
 assert array.shape == (1, 549, 549)  # bands, height, width
 assert array.dtype == "float32"
+```
+
+#### Xarray
+
+```python
+import xarray as xr
+
+# Read GeoTIFF into an xarray.DataArray
+dataarray: xr.DataArray = xr.open_dataarray(
+    filename_or_obj="https://github.com/cogeotiff/rio-tiler/raw/6.4.1/tests/fixtures/cog_nodata_nan.tif",
+    engine="cog3pio",
+)
+assert dataarray.sizes == {'band': 1, 'y': 549, 'x': 549}
+assert dataarray.dtype == "float32"
 ```
 
 > [!NOTE]
@@ -81,16 +99,18 @@ assert array.dtype == "float32"
 ## Roadmap
 
 Short term (Q1 2024):
-- [ ] Implement single-band GeoTIFF reader (for uint/int/float dtypes) to
-      [`ndarray`](https://github.com/rust-ndarray/ndarray)
-- [x] Multi-band reader (relying on
-      [`image-tiff`](https://github.com/image-rs/image-tiff))
-- [x] Read from remote storage (using
+- [x] Multi-band reader to [`ndarray`](https://github.com/rust-ndarray/ndarray) (relying
+      on [`image-tiff`](https://github.com/image-rs/image-tiff))
+- [x] Read from HTTP remote storage (using
       [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
 
 Medium term (Q2 2024):
-- [ ] Integration with `xarray` as a
+- [x] Integration with `xarray` as a
       [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
+- [ ] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (relying
+      on [`geotiff`](https://github.com/georust/geotiff) crate)
+
+Longer term (Q3-Q4 2024):
 - [ ] Parallel reader (TBD on multi-threaded or asynchronous)
 - [ ] Direct-to-GPU loading
 
