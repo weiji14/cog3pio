@@ -53,6 +53,7 @@ async fn main() {
         Cursor::new(bytes)
     };
 
+    // Read GeoTIFF into an ndarray::Array
     let arr: Array3<f32> = read_geotiff(stream).unwrap();
     assert_eq!(arr.dim(), (1, 549, 549));
     assert_eq!(arr[[0, 500, 500]], 0.13482364);
@@ -61,15 +62,32 @@ async fn main() {
 
 ### Python
 
+#### NumPy
+
 ```python
 import numpy as np
 from cog3pio import read_geotiff
 
+# Read GeoTIFF into a numpy array
 array: np.ndarray = read_geotiff(
     path="https://github.com/cogeotiff/rio-tiler/raw/6.4.0/tests/fixtures/cog_nodata_nan.tif"
 )
 assert array.shape == (1, 549, 549)  # bands, height, width
 assert array.dtype == "float32"
+```
+
+#### Xarray
+
+```python
+import xarray as xr
+
+# Read GeoTIFF into an xarray.DataArray
+dataarray: xr.DataArray = xr.open_dataarray(
+    filename_or_obj="https://github.com/cogeotiff/rio-tiler/raw/6.4.1/tests/fixtures/cog_nodata_nan.tif",
+    engine="cog3pio",
+)
+assert dataarray.sizes == {'band': 1, 'y': 549, 'x': 549}
+assert dataarray.dtype == "float32"
 ```
 
 > [!NOTE]
