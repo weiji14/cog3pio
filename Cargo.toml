@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 bytes = "1.5.0"
-geo = { git = "https://github.com/weiji14/geo.git", branch = "affinetransform-index", version = "0.28.0" }
+geo = { git = "https://github.com/georust/geo.git", version = "0.28.0", rev = "481196b4e50a488442b3919e02496ad909fc5412" }
 ndarray = "0.15.6"
 numpy = "0.21.0"
 object_store = { version = "0.9.0", features = ["http"] }

@@ -115,8 +115,8 @@ impl<R: Read + Seek> CogReader<R> {
         let transform = self.transform()?; // affine transformation matrix
 
         // Get spatial resolution in x and y dimensions
-        let x_res: &f64 = transform.a();
-        let y_res: &f64 = transform.e();
+        let x_res: &f64 = &transform.a();
+        let y_res: &f64 = &transform.e();
 
         // Get xy coordinate of the center of the top left pixel
         let x_origin: &f64 = &(transform.xoff() + x_res / 2.0);

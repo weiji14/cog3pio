@@ -369,7 +369,7 @@ dependencies = [
 [[package]]
 name = "geo"
 version = "0.28.0"
-source = "git+https://github.com/weiji14/geo.git?branch=affinetransform-index#0bd04a57d66fc1ff7d19524b16a03d9af8fe29a9"
+source = "git+https://github.com/georust/geo.git?rev=481196b4e50a488442b3919e02496ad909fc5412#481196b4e50a488442b3919e02496ad909fc5412"
 dependencies = [
  "earcutr",
  "float_next_after",
