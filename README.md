@@ -99,16 +99,18 @@ assert dataarray.dtype == "float32"
 ## Roadmap
 
 Short term (Q1 2024):
-- [ ] Implement single-band GeoTIFF reader (for uint/int/float dtypes) to
-      [`ndarray`](https://github.com/rust-ndarray/ndarray)
-- [x] Multi-band reader (relying on
-      [`image-tiff`](https://github.com/image-rs/image-tiff))
-- [x] Read from remote storage (using
+- [x] Multi-band reader to [`ndarray`](https://github.com/rust-ndarray/ndarray) (relying
+      on [`image-tiff`](https://github.com/image-rs/image-tiff))
+- [x] Read from HTTP remote storage (using
       [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
 
 Medium term (Q2 2024):
 - [x] Integration with `xarray` as a
       [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
+- [ ] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (relying
+      on [`geotiff`](https://github.com/georust/geotiff) crate)
+
+Longer term (Q3-Q4 2024):
 - [ ] Parallel reader (TBD on multi-threaded or asynchronous)
 - [ ] Direct-to-GPU loading
 
