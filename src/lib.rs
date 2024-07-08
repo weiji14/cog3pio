@@ -19,7 +19,7 @@
 //!
 //! use bytes::Bytes;
 //! use cog3pio::io::geotiff::read_geotiff;
-//! use ndarray::Array2;
+//! use ndarray::Array3;
 //! use object_store::path::Path;
 //! use object_store::{parse_url, GetResult, ObjectStore};
 //! use tokio;
@@ -38,9 +38,9 @@
 //!         Cursor::new(bytes)
 //!     };
 //!
-//!     let arr: Array2<f32> = read_geotiff(stream).unwrap();
-//!     assert_eq!(arr.dim(), (549, 549));
-//!     assert_eq!(arr[[500, 500]], 0.13482364);
+//!     let arr: Array3<f32> = read_geotiff(stream).unwrap();
+//!     assert_eq!(arr.dim(), (1, 549, 549));
+//!     assert_eq!(arr[[0, 500, 500]], 0.13482364);
 //! }
 //! ```
 
