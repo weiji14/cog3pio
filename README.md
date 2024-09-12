@@ -54,7 +54,7 @@ async fn main() {
     };
 
     // Read GeoTIFF into an ndarray::Array
-    let arr: Array3<f32> = read_geotiff(stream).unwrap();
+    let arr: Array3<f32> = read_geotiff::<f32, _>(stream).unwrap();
     assert_eq!(arr.dim(), (1, 549, 549));
     assert_eq!(arr[[0, 500, 500]], 0.13482364);
 }
@@ -91,9 +91,9 @@ assert dataarray.dtype == "float32"
 ```
 
 > [!NOTE]
-> Currently, this crate/library only supports reading single or multi-band float32
-> GeoTIFF files, i.e. other dtypes (e.g. uint16) don't work yet. See roadmap below on
-> future plans.
+> Currently, the Python library supports reading single or multi-band GeoTIFF files into
+> a float32 array only, i.e. other dtypes (e.g. uint16) don't work yet. There is support
+> for reading into different dtypes in the Rust crate via a turbofish operator though!
 
 
 ## Roadmap
@@ -104,19 +104,20 @@ Short term (Q1 2024):
 - [x] Read from HTTP remote storage (using
       [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
 
-Medium term (Q2 2024):
+Medium term (Q2-Q4 2024):
 - [x] Integration with `xarray` as a
       [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
-- [ ] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (relying
-      on [`geotiff`](https://github.com/georust/geotiff) crate)
+- [x] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (based
+      on [`geotiff`](https://github.com/georust/geotiff) crate, Rust-only)
 
-Longer term (Q3-Q4 2024):
+Longer term (2025):
 - [ ] Parallel reader (TBD on multi-threaded or asynchronous)
 - [ ] Direct-to-GPU loading
 
 
 ## Related crates
 
+- https://github.com/developmentseed/aiocogeo-rs
 - https://github.com/georust/geotiff
 - https://github.com/jblindsay/whitebox-tools
 - https://github.com/pka/georaster

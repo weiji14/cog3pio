@@ -38,11 +38,16 @@
 //!         Cursor::new(bytes)
 //!     };
 //!
-//!     let arr: Array3<f32> = read_geotiff(stream).unwrap();
+//!     let arr: Array3<f32> = read_geotiff::<f32, _>(stream).unwrap();
 //!     assert_eq!(arr.dim(), (1, 549, 549));
 //!     assert_eq!(arr[[0, 500, 500]], 0.13482364);
 //! }
 //! ```
+//!
+//! Note that the output dtype can be specified either by using a type hint
+//! (`let arr: Array3<f32>`) or via the turbofish operator (`read_geotiff::<f32>`).
+//! Currently supported dtypes include uint (u8/u16/u32/u64), int (i8/i16/i32/i64) and
+//! float (f32/f64).
 
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
