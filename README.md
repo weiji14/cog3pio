@@ -54,7 +54,7 @@ async fn main() {
     };
 
     // Read GeoTIFF into an ndarray::Array
-    let arr: Array3<f32> = read_geotiff(stream).unwrap();
+    let arr: Array3<f32> = read_geotiff::<f32, _>(stream).unwrap();
     assert_eq!(arr.dim(), (1, 549, 549));
     assert_eq!(arr[[0, 500, 500]], 0.13482364);
 }
