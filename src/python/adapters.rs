@@ -6,6 +6,7 @@ use numpy::{PyArray1, PyArray3, ToPyArray};
 use object_store::{parse_url, ObjectStore};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
 use pyo3::prelude::{pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python};
+use pyo3::types::PyModuleMethods;
 use pyo3::{wrap_pyfunction, Bound, PyErr};
 use url::Url;
 
