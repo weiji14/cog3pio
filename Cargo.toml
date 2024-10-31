@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-geo = { git = "https://github.com/georust/geo.git", version = "0.28.0", rev = "481196b4e50a488442b3919e02496ad909fc5412" }
+geo = "0.29.0"
 ndarray = "0.15.6"
 num-traits = "0.2.19"
 numpy = "0.22.0"
