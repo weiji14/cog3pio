@@ -67,7 +67,7 @@ impl PyCogReader {
             .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
         // Convert from ndarray (Rust) to numpy ndarray (Python)
-        Ok(array_data.to_pyarray_bound(py))
+        Ok(array_data.to_pyarray(py))
     }
 
     /// Get x and y coordinates as numpy.ndarray
@@ -80,7 +80,7 @@ impl PyCogReader {
             .xy_coords()
             .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
-        Ok((x_coords.to_pyarray_bound(py), y_coords.to_pyarray_bound(py)))
+        Ok((x_coords.to_pyarray(py), y_coords.to_pyarray(py)))
     }
 }
 
