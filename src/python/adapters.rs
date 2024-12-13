@@ -60,7 +60,7 @@ impl PyCogReader {
     /// -------
     /// array : np.ndarray
     ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
-    fn to_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
+    fn as_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
         let array_data: Array3<f32> = self
             .inner
             .ndarray()
@@ -142,7 +142,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
     let mut reader = PyCogReader::new(path)?;
 
     // Decode TIFF into numpy ndarray
-    let array_data = reader.to_numpy(py)?;
+    let array_data = reader.as_numpy(py)?;
 
     Ok(array_data)
 }
