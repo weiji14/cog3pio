@@ -71,6 +71,7 @@ impl PyCogReader {
     }
 
     /// Get x and y coordinates as numpy.ndarray
+    #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
         py: Python<'py>,
