@@ -95,8 +95,8 @@ impl<R: Read + Seek> CogReader<R> {
     /// | 1  |   | 0 0 1 | | 1 |
     /// ```
     ///
-    /// where (`x'` and `y'`) are world coordinates, and (`x`, `y) are the pixel's image
-    /// coordinates. Letters a to f represent:
+    /// where (`x'` and `y'`) are world coordinates, and (`x`, `y`) are the pixel's
+    /// image coordinates. Letters a to f represent:
     ///
     /// - `a` - width of a pixel (x-resolution)
     /// - `b` - row rotation (typically zero)
