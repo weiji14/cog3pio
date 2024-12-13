@@ -1,0 +1,29 @@
+# Run linters
+#
+# Lint Rust code using cargo clippy. Apply static analysis rules to catch common
+# mistakes and improves code style.
+
+name: Lint
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: ["main"]
+
+# Make sure CI fails on all warnings, including Clippy lints
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  clippy_check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features
