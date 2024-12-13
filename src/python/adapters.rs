@@ -151,7 +151,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-fn cog3pio<'py>(_py: Python, m: &Bound<'py, PyModule>) -> PyResult<()> {
+fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Register Python classes
     m.add_class::<PyCogReader>()?;
     // Register Python functions
