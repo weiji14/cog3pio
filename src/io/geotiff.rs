@@ -79,11 +79,9 @@ impl<R: Read + Seek> CogReader<R> {
         };
 
         // Put image pixel data into an ndarray
-        let array_data: Array3<T> = Array3::from_shape_vec(
-            (num_bands, height as usize, width as usize),
-            image_data.into(),
-        )
-        .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
+        let array_data: Array3<T> =
+            Array3::from_shape_vec((num_bands, height as usize, width as usize), image_data)
+                .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
 
         Ok(array_data)
     }
@@ -97,8 +95,8 @@ impl<R: Read + Seek> CogReader<R> {
     /// | 1  |   | 0 0 1 | | 1 |
     /// ```
     ///
-    /// where (`x'` and `y'`) are world coordinates, and (`x`, `y) are the pixel's image
-    /// coordinates. Letters a to f represent:
+    /// where (`x'` and `y'`) are world coordinates, and (`x`, `y`) are the pixel's
+    /// image coordinates. Letters a to f represent:
     ///
     /// - `a` - width of a pixel (x-resolution)
     /// - `b` - row rotation (typically zero)

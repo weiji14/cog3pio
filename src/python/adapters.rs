@@ -60,7 +60,7 @@ impl PyCogReader {
     /// -------
     /// array : np.ndarray
     ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
-    fn to_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
+    fn as_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
         let array_data: Array3<f32> = self
             .inner
             .ndarray()
@@ -71,6 +71,7 @@ impl PyCogReader {
     }
 
     /// Get x and y coordinates as numpy.ndarray
+    #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
         py: Python<'py>,
@@ -142,7 +143,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
     let mut reader = PyCogReader::new(path)?;
 
     // Decode TIFF into numpy ndarray
-    let array_data = reader.to_numpy(py)?;
+    let array_data = reader.as_numpy(py)?;
 
     Ok(array_data)
 }
@@ -151,7 +152,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-fn cog3pio<'py>(_py: Python, m: &Bound<'py, PyModule>) -> PyResult<()> {
+fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Register Python classes
     m.add_class::<PyCogReader>()?;
     // Register Python functions

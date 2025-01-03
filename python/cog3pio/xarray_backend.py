@@ -31,7 +31,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
     ) -> xr.Dataset:
         reader = CogReader(path=filename_or_obj)
 
-        array: np.ndarray = reader.to_numpy()
+        array: np.ndarray = reader.as_numpy()
         x_coords, y_coords = reader.xy_coords()
 
         channels, height, width = array.shape
