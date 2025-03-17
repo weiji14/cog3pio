@@ -53,7 +53,7 @@ jobs:
 
       # Run the benchmark tests
       - name: Run benchmarks
-        uses: CodSpeedHQ/action@2e04019f4572c19684929a755da499f19a00b25b # v2.2.1
+        uses: CodSpeedHQ/action@0010eb0ca6e89b80c88e8edaaa07cfe5f3e6664d # v3.5.0
         with:
           run: |
             python -m pytest --verbose --codspeed
