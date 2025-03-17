@@ -43,7 +43,7 @@ jobs:
         run: cargo test --verbose
 
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         target: [x86_64, aarch64, armv7, s390x, ppc64le]
@@ -96,7 +96,7 @@ jobs:
             pytest --verbose
 
   windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
     strategy:
       matrix:
         target: [x64]
@@ -129,7 +129,7 @@ jobs:
           pytest --verbose
 
   macos:
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       matrix:
         target: [x86_64, aarch64]
@@ -162,7 +162,7 @@ jobs:
           pytest --verbose
 
   sdist:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
@@ -180,7 +180,7 @@ jobs:
 
   release:
     name: Release
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     if: "startsWith(github.ref, 'refs/tags/')"
     needs: [linux, windows, macos, sdist]
     steps:
