@@ -12,6 +12,8 @@ on:
     types: [opened, reopened, synchronize]
     branches: ["main"]
 
+permissions: {}
+
 # Make sure CI fails on all warnings, including Clippy lints
 env:
   CARGO_TERM_COLOR: always
@@ -42,4 +44,4 @@ jobs:
         uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
 
       - name: Run zizmor 🌈
-        run: uvx zizmor .
+        run: uvx zizmor --color=always .

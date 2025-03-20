@@ -18,6 +18,8 @@ on:
   release:
     types: [published]
 
+permissions: {}
+
 jobs:
   benchmarks:
     runs-on: ubuntu-24.04
