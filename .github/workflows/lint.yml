@@ -45,3 +45,5 @@ jobs:
 
       - name: Run zizmor 🌈
         run: uvx zizmor --color=always .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
