@@ -11,12 +11,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-cudarc = { version = "0.16.4", features = ["cuda-version-from-build-system"] }
+cudarc = { version = "0.16.4", features = [
+    "cuda-version-from-build-system",
+], optional = true }
 geo = "0.29.0"
 ndarray = "0.15.6"
 num-traits = "0.2.19"
 numpy = "0.25.0"
-nvtiff-sys = "0.1.0"
+nvtiff-sys = { version = "0.1.0", optional = true }
 object_store = { version = "0.9.0", features = ["http"] }
 pyo3 = { version = "0.25.0", features = ["abi3-py310", "extension-module"] }
 tiff = { git = "https://github.com/image-rs/image-tiff.git", version = "0.9.1", rev = "0c54a18e2130bd8e3e897009e1fb59eaaf607c6c" }  # https://github.com/image-rs/image-tiff/pull/224
@@ -25,3 +27,6 @@ url = "2.5.0"
 
 [dev-dependencies]
 tempfile = "3.10.1"
+
+[features]
+cuda = ["dep:cudarc", "dep:nvtiff-sys"]
