@@ -11,6 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
+cudarc = { version = "0.16.4", features = ["cuda-version-from-build-system"] }
 geo = "0.29.0"
 ndarray = "0.15.6"
 num-traits = "0.2.19"

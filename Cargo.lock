@@ -206,6 +206,7 @@ name = "cog3pio"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "cudarc",
  "geo",
  "ndarray",
  "num-traits",
@@ -268,6 +269,15 @@ name = "crossbeam-utils"
 version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22ec99545bb0ed0ea7bb9b8e1e9122ea386ff8a48c0922e43f36d45ab09e0e80"
+
+[[package]]
+name = "cudarc"
+version = "0.16.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9574894139a982bf26fbb44473a9d416c015e779c51ef0fbc0789f1a1c17b25"
+dependencies = [
+ "libloading",
+]
 
 [[package]]
 name = "doc-comment"
