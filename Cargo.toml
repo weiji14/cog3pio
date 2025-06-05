@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 bytes = "1.5.0"
 dlpark = { version = "0.6.0", features = ["ndarray", "pyo3"] }
 geo = "0.29.0"
-ndarray = "0.15.6"
+ndarray = "0.16.1"
 num-traits = "0.2.19"
 numpy = "0.25.0"
 object_store = { version = "0.9.0", features = ["http"] }
