@@ -15,6 +15,7 @@ geo = "0.29.0"
 ndarray = "0.15.6"
 num-traits = "0.2.19"
 numpy = "0.25.0"
+nvtiff-sys = "0.1.0"
 object_store = { version = "0.9.0", features = ["http"] }
 pyo3 = { version = "0.25.0", features = ["abi3-py310", "extension-module"] }
 tiff = { git = "https://github.com/image-rs/image-tiff.git", version = "0.9.1", rev = "0c54a18e2130bd8e3e897009e1fb59eaaf607c6c" }  # https://github.com/image-rs/image-tiff/pull/224
