@@ -12,6 +12,7 @@ use nvtiff_sys::{
 /// nvTIFF decoder
 pub(crate) struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
+    file_info: nvtiffFileInfo,
 }
 
 impl CudaCogReader {
@@ -39,13 +40,10 @@ impl CudaCogReader {
         dbg!(file_info);
         assert_eq!(status_fileinfo, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
 
-        // TODO work out actual size needed for alloc
-        //
-        // // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
-        // let image_size: usize = 101 * 101 * 8; // Width:3, Height:2, 4 bytes per f32 num
-        // let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(image_size).unwrap();
-
-        Self { tiff_stream }
+        Self {
+            tiff_stream,
+            file_info,
+        }
     }
 
     /// Decode GeoTIFF image to a `CudaSlice` (`Vec<u8>` on a CUDA device)
@@ -77,8 +75,10 @@ impl CudaCogReader {
         assert_eq!(status_check, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
 
         // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
-        let image_size: usize = 3 * 2 * 4; // Width:3, Height:2, 4 bytes per f32 num
-        let image_stream: CudaSlice<u8> = stream.alloc_zeros::<u8>(image_size).unwrap();
+        let num_bytes: usize = self.file_info.image_width as usize // Width
+            * self.file_info.image_height as usize // Height
+            * (self.file_info.bits_per_pixel as usize / 8); // Bytes per pixel (e.g. 4 bytes for f32)
+        let image_stream: CudaSlice<u8> = stream.alloc_zeros::<u8>(num_bytes).unwrap();
         let (image_ptr, _record): (u64, _) = image_stream.device_ptr(stream);
         let image_out_d = image_ptr as *mut c_void;
         let status_decode: u32 = unsafe {
@@ -131,15 +131,15 @@ mod tests {
         let reader: CudaCogReader = CudaCogReader::new(&bytes);
 
         // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
-        let image_size: usize = 3 * 2 * 4; // Width:3, Height:2, 4 bytes per f32 num
-                                           // let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(image_size).unwrap();
+        let num_bytes: usize = 3 * 2 * 4; // Width:3, Height:2, 4 bytes per f32 num
 
+        // let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(num_bytes).unwrap();
         let slice: CudaSlice<u8> = reader.to_cuda(&cuda_stream);
 
         // todo!();
 
         // Step 2c: Transfer decoded bytes from device to host, and check results
-        let mut image_out_h: Vec<u8> = vec![0; image_size];
+        let mut image_out_h: Vec<u8> = vec![0; num_bytes];
         cuda_stream.memcpy_dtoh(&slice, &mut image_out_h).unwrap();
         dbg!(image_out_h.clone());
         let float_array: Vec<f32> = image_out_h
