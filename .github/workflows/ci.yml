@@ -93,11 +93,12 @@ jobs:
             apt update
             apt install -y --no-install-recommends \
                         gcc g++ gfortran libopenblas-dev liblapack-dev ninja-build \
-                        pkg-config python3-pip python3-dev
-            pip3 install -U pip pytest
+                        pkg-config python3-pip python3-dev python3-venv
           run: |
             set -e
-            pip3 install cog3pio --find-links dist --force-reinstall
+            python3 -m venv .venv
+            .venv/bin/pip3 install -U pip pytest
+            .venv/bin/pip3 install cog3pio --find-links dist --force-reinstall
             pytest --verbose
 
   windows:
