@@ -99,7 +99,7 @@ jobs:
             python3 -m venv .venv
             .venv/bin/pip3 install -U pip pytest
             .venv/bin/pip3 install cog3pio --find-links dist --force-reinstall
-            pytest --verbose
+            .venv/bin/pytest --verbose
 
   windows:
     runs-on: windows-2025
