@@ -82,6 +82,7 @@ impl<R: Read + Seek> CogReader<R> {
                 num_samples,
             } => num_samples as usize,
             ColorType::Gray(_) => 1,
+            ColorType::RGB(_) => 3,
             _ => {
                 return Err(TiffError::UnsupportedError(
                     TiffUnsupportedError::UnsupportedColorType(color_type),
@@ -272,7 +273,21 @@ mod tests {
         let array = reader.ndarray::<f32>().unwrap();
 
         assert_eq!(array.shape(), [1, 2, 3]);
-        assert_eq!(array, array![[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]])
+        assert_eq!(array, array![[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]]);
+    }
+
+    #[tokio::test]
+    async fn test_cogreader_num_samples() {
+        let cog_url: &str = "https://github.com/developmentseed/titiler/raw/refs/tags/0.22.2/src/titiler/mosaic/tests/fixtures/TCI.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        let stream = Cursor::new(bytes);
+
+        let mut reader = CogReader::new(stream).unwrap();
+        assert_eq!(reader.num_samples().unwrap(), 3);
     }
 
     #[tokio::test]
