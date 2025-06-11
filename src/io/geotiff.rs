@@ -26,20 +26,7 @@ impl<R: Read + Seek> CogReader<R> {
     /// Decode GeoTIFF image to an [`ndarray::Array`]
     pub fn ndarray<T: FromPrimitive + 'static>(&mut self) -> TiffResult<Array3<T>> {
         // Count number of bands
-        let color_type = self.decoder.colortype()?;
-        let num_bands: usize = match color_type {
-            ColorType::Multiband {
-                bit_depth: _,
-                num_samples,
-            } => num_samples as usize,
-            ColorType::Gray(_) => 1,
-            _ => {
-                return Err(TiffError::UnsupportedError(
-                    TiffUnsupportedError::UnsupportedColorType(color_type),
-                ))
-            }
-        };
-
+        let num_bands: usize = self.num_samples()?;
         // Get image dimensions
         let (width, height): (u32, u32) = self.decoder.dimensions()?;
 
@@ -84,6 +71,24 @@ impl<R: Read + Seek> CogReader<R> {
                 .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
 
         Ok(array_data)
+    }
+
+    /// Number of samples per pixel, also known as channels or bands
+    fn num_samples(&mut self) -> TiffResult<usize> {
+        let color_type = self.decoder.colortype()?;
+        let num_bands: usize = match color_type {
+            ColorType::Multiband {
+                bit_depth: _,
+                num_samples,
+            } => num_samples as usize,
+            ColorType::Gray(_) => 1,
+            _ => {
+                return Err(TiffError::UnsupportedError(
+                    TiffUnsupportedError::UnsupportedColorType(color_type),
+                ))
+            }
+        };
+        Ok(num_bands)
     }
 
     /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
