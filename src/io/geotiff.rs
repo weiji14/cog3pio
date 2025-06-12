@@ -26,20 +26,7 @@ impl<R: Read + Seek> CogReader<R> {
     /// Decode GeoTIFF image to an [`ndarray::Array`]
     pub fn ndarray<T: FromPrimitive + 'static>(&mut self) -> TiffResult<Array3<T>> {
         // Count number of bands
-        let color_type = self.decoder.colortype()?;
-        let num_bands: usize = match color_type {
-            ColorType::Multiband {
-                bit_depth: _,
-                num_samples,
-            } => num_samples as usize,
-            ColorType::Gray(_) => 1,
-            _ => {
-                return Err(TiffError::UnsupportedError(
-                    TiffUnsupportedError::UnsupportedColorType(color_type),
-                ))
-            }
-        };
-
+        let num_bands: usize = self.num_samples()?;
         // Get image dimensions
         let (width, height): (u32, u32) = self.decoder.dimensions()?;
 
@@ -84,6 +71,25 @@ impl<R: Read + Seek> CogReader<R> {
                 .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
 
         Ok(array_data)
+    }
+
+    /// Number of samples per pixel, also known as channels or bands
+    fn num_samples(&mut self) -> TiffResult<usize> {
+        let color_type = self.decoder.colortype()?;
+        let num_bands: usize = match color_type {
+            ColorType::Multiband {
+                bit_depth: _,
+                num_samples,
+            } => num_samples as usize,
+            ColorType::Gray(_) => 1,
+            ColorType::RGB(_) => 3,
+            _ => {
+                return Err(TiffError::UnsupportedError(
+                    TiffUnsupportedError::UnsupportedColorType(color_type),
+                ))
+            }
+        };
+        Ok(num_bands)
     }
 
     /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
@@ -267,7 +273,21 @@ mod tests {
         let array = reader.ndarray::<f32>().unwrap();
 
         assert_eq!(array.shape(), [1, 2, 3]);
-        assert_eq!(array, array![[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]])
+        assert_eq!(array, array![[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]]);
+    }
+
+    #[tokio::test]
+    async fn test_cogreader_num_samples() {
+        let cog_url: &str = "https://github.com/developmentseed/titiler/raw/refs/tags/0.22.2/src/titiler/mosaic/tests/fixtures/TCI.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        let stream = Cursor::new(bytes);
+
+        let mut reader = CogReader::new(stream).unwrap();
+        assert_eq!(reader.num_samples().unwrap(), 3);
     }
 
     #[tokio::test]
