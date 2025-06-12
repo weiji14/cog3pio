@@ -12,12 +12,13 @@ use nvtiff_sys::{
 /// nvTIFF decoder
 pub(crate) struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
-    file_info: nvtiffFileInfo,
+    num_bytes: usize,
+    cuda_slice: CudaSlice<u8>,
 }
 
 impl CudaCogReader {
     /// Create a new Cloud-optimized GeoTIFF decoder that decodes from a stream buffer
-    pub fn new(byte_stream: &Bytes) -> Self {
+    pub fn new(byte_stream: &Bytes, cuda_stream: &Arc<CudaStream>) -> Self {
         // Step 0: Init TIFF stream on host (CPU)
         let mut host_stream = std::mem::MaybeUninit::uninit();
         let mut tiff_stream: *mut nvtiffStream = host_stream.as_mut_ptr();
@@ -37,18 +38,26 @@ impl CudaCogReader {
         let mut file_info = nvtiffFileInfo::default();
         let status_fileinfo: u32 = unsafe { nvtiffStreamGetFileInfo(tiff_stream, &mut file_info) };
         dbg!(status_fileinfo);
-        dbg!(file_info);
         assert_eq!(status_fileinfo, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
+
+        // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
+        let num_bytes: usize = file_info.image_width as usize // Width
+            * file_info.image_height as usize // Height
+            * (file_info.bits_per_pixel as usize / 8); // Bytes per pixel (e.g. 4 bytes for f32)
+        dbg!(num_bytes);
+        let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(num_bytes).unwrap();
 
         Self {
             tiff_stream,
-            file_info,
+            num_bytes,
+            cuda_slice: image_stream,
         }
     }
 
     /// Decode GeoTIFF image to a `CudaSlice` (`Vec<u8>` on a CUDA device)
-    pub fn to_cuda(&self, stream: &Arc<CudaStream>) -> CudaSlice<u8> {
+    pub fn to_cuda(&self) -> CudaSlice<u8> {
         // Step 1b: Init CUDA stream on device (GPU)
+        let stream: &Arc<CudaStream> = self.cuda_slice.stream();
         let cuda_stream: *mut nvtiff_sys::CUstream_st = stream.cu_stream().cast::<_>();
 
         // Step 1c: Init decoder handle
@@ -74,12 +83,8 @@ impl CudaCogReader {
         dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
         assert_eq!(status_check, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
 
-        // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
-        let num_bytes: usize = self.file_info.image_width as usize // Width
-            * self.file_info.image_height as usize // Height
-            * (self.file_info.bits_per_pixel as usize / 8); // Bytes per pixel (e.g. 4 bytes for f32)
-        let image_stream: CudaSlice<u8> = stream.alloc_zeros::<u8>(num_bytes).unwrap();
-        let (image_ptr, _record): (u64, _) = image_stream.device_ptr(stream);
+        // Step 3b: Do the TIFF decoding to allocated device memory
+        let (image_ptr, _record): (u64, _) = self.cuda_slice.device_ptr(stream);
         let image_out_d = image_ptr as *mut c_void;
         let status_decode: u32 = unsafe {
             nvtiffDecodeImage(
@@ -96,7 +101,8 @@ impl CudaCogReader {
 
         // todo!();
 
-        image_stream.clone()
+        // self.cuda_slice
+        unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) }
     }
 }
 
@@ -128,20 +134,16 @@ mod tests {
         let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
-        let reader: CudaCogReader = CudaCogReader::new(&bytes);
-
-        // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
-        let num_bytes: usize = 3 * 2 * 4; // Width:3, Height:2, 4 bytes per f32 num
-
-        // let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(num_bytes).unwrap();
-        let slice: CudaSlice<u8> = reader.to_cuda(&cuda_stream);
+        // Step 3b: Do the TIFF decoding
+        let reader: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream);
+        let slice: CudaSlice<u8> = reader.to_cuda();
 
         // todo!();
 
         // Step 2c: Transfer decoded bytes from device to host, and check results
-        let mut image_out_h: Vec<u8> = vec![0; num_bytes];
+        let mut image_out_h: Vec<u8> = vec![0; slice.num_bytes()];
         cuda_stream.memcpy_dtoh(&slice, &mut image_out_h).unwrap();
-        dbg!(image_out_h.clone());
+        // dbg!(image_out_h.clone());
         let float_array: Vec<f32> = image_out_h
             // https://stackoverflow.com/questions/77388769/convert-vecu8-to-vecfloat-in-rust
             // .array_chunks::<4>()
