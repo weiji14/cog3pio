@@ -26,6 +26,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
+          - 1.78.0 # msrv
           - stable
           - beta
           - nightly
@@ -45,10 +46,16 @@ jobs:
         run: cargo test --verbose
 
   linux:
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.platform.runner || 'ubuntu-24.04' }}
     strategy:
       matrix:
-        target: [x86_64, aarch64, armv7, s390x, ppc64le]
+        platform:
+          - target: x86_64
+          - target: aarch64
+            runner: ubuntu-24.04-arm
+          - target: armv7
+          - target: s390x
+          - target: ppc64le
     steps:
       - name: Checkout repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -57,25 +64,25 @@ jobs:
 
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Build wheels
         uses: PyO3/maturin-action@60d11847b29f81ca5375519a8eb33cc336ba4bfa # v1.41.0
         with:
-          target: ${{ matrix.target }}
+          target: ${{ matrix.platform.target }}
           args: --release --out dist --find-interpreter
-          container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.target }}
+          container: ghcr.io/rust-cross/manylinux_2_28-cross:${{ matrix.platform.target }}
           sccache: "true"
           manylinux: "2_28"
 
       - name: Upload wheels
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
         with:
-          name: wheels-linux-${{ matrix.target }}
+          name: wheels-linux-${{ matrix.platform.target }}
           path: dist
 
       - name: pytest
-        if: ${{ startsWith(matrix.target, 'x86_64') }}
+        if: ${{ endswith(matrix.platform.target, '64') }} # x86_64 and aarch64
         shell: bash
         run: |
           set -e
@@ -83,22 +90,23 @@ jobs:
           pytest --verbose
 
       - name: pytest
-        if: ${{ !startsWith(matrix.target, 'x86') && matrix.target != 'ppc64' }}
-        uses: uraimo/run-on-arch-action@4141da824ffb5eda88d221d9cf835f6a61ed98d9 # v3.0.0
+        if: ${{ !endswith(matrix.platform.target, '64') }} # armv7, s390x and ppc64le
+        uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         with:
-          arch: ${{ matrix.target }}
-          distro: ubuntu22.04
+          arch: ${{ matrix.platform.target }}
+          distro: ubuntu24.04
           githubToken: ${{ github.token }}
           install: |
             apt update
             apt install -y --no-install-recommends \
                         gcc g++ gfortran libopenblas-dev liblapack-dev ninja-build \
-                        pkg-config python3-pip python3-dev
-            pip3 install -U pip pytest
+                        pkg-config python3-pip python3-dev python3-venv
           run: |
             set -e
-            pip3 install cog3pio --find-links dist --force-reinstall
-            pytest --verbose
+            python3 -m venv .venv
+            .venv/bin/pip3 install -U pip pytest
+            .venv/bin/pip3 install cog3pio --find-links dist --force-reinstall
+            .venv/bin/pytest --verbose
 
   windows:
     runs-on: windows-2025
@@ -113,7 +121,7 @@ jobs:
 
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           architecture: ${{ matrix.target }}
 
       - name: Build wheels
@@ -149,7 +157,7 @@ jobs:
 
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Build wheels
         uses: PyO3/maturin-action@60d11847b29f81ca5375519a8eb33cc336ba4bfa # v1.41.0
