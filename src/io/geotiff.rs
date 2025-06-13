@@ -1,16 +1,17 @@
-use std::io::{Read, Seek};
+use std::io::{Error, Read, Seek};
 
+use dlpark::traits::InferDataType;
+use dlpark::SafeManagedTensorVersioned;
 use geo::AffineTransform;
-use ndarray::{Array, Array1, Array3};
-use num_traits::FromPrimitive;
+use ndarray::{Array, Array1, Array3, ArrayView3, ArrayViewD};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
 use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
 
 /// Cloud-optimized GeoTIFF reader
-pub(crate) struct CogReader<R: Read + Seek> {
+pub struct CogReader<R: Read + Seek> {
     /// TIFF decoder
-    pub decoder: Decoder<R>,
+    decoder: Decoder<R>,
 }
 
 impl<R: Read + Seek> CogReader<R> {
@@ -23,8 +24,8 @@ impl<R: Read + Seek> CogReader<R> {
         Ok(Self { decoder })
     }
 
-    /// Decode GeoTIFF image to an [`ndarray::Array`]
-    pub fn ndarray<T: FromPrimitive + 'static>(&mut self) -> TiffResult<Array3<T>> {
+    /// Decode GeoTIFF image to a [`dlpark::SafeManagedTensorVersioned`]
+    pub fn dlpack(&mut self) -> TiffResult<SafeManagedTensorVersioned> {
         // Count number of bands
         let num_bands: usize = self.num_samples()?;
         // Get image dimensions
@@ -32,45 +33,22 @@ impl<R: Read + Seek> CogReader<R> {
 
         // Get image pixel data
         let decode_result = self.decoder.read_image()?;
-        let image_data: Vec<T> = match decode_result {
-            DecodingResult::U8(img_data) => {
-                img_data.iter().map(|v| T::from_u8(*v).unwrap()).collect()
-            }
-            DecodingResult::U16(img_data) => {
-                img_data.iter().map(|v| T::from_u16(*v).unwrap()).collect()
-            }
-            DecodingResult::U32(img_data) => {
-                img_data.iter().map(|v| T::from_u32(*v).unwrap()).collect()
-            }
-            DecodingResult::U64(img_data) => {
-                img_data.iter().map(|v| T::from_u64(*v).unwrap()).collect()
-            }
-            DecodingResult::I8(img_data) => {
-                img_data.iter().map(|v| T::from_i8(*v).unwrap()).collect()
-            }
-            DecodingResult::I16(img_data) => {
-                img_data.iter().map(|v| T::from_i16(*v).unwrap()).collect()
-            }
-            DecodingResult::I32(img_data) => {
-                img_data.iter().map(|v| T::from_i32(*v).unwrap()).collect()
-            }
-            DecodingResult::I64(img_data) => {
-                img_data.iter().map(|v| T::from_i64(*v).unwrap()).collect()
-            }
-            DecodingResult::F32(img_data) => {
-                img_data.iter().map(|v| T::from_f32(*v).unwrap()).collect()
-            }
-            DecodingResult::F64(img_data) => {
-                img_data.iter().map(|v| T::from_f64(*v).unwrap()).collect()
-            }
+
+        let shape = (num_bands, height as usize, width as usize);
+        let tensor: SafeManagedTensorVersioned = match decode_result {
+            DecodingResult::U8(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::U16(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::U32(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::U64(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::I8(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::I16(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::I32(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::I64(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::F32(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::F64(img_data) => shape_vec_to_tensor(shape, img_data)?,
         };
 
-        // Put image pixel data into an ndarray
-        let array_data: Array3<T> =
-            Array3::from_shape_vec((num_bands, height as usize, width as usize), image_data)
-                .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
-
-        Ok(array_data)
+        Ok(tensor)
     }
 
     /// Number of samples per pixel, also known as channels or bands
@@ -168,25 +146,51 @@ impl<R: Read + Seek> CogReader<R> {
     }
 }
 
+/// Convert Vec<T> into an Array3<T> with a shape of (channels, height, width), and then
+/// output it as a DLPack tensor.
+fn shape_vec_to_tensor<T: InferDataType>(
+    shape: (usize, usize, usize),
+    vec: Vec<T>,
+) -> TiffResult<SafeManagedTensorVersioned> {
+    let array_data = Array3::from_shape_vec(shape, vec)
+        .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
+    let tensor = SafeManagedTensorVersioned::new(array_data)
+        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+    Ok(tensor)
+}
+
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
-pub fn read_geotiff<T: FromPrimitive + 'static, R: Read + Seek>(
-    stream: R,
-) -> TiffResult<Array3<T>> {
+pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> TiffResult<Array3<T>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
 
-    // Decode TIFF into ndarray
-    let array_data: Array3<T> = reader.ndarray()?;
+    // Decode TIFF into DLPack
+    let tensor: SafeManagedTensorVersioned = reader.dlpack()?;
 
-    Ok(array_data)
+    // Count number of bands
+    let num_bands: usize = reader.num_samples()?;
+    // Get image dimensions
+    let (width, height): (u32, u32) = reader.decoder.dimensions()?;
+
+    // Convert DLPack tensor to ndarray
+    let view = ArrayViewD::<T>::try_from(&tensor)
+        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+    let array: ArrayView3<T> = view
+        .into_shape_with_order((num_bands, height as usize, width as usize))
+        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+
+    Ok(array.to_owned())
 }
 
 #[cfg(test)]
 mod tests {
     use std::io::{Cursor, Seek, SeekFrom};
 
+    use dlpark::ffi::DataType;
+    use dlpark::prelude::TensorView;
+    use dlpark::SafeManagedTensorVersioned;
     use geo::AffineTransform;
-    use ndarray::{array, s};
+    use ndarray::{s, Array3};
     use object_store::parse_url;
     use tempfile::tempfile;
     use tiff::encoder::{colortype, TiffEncoder};
@@ -214,7 +218,7 @@ mod tests {
         file.seek(SeekFrom::Start(0)).unwrap();
 
         // Read a BigTIFF file
-        let arr = read_geotiff(file).unwrap();
+        let arr: Array3<f32> = read_geotiff(file).unwrap();
         assert_eq!(arr.ndim(), 3);
         assert_eq!(arr.dim(), (1, 10, 20)); // (channels, height, width)
         let first_band = arr.slice(s![0, .., ..]);
@@ -234,11 +238,10 @@ mod tests {
         let bytes = result.bytes().await.unwrap();
         let stream = Cursor::new(bytes);
 
-        let mut reader = CogReader::new(stream).unwrap();
-        let array = reader.ndarray().unwrap();
+        let array: Array3<f32> = read_geotiff(stream).unwrap();
 
         assert_eq!(array.dim(), (2, 512, 512));
-        assert_eq!(array.mean(), Some(225.17439122416545));
+        assert_eq!(array.mean(), Some(225.17654));
     }
 
     #[tokio::test]
@@ -252,15 +255,14 @@ mod tests {
         let bytes = result.bytes().await.unwrap();
         let stream = Cursor::new(bytes);
 
-        let mut reader = CogReader::new(stream).unwrap();
-        let array = reader.ndarray::<u16>().unwrap();
+        let array: Array3<u16> = read_geotiff(stream).unwrap();
 
         assert_eq!(array.dim(), (1, 20, 20));
         assert_eq!(array.mean(), Some(126));
     }
 
     #[tokio::test]
-    async fn test_cogreader_ndarray() {
+    async fn test_cogreader_dlpack() {
         let cog_url: &str = "https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif";
         let tif_url = Url::parse(cog_url).unwrap();
         let (store, location) = parse_url(&tif_url).unwrap();
@@ -269,11 +271,19 @@ mod tests {
         let bytes = result.bytes().await.unwrap();
         let stream = Cursor::new(bytes);
 
-        let mut reader = CogReader::new(stream).unwrap();
-        let array = reader.ndarray::<f32>().unwrap();
+        let mut cog = CogReader::new(stream).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
-        assert_eq!(array.shape(), [1, 2, 3]);
-        assert_eq!(array, array![[[1.41, 1.23, 0.78], [0.32, -0.23, -1.88]]]);
+        assert_eq!(tensor.shape(), [1, 2, 3]);
+        assert_eq!(tensor.data_type(), &DataType::F32);
+        let values: Vec<f32> = tensor
+            .to_vec()
+            .chunks_exact(4)
+            .map(TryInto::try_into)
+            .map(Result::unwrap)
+            .map(f32::from_le_bytes)
+            .collect();
+        assert_eq!(values, vec![1.41, 1.23, 0.78, 0.32, -0.23, -1.88]);
     }
 
     #[tokio::test]
@@ -286,8 +296,8 @@ mod tests {
         let bytes = result.bytes().await.unwrap();
         let stream = Cursor::new(bytes);
 
-        let mut reader = CogReader::new(stream).unwrap();
-        assert_eq!(reader.num_samples().unwrap(), 3);
+        let mut cog = CogReader::new(stream).unwrap();
+        assert_eq!(cog.num_samples().unwrap(), 3);
     }
 
     #[tokio::test]
@@ -301,8 +311,8 @@ mod tests {
         let bytes = result.bytes().await.unwrap();
         let stream = Cursor::new(bytes);
 
-        let mut reader = CogReader::new(stream).unwrap();
-        let transform = reader.transform().unwrap();
+        let mut cog = CogReader::new(stream).unwrap();
+        let transform = cog.transform().unwrap();
 
         assert_eq!(
             transform,
