@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - 1.78.0 # msrv
+          - 1.85.0 # msrv
           - stable
           - beta
           - nightly
