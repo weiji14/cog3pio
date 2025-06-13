@@ -1,18 +1,18 @@
 use std::io::Cursor;
 
 use bytes::Bytes;
-use dlpark::ffi::Device;
 use dlpark::SafeManagedTensorVersioned;
+use dlpark::ffi::Device;
 use ndarray::Array3;
 use numpy::{PyArray1, PyArray3, ToPyArray};
-use object_store::{parse_url, ObjectStore};
+use object_store::{ObjectStore, parse_url};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
-use pyo3::prelude::{pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python};
+use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, pymodule};
 use pyo3::types::PyModuleMethods;
-use pyo3::{wrap_pyfunction, Bound, PyErr};
+use pyo3::{Bound, PyErr, wrap_pyfunction};
 use url::Url;
 
-use crate::io::geotiff::{read_geotiff, CogReader};
+use crate::io::geotiff::{CogReader, read_geotiff};
 
 /// Python class interface to a Cloud-optimized GeoTIFF reader.
 ///

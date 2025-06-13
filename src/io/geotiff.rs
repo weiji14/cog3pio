@@ -1,7 +1,7 @@
 use std::io::{Error, Read, Seek};
 
-use dlpark::traits::InferDataType;
 use dlpark::SafeManagedTensorVersioned;
+use dlpark::traits::InferDataType;
 use geo::AffineTransform;
 use ndarray::{Array, Array1, Array3, ArrayView3, ArrayViewD};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
@@ -64,7 +64,7 @@ impl<R: Read + Seek> CogReader<R> {
             _ => {
                 return Err(TiffError::UnsupportedError(
                     TiffUnsupportedError::UnsupportedColorType(color_type),
-                ))
+                ));
             }
         };
         Ok(num_bands)
@@ -186,17 +186,17 @@ pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> Tiff
 mod tests {
     use std::io::{Cursor, Seek, SeekFrom};
 
+    use dlpark::SafeManagedTensorVersioned;
     use dlpark::ffi::DataType;
     use dlpark::prelude::TensorView;
-    use dlpark::SafeManagedTensorVersioned;
     use geo::AffineTransform;
-    use ndarray::{s, Array3};
+    use ndarray::{Array3, s};
     use object_store::parse_url;
     use tempfile::tempfile;
-    use tiff::encoder::{colortype, TiffEncoder};
+    use tiff::encoder::{TiffEncoder, colortype};
     use url::Url;
 
-    use crate::io::geotiff::{read_geotiff, CogReader};
+    use crate::io::geotiff::{CogReader, read_geotiff};
 
     #[test]
     fn test_read_geotiff() {
@@ -229,8 +229,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_read_geotiff_multi_band() {
-        let cog_url: &str =
-            "https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif";
+        let cog_url: &str = "https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif";
         let tif_url = Url::parse(cog_url).unwrap();
         let (store, location) = parse_url(&tif_url).unwrap();
 
