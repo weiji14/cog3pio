@@ -135,8 +135,8 @@ impl<R: Read + Seek> CogReader<R> {
         let (x_pixels, y_pixels): (u32, u32) = self.decoder.dimensions()?;
 
         // Get xy coordinate of the center of the bottom right pixel
-        let x_end: f64 = x_origin + x_res * x_pixels as f64;
-        let y_end: f64 = y_origin + y_res * y_pixels as f64;
+        let x_end: f64 = x_origin + x_res * f64::from(x_pixels);
+        let y_end: f64 = y_origin + y_res * f64::from(y_pixels);
 
         // Get array of x-coordinates and y-coordinates
         let x_coords = Array::range(x_origin.to_owned(), x_end, x_res.to_owned());
@@ -202,10 +202,10 @@ mod tests {
     fn test_read_geotiff() {
         // Generate some data
         let mut image_data = Vec::new();
-        for y in 0..10 {
-            for x in 0..20 {
+        for y in 0..10u8 {
+            for x in 0..20u8 {
                 let val = y + x;
-                image_data.push(val as f32);
+                image_data.push(f32::from(val));
             }
         }
 
