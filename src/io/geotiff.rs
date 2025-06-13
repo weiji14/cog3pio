@@ -315,7 +315,7 @@ mod tests {
 
         assert_eq!(
             transform,
-            AffineTransform::new(200.0, 0.0, 499980.0, 0.0, -200.0, 5300040.0)
+            AffineTransform::new(200.0, 0.0, 499_980.0, 0.0, -200.0, 5_300_040.0)
         );
     }
 }
