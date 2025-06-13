@@ -16,6 +16,11 @@ pub struct CogReader<R: Read + Seek> {
 
 impl<R: Read + Seek> CogReader<R> {
     /// Create a new GeoTIFF decoder that decodes from a stream buffer
+    ///
+    /// # Errors
+    ///
+    /// Will return [`tiff::TiffFormatError`] if TIFF stream signature cannot be found
+    /// or is invalid, e.g. from a corrupted input file.
     pub fn new(stream: R) -> TiffResult<Self> {
         // Open TIFF stream with decoder
         let mut decoder = Decoder::new(stream)?;
@@ -25,6 +30,7 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Decode GeoTIFF image to a [`dlpark::SafeManagedTensorVersioned`]
+    #[allow(clippy::missing_errors_doc)]
     pub fn dlpack(&mut self) -> TiffResult<SafeManagedTensorVersioned> {
         // Count number of bands
         let num_bands: usize = self.num_samples()?;
@@ -120,6 +126,16 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Get list of x and y coordinates
+    ///
+    /// Determined based on an [`geo::AffineTransform`] matrix built from the
+    /// [`tiff::tags::Tag::ModelPixelScaleTag`] and
+    /// [`tiff::tags::Tag::ModelTiepointTag`] tags. Note that non-zero rotation (set by
+    /// [`tiff::tags::Tag::ModelTransformationTag`]) is currently unsupported.
+    ///
+    /// # Errors
+    ///
+    /// Will return [`tiff::TiffFormatError::RequiredTagNotFound`] if the TIFF file is
+    /// missing tags required to build an Affine transformation matrix.
     pub fn xy_coords(&mut self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
         let transform = self.transform()?; // affine transformation matrix
 
@@ -160,6 +176,7 @@ fn shape_vec_to_tensor<T: InferDataType>(
 }
 
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
+#[allow(clippy::missing_errors_doc)]
 pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> TiffResult<Array3<T>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
