@@ -1,9 +1,9 @@
 [package]
 name = "cog3pio"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "MIT OR Apache-2.0"
-rust-version = "1.78.0"
+rust-version = "1.85.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
@@ -12,9 +12,9 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
+dlpark = { version = "0.6.0", features = ["ndarray", "pyo3"] }
 geo = "0.29.0"
-ndarray = "0.15.6"
-num-traits = "0.2.19"
+ndarray = "0.16.1"
 numpy = "0.25.0"
 object_store = { version = "0.9.0", features = ["http"] }
 pyo3 = { version = "0.25.0", features = ["abi3-py312", "extension-module"] }

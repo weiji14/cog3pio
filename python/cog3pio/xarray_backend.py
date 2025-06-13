@@ -29,10 +29,10 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
         # other backend specific keyword arguments
         # `chunks` and `cache` DO NOT go here, they are handled by xarray
     ) -> xr.Dataset:
-        reader = CogReader(path=filename_or_obj)
+        cog = CogReader(path=filename_or_obj)
 
-        array: np.ndarray = reader.as_numpy()
-        x_coords, y_coords = reader.xy_coords()
+        array: np.ndarray = np.from_dlpack(cog)
+        x_coords, y_coords = cog.xy_coords()
 
         channels, height, width = array.shape
         dataarray: xr.DataArray = xr.DataArray(

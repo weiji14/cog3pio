@@ -1,6 +1,8 @@
 use std::io::Cursor;
 
 use bytes::Bytes;
+use dlpark::ffi::Device;
+use dlpark::SafeManagedTensorVersioned;
 use ndarray::Array3;
 use numpy::{PyArray1, PyArray3, ToPyArray};
 use object_store::{parse_url, ObjectStore};
@@ -10,7 +12,7 @@ use pyo3::types::PyModuleMethods;
 use pyo3::{wrap_pyfunction, Bound, PyErr};
 use url::Url;
 
-use crate::io::geotiff::CogReader;
+use crate::io::geotiff::{read_geotiff, CogReader};
 
 /// Python class interface to a Cloud-optimized GeoTIFF reader.
 ///
@@ -54,20 +56,34 @@ impl PyCogReader {
         Ok(Self { inner: reader })
     }
 
-    /// Get image pixel data from GeoTIFF as a numpy.ndarray
+    /// Get image pixel data from GeoTIFF as a DLPack capsule
     ///
     /// Returns
     /// -------
-    /// array : np.ndarray
-    ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
-    fn as_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
-        let array_data: Array3<f32> = self
+    /// tensor : PyCapsule
+    ///     3D tensor of shape (band, height, width) containing the GeoTIFF pixel data.
+    fn __dlpack__(&mut self) -> PyResult<SafeManagedTensorVersioned> {
+        // Convert from ndarray (Rust) to DLPack (Python)
+        let tensor: SafeManagedTensorVersioned = self
             .inner
-            .ndarray()
+            .dlpack()
             .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
-        // Convert from ndarray (Rust) to numpy ndarray (Python)
-        Ok(array_data.to_pyarray(py))
+        Ok(tensor)
+    }
+
+    /// Get device type and device ID in DLPack format.
+    ///
+    /// Meant for use by `from_dlpack()`.
+    ///
+    /// Returns
+    /// -------
+    /// device : (int, int)
+    ///     A tuple (device_type, device_id) in DLPack format.
+    #[staticmethod]
+    fn __dlpack_device__() -> (i32, i32) {
+        let device = Device::CPU;
+        (device.device_type as i32, device.device_id)
     }
 
     /// Get x and y coordinates as numpy.ndarray
@@ -140,12 +156,13 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
     // Open URL with TIFF decoder
-    let mut reader = PyCogReader::new(path)?;
+    let stream = path_to_stream(path)?;
 
-    // Decode TIFF into numpy ndarray
-    let array_data = reader.as_numpy(py)?;
+    // Decode TIFF into DLPack tensor
+    let array: Array3<f32> =
+        read_geotiff(stream).map_err(|err| PyValueError::new_err(err.to_string()))?;
 
-    Ok(array_data)
+    Ok(array.to_pyarray(py))
 }
 
 /// A Python module implemented in Rust. The name of this function must match
