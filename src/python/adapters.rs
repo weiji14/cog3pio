@@ -108,7 +108,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
         // Parse local filepath
         Ok(filepath) => filepath,
         // Parse remote URL
-        Err(_) => Url::parse(path)
+        Err(()) => Url::parse(path)
             .map_err(|_| PyValueError::new_err(format!("Cannot parse path: {path}")))?,
     };
     let (store, location) = parse_url(&file_or_url)
