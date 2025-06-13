@@ -160,7 +160,6 @@ dependencies = [
  "dlpark",
  "geo",
  "ndarray",
- "num-traits",
  "numpy",
  "object_store",
  "pyo3",
