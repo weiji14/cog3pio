@@ -1,7 +1,7 @@
 use std::io::{Error, Read, Seek};
 
-use dlpark::traits::InferDataType;
 use dlpark::SafeManagedTensorVersioned;
+use dlpark::traits::InferDataType;
 use geo::AffineTransform;
 use ndarray::{Array, Array1, Array3, ArrayView3, ArrayViewD};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
@@ -16,6 +16,11 @@ pub struct CogReader<R: Read + Seek> {
 
 impl<R: Read + Seek> CogReader<R> {
     /// Create a new GeoTIFF decoder that decodes from a stream buffer
+    ///
+    /// # Errors
+    ///
+    /// Will return [`tiff::TiffFormatError`] if TIFF stream signature cannot be found
+    /// or is invalid, e.g. from a corrupted input file.
     pub fn new(stream: R) -> TiffResult<Self> {
         // Open TIFF stream with decoder
         let mut decoder = Decoder::new(stream)?;
@@ -25,6 +30,7 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Decode GeoTIFF image to a [`dlpark::SafeManagedTensorVersioned`]
+    #[allow(clippy::missing_errors_doc)]
     pub fn dlpack(&mut self) -> TiffResult<SafeManagedTensorVersioned> {
         // Count number of bands
         let num_bands: usize = self.num_samples()?;
@@ -64,7 +70,7 @@ impl<R: Read + Seek> CogReader<R> {
             _ => {
                 return Err(TiffError::UnsupportedError(
                     TiffUnsupportedError::UnsupportedColorType(color_type),
-                ))
+                ));
             }
         };
         Ok(num_bands)
@@ -120,6 +126,16 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Get list of x and y coordinates
+    ///
+    /// Determined based on an [`geo::AffineTransform`] matrix built from the
+    /// [`tiff::tags::Tag::ModelPixelScaleTag`] and
+    /// [`tiff::tags::Tag::ModelTiepointTag`] tags. Note that non-zero rotation (set by
+    /// [`tiff::tags::Tag::ModelTransformationTag`]) is currently unsupported.
+    ///
+    /// # Errors
+    ///
+    /// Will return [`tiff::TiffFormatError::RequiredTagNotFound`] if the TIFF file is
+    /// missing tags required to build an Affine transformation matrix.
     pub fn xy_coords(&mut self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
         let transform = self.transform()?; // affine transformation matrix
 
@@ -135,8 +151,8 @@ impl<R: Read + Seek> CogReader<R> {
         let (x_pixels, y_pixels): (u32, u32) = self.decoder.dimensions()?;
 
         // Get xy coordinate of the center of the bottom right pixel
-        let x_end: f64 = x_origin + x_res * x_pixels as f64;
-        let y_end: f64 = y_origin + y_res * y_pixels as f64;
+        let x_end: f64 = x_origin + x_res * f64::from(x_pixels);
+        let y_end: f64 = y_origin + y_res * f64::from(y_pixels);
 
         // Get array of x-coordinates and y-coordinates
         let x_coords = Array::range(x_origin.to_owned(), x_end, x_res.to_owned());
@@ -160,6 +176,7 @@ fn shape_vec_to_tensor<T: InferDataType>(
 }
 
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
+#[allow(clippy::missing_errors_doc)]
 pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> TiffResult<Array3<T>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
@@ -186,26 +203,26 @@ pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> Tiff
 mod tests {
     use std::io::{Cursor, Seek, SeekFrom};
 
+    use dlpark::SafeManagedTensorVersioned;
     use dlpark::ffi::DataType;
     use dlpark::prelude::TensorView;
-    use dlpark::SafeManagedTensorVersioned;
     use geo::AffineTransform;
-    use ndarray::{s, Array3};
+    use ndarray::{Array3, s};
     use object_store::parse_url;
     use tempfile::tempfile;
-    use tiff::encoder::{colortype, TiffEncoder};
+    use tiff::encoder::{TiffEncoder, colortype};
     use url::Url;
 
-    use crate::io::geotiff::{read_geotiff, CogReader};
+    use crate::io::geotiff::{CogReader, read_geotiff};
 
     #[test]
     fn test_read_geotiff() {
         // Generate some data
         let mut image_data = Vec::new();
-        for y in 0..10 {
-            for x in 0..20 {
+        for y in 0..10u8 {
+            for x in 0..20u8 {
                 let val = y + x;
-                image_data.push(val as f32);
+                image_data.push(f32::from(val));
             }
         }
 
@@ -229,8 +246,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_read_geotiff_multi_band() {
-        let cog_url: &str =
-            "https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif";
+        let cog_url: &str = "https://github.com/locationtech/geotrellis/raw/v3.7.1/raster/data/one-month-tiles-multiband/result.tif";
         let tif_url = Url::parse(cog_url).unwrap();
         let (store, location) = parse_url(&tif_url).unwrap();
 
@@ -316,7 +332,7 @@ mod tests {
 
         assert_eq!(
             transform,
-            AffineTransform::new(200.0, 0.0, 499980.0, 0.0, -200.0, 5300040.0)
+            AffineTransform::new(200.0, 0.0, 499_980.0, 0.0, -200.0, 5_300_040.0)
         );
     }
 }
