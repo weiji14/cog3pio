@@ -25,6 +25,9 @@ benchmark = [
     "pytest-codspeed",
     "rioxarray",
 ]
+docs = [
+    "jupyter-book>=2.0.0a0",
+]
 tests = [
     "pytest",
 ]
