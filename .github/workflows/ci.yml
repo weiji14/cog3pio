@@ -237,7 +237,7 @@ jobs:
 
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
-    if: github.repository == 'weiji14/cog3pio' && (github.event_name == 'release' || github.event_name == 'push')
+    if: github.repository == 'weiji14/cog3pio' && (github.event_name == 'release' && (github.event.action == 'prereleased' || github.event.action == 'released'))
     needs: [linux, windows, macos, sdist]
     runs-on: ubuntu-24.04
     environment:
@@ -264,7 +264,7 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/project/cog3pio/
-    if: github.repository == 'weiji14/cog3pio' && startsWith(github.ref, 'refs/tags/')
+    if: github.repository == 'weiji14/cog3pio' && (github.event_name == 'release' && github.event.action == 'released')
     needs: [linux, windows, macos, sdist]
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted OIDC publishing
