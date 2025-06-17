@@ -12,6 +12,9 @@ build:
     python: "3.12"
     rust: "1.86"
   jobs:
+    install:
+      - pip install .[docs]
+      - pip list
     post_install:
       - npm install -g mystmd
       - myst --version
@@ -25,21 +28,3 @@ build:
     post_build:
       - "mkdir --parents $READTHEDOCS_OUTPUT/html/"
       - "mv docs/_build/html/* $READTHEDOCS_OUTPUT/html/"
-
-# Build documentation in the "docs/" directory with Sphinx
-# sphinx:
-#   configuration: docs/conf.py
-#   # You can configure Sphinx to use a different builder, for instance use the dirhtml builder for simpler URLs
-#   builder: "myst" # https://jupyter-book.github.io/sphinx-ext-mystmd/include-sphinx
-#   # Fail on all warnings to avoid broken references
-#   # fail_on_warning: true
-
-# Optional but recommended, declare the Python requirements required
-# to build your documentation
-# See https://docs.readthedocs.com/platform/stable/guides/reproducible-builds.html
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
