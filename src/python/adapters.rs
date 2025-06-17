@@ -28,19 +28,19 @@ use crate::io::geotiff::{CogReader, read_geotiff};
 ///
 /// Examples
 /// --------
-/// Read a GeoTIFF from a HTTP url into a numpy.ndarray::
+/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
 ///
-///     >>> import numpy as np
-///     >>> from cog3pio import CogReader
-///     ...
-///     cog = CogReader(
-///        path="https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/RGBA.uint16.tif"
-///     )
-///     >>> array: np.ndarray = np.from_dlpack(cog)
-///     >>> array.shape
-///     (4, 411, 634)
-///     >>> array.dtype
-///     dtype('uint16')
+/// >>> import numpy as np
+/// >>> from cog3pio import CogReader
+/// ...
+/// >>> cog = CogReader(
+/// ... path="https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/RGBA.uint16.tif"
+/// ...)
+/// >>> array: np.ndarray = np.from_dlpack(cog)
+/// >>> array.shape
+/// (4, 411, 634)
+/// >>> array.dtype
+/// dtype('uint16')
 #[pyclass]
 #[pyo3(name = "CogReader")]
 struct PyCogReader {
@@ -166,13 +166,13 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 ///
 /// Examples
 /// --------
-/// Read a GeoTIFF from a HTTP url into a numpy.ndarray::
+/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
 ///
-///     >>> from cog3pio import read_geotiff
-///     ...
-///     >>> array = read_geotiff("https://github.com/pka/georaster/raw/v0.2.0/data/tiff/float32.tif")
-///     >>> array.shape
-///     (1, 20, 20)
+/// >>> from cog3pio import read_geotiff
+/// ...
+/// >>> array = read_geotiff("https://github.com/pka/georaster/raw/v0.2.0/data/tiff/float32.tif")
+/// >>> array.shape
+/// (1, 20, 20)
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
