@@ -28,17 +28,19 @@ use crate::io::geotiff::{CogReader, read_geotiff};
 ///
 /// Examples
 /// --------
+/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
+///
 /// >>> import numpy as np
 /// >>> from cog3pio import CogReader
-/// >>>
-/// >>> reader = CogReader(
-/// >>>     path="https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif"
-/// >>> )
-/// >>> array: np.ndarray = reader.data()
+/// ...
+/// >>> cog = CogReader(
+/// ... path="https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/RGBA.uint16.tif"
+/// ...)
+/// >>> array: np.ndarray = np.from_dlpack(cog)
 /// >>> array.shape
-/// >>> (1, 12, 13)
+/// (4, 411, 634)
 /// >>> array.dtype
-/// >>> dtype('float32')
+/// dtype('uint16')
 #[pyclass]
 #[pyo3(name = "CogReader")]
 struct PyCogReader {
@@ -86,7 +88,17 @@ impl PyCogReader {
         (device.device_type as i32, device.device_id)
     }
 
-    /// Get x and y coordinates as numpy.ndarray
+    /// Get list of x and y coordinates.
+    ///
+    /// Determined based on an Affine transformation matrix built from the
+    /// `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
+    /// rotation (set by `ModelTransformationTag` is currently unsupported.
+    ///
+    /// Returns
+    /// -------
+    /// coords : (np.ndarray, np.ndarray)
+    ///    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
+    ///    x- and y-coordinates.
     #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
@@ -134,7 +146,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
     Ok(stream)
 }
 
-/// Read a GeoTIFF file from a path on disk or a url into an ndarray
+/// Read a GeoTIFF file from a path on disk or a url into an ndarray.
 ///
 /// Parameters
 /// ----------
@@ -146,12 +158,21 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// array : np.ndarray
 ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
 ///
+/// Raises
+/// ------
+/// ValueError
+///     If a TIFF which has a non-float32 dtype is passed in. Please use
+///     `cog3pio.CogReader` for reading TIFFs with other dtypes (e.g. uint16).
+///
 /// Examples
 /// --------
-/// from cog3pio import read_geotiff
+/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
 ///
-/// array = read_geotiff("https://github.com/pka/georaster/raw/v0.1.0/data/tiff/float32.tif")
-/// assert array.shape == (20, 20)
+/// >>> from cog3pio import read_geotiff
+/// ...
+/// >>> array = read_geotiff("https://github.com/pka/georaster/raw/v0.2.0/data/tiff/float32.tif")
+/// >>> array.shape
+/// (1, 20, 20)
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
