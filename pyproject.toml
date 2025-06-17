@@ -27,6 +27,9 @@ benchmark = [
 ]
 docs = [
     "jupyter-book>=2.0.0a0",
+    "myst_parser",
+    "sphinx",
+    "sphinx-ext-mystmd",
 ]
 tests = [
     "pytest",
