@@ -1,1 +1,1 @@
-# ⚙️ *cog3pio* - Cloud-optimized GeoTIFFs ... Parallel I/O
+# ⚙️ *cog3pio* - Cloud-optimized GeoTIFF ... Parallel I/O
