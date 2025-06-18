@@ -1,0 +1,29 @@
+# Read the Docs configuration file for Sphinx projects
+# See https://docs.readthedocs.com/platform/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Set the OS, Python version and other tools you might need
+build:
+  os: "ubuntu-24.04"
+  tools:
+    nodejs: "23"
+    python: "3.12"
+    rust: "1.86"
+  jobs:
+    install:
+      - pip install .[docs]
+      - pip list
+    post_install:
+      - npm install -g mystmd
+      - myst --version
+    pre_build:
+      - "cd docs/ && sphinx-build --builder myst . _build/myst-asts"
+      - "ls -lh docs/_build/"
+    build:
+      html:
+        - "cd docs/ && myst build --html"
+    post_build:
+      - "mkdir --parents $READTHEDOCS_OUTPUT/html/"
+      - "mv docs/_build/html/* $READTHEDOCS_OUTPUT/html/"
