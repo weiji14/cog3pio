@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 
 ### <!-- 5 --> 🧰 Maintenance
 
+- 👷 Upload to TestPyPI on prerelease and release tags ([#40](https://github.com/weiji14/cog3pio/pull/40))
 - 👷 Adjust CI workflow conditions for release trigger ([#38](https://github.com/weiji14/cog3pio/pull/38))
 - 🔧 Configure readthedocs documentation build ([#36](https://github.com/weiji14/cog3pio/pull/36))
 - 👷 Build free-threaded wheels on CI and upload to TestPyPI ([#34](https://github.com/weiji14/cog3pio/pull/34))
