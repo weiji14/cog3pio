@@ -99,7 +99,7 @@ jobs:
           pytest --verbose
 
       - name: pytest
-        if: ${{ !endswith(matrix.platform.target, '64') }} # armv7, s390x and ppc64le
+        if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
         uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         with:
           arch: ${{ matrix.platform.target }}
