@@ -99,7 +99,7 @@ jobs:
           pytest --verbose
 
       - name: pytest
-        if: ${{ !endswith(matrix.platform.target, '64') }} # armv7, s390x and ppc64le
+        if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
         uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         with:
           arch: ${{ matrix.platform.target }}
@@ -237,7 +237,7 @@ jobs:
 
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
-    if: github.repository == 'weiji14/cog3pio' && (github.event_name == 'release' && (github.event.action == 'prereleased' || github.event.action == 'released'))
+    if: ${{ github.event_name == 'release' && github.event.action == 'prereleased' }}
     needs: [linux, windows, macos, sdist]
     runs-on: ubuntu-24.04
     environment:
@@ -264,7 +264,7 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/project/cog3pio/
-    if: github.repository == 'weiji14/cog3pio' && (github.event_name == 'release' && github.event.action == 'released')
+    if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
     needs: [linux, windows, macos, sdist]
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted OIDC publishing
