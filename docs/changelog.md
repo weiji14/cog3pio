@@ -35,6 +35,7 @@ All notable changes to this project will be documented in this file.
 
 ### <!-- 5 --> 🧰 Maintenance
 
+- 📌 Unpin sphinx-ext-mystmd in docs extras ([#44](https://github.com/weiji14/cog3pio/pull/44))
 - 🔊 Enable verbose logging for pypa/gh-action-pypi-publish ([#42](https://github.com/weiji14/cog3pio/pull/42))
 - 👷 Upload to TestPyPI on prerelease and release tags ([#40](https://github.com/weiji14/cog3pio/pull/40))
 - 👷 Adjust CI workflow conditions for release trigger ([#38](https://github.com/weiji14/cog3pio/pull/38))
