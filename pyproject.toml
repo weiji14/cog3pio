@@ -30,7 +30,8 @@ docs = [
     "myst_parser",
     "sphinx",
     # https://github.com/jupyter-book/sphinx-ext-mystmd/pull/2
-    "sphinx-ext-mystmd @ git+https://github.com/weiji14/sphinx-ext-mystmd@e995908b3a898b9c9d5d3fec4ff1478f1f4c1ccd",
+    # "sphinx-ext-mystmd @ git+https://github.com/weiji14/sphinx-ext-mystmd@e995908b3a898b9c9d5d3fec4ff1478f1f4c1ccd",
+    "sphinx-ext-mystmd",
 ]
 tests = [
     "pytest",
