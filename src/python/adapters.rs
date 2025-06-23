@@ -1,16 +1,18 @@
 use std::io::Cursor;
 
 use bytes::Bytes;
+use dlpark::SafeManagedTensorVersioned;
+use dlpark::ffi::Device;
 use ndarray::Array3;
 use numpy::{PyArray1, PyArray3, ToPyArray};
-use object_store::{parse_url, ObjectStore};
+use object_store::{ObjectStore, parse_url};
 use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
-use pyo3::prelude::{pyclass, pyfunction, pymethods, pymodule, PyModule, PyResult, Python};
+use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, pymodule};
 use pyo3::types::PyModuleMethods;
-use pyo3::{wrap_pyfunction, Bound, PyErr};
+use pyo3::{Bound, PyErr, wrap_pyfunction};
 use url::Url;
 
-use crate::io::geotiff::CogReader;
+use crate::io::geotiff::{CogReader, read_geotiff};
 
 /// Python class interface to a Cloud-optimized GeoTIFF reader.
 ///
@@ -26,17 +28,19 @@ use crate::io::geotiff::CogReader;
 ///
 /// Examples
 /// --------
+/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
+///
 /// >>> import numpy as np
 /// >>> from cog3pio import CogReader
-/// >>>
-/// >>> reader = CogReader(
-/// >>>     path="https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif"
-/// >>> )
-/// >>> array: np.ndarray = reader.data()
+/// ...
+/// >>> cog = CogReader(
+/// ... path="https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/RGBA.uint16.tif"
+/// ...)
+/// >>> array: np.ndarray = np.from_dlpack(cog)
 /// >>> array.shape
-/// >>> (1, 12, 13)
+/// (4, 411, 634)
 /// >>> array.dtype
-/// >>> dtype('float32')
+/// dtype('uint16')
 #[pyclass]
 #[pyo3(name = "CogReader")]
 struct PyCogReader {
@@ -54,23 +58,47 @@ impl PyCogReader {
         Ok(Self { inner: reader })
     }
 
-    /// Get image pixel data from GeoTIFF as a numpy.ndarray
+    /// Get image pixel data from GeoTIFF as a DLPack capsule
     ///
     /// Returns
     /// -------
-    /// array : np.ndarray
-    ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
-    fn as_numpy<'py>(&mut self, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
-        let array_data: Array3<f32> = self
+    /// tensor : PyCapsule
+    ///     3D tensor of shape (band, height, width) containing the GeoTIFF pixel data.
+    fn __dlpack__(&mut self) -> PyResult<SafeManagedTensorVersioned> {
+        // Convert from ndarray (Rust) to DLPack (Python)
+        let tensor: SafeManagedTensorVersioned = self
             .inner
-            .ndarray()
+            .dlpack()
             .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
-        // Convert from ndarray (Rust) to numpy ndarray (Python)
-        Ok(array_data.to_pyarray(py))
+        Ok(tensor)
     }
 
-    /// Get x and y coordinates as numpy.ndarray
+    /// Get device type and device ID in DLPack format.
+    ///
+    /// Meant for use by `from_dlpack()`.
+    ///
+    /// Returns
+    /// -------
+    /// device : (int, int)
+    ///     A tuple (device_type, device_id) in DLPack format.
+    #[staticmethod]
+    fn __dlpack_device__() -> (i32, i32) {
+        let device = Device::CPU;
+        (device.device_type as i32, device.device_id)
+    }
+
+    /// Get list of x and y coordinates.
+    ///
+    /// Determined based on an Affine transformation matrix built from the
+    /// `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
+    /// rotation (set by `ModelTransformationTag` is currently unsupported.
+    ///
+    /// Returns
+    /// -------
+    /// coords : (np.ndarray, np.ndarray)
+    ///    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
+    ///    x- and y-coordinates.
     #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
@@ -92,7 +120,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
         // Parse local filepath
         Ok(filepath) => filepath,
         // Parse remote URL
-        Err(_) => Url::parse(path)
+        Err(()) => Url::parse(path)
             .map_err(|_| PyValueError::new_err(format!("Cannot parse path: {path}")))?,
     };
     let (store, location) = parse_url(&file_or_url)
@@ -118,7 +146,7 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
     Ok(stream)
 }
 
-/// Read a GeoTIFF file from a path on disk or a url into an ndarray
+/// Read a GeoTIFF file from a path on disk or a url into an ndarray.
 ///
 /// Parameters
 /// ----------
@@ -130,22 +158,32 @@ fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// array : np.ndarray
 ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
 ///
+/// Raises
+/// ------
+/// ValueError
+///     If a TIFF which has a non-float32 dtype is passed in. Please use
+///     `cog3pio.CogReader` for reading TIFFs with other dtypes (e.g. uint16).
+///
 /// Examples
 /// --------
-/// from cog3pio import read_geotiff
+/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
 ///
-/// array = read_geotiff("https://github.com/pka/georaster/raw/v0.1.0/data/tiff/float32.tif")
-/// assert array.shape == (20, 20)
+/// >>> from cog3pio import read_geotiff
+/// ...
+/// >>> array = read_geotiff("https://github.com/pka/georaster/raw/v0.2.0/data/tiff/float32.tif")
+/// >>> array.shape
+/// (1, 20, 20)
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
     // Open URL with TIFF decoder
-    let mut reader = PyCogReader::new(path)?;
+    let stream = path_to_stream(path)?;
 
-    // Decode TIFF into numpy ndarray
-    let array_data = reader.as_numpy(py)?;
+    // Decode TIFF into DLPack tensor
+    let array: Array3<f32> =
+        read_geotiff(stream).map_err(|err| PyValueError::new_err(err.to_string()))?;
 
-    Ok(array_data)
+    Ok(array.to_pyarray(py))
 }
 
 /// A Python module implemented in Rust. The name of this function must match

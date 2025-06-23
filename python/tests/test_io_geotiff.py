@@ -117,14 +117,19 @@ def test_read_geotiff_unsupported_dtype():
         )
 
 
-def test_CogReader_as_numpy():
+def test_CogReader_to_dlpack():
     """
-    Ensure that the CogReader class's `as_numpy` method produces a numpy.ndarray output.
+    Ensure that the CogReader class's `__dlpack__` method produces a dl_tensor that
+    can be read into a numpy.ndarray.
     """
-    reader = CogReader(
+    cog = CogReader(
         path="https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif"
     )
-    array = reader.as_numpy()
+
+    assert hasattr(cog, "__dlpack__")
+    assert hasattr(cog, "__dlpack_device__")
+    array = np.from_dlpack(cog)
+
     assert array.shape == (1, 2, 3)  # band, height, width
     np.testing.assert_equal(
         actual=array,
