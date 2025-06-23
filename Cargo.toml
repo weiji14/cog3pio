@@ -1,6 +1,6 @@
 [package]
 name = "cog3pio"
-version = "0.0.1-beta.4"
+version = "0.0.1-beta.5"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.85.0"
