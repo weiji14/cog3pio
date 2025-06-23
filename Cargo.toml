@@ -103,6 +103,7 @@ commit_preprocessors = [
     { pattern = ':heavy_minus_sign:', replace = "➖" },
     { pattern = ':heavy_plus_sign:', replace = "➕" },
     { pattern = ':lock:', replace = "🔒️" },
+    { pattern = ':loud_sound:', replace = "🔊|" },
     { pattern = ':memo:', replace = "📝" },
     { pattern = ':pushpin:', replace = "📌" },
     { pattern = ':recycle:', replace = "♻️" },
@@ -121,7 +122,7 @@ commit_parsers = [
     { message = "^(🐛|:bug:)", group = "<!-- 2 --> 🐛 Bug Fixes" },
     { message = "^(♻️|:recycle:|🚚|:truck:|🎨|:art:)", group = "<!-- 3 --> 🏭 Refactors" },
     { message = "^(📝|:memo:)", group = "<!-- 4 --> 📝 Documentation" },
-    { message = "^(👷|:construction_worker:|🔧|:wrench:|⬆️|:arrow_up:|➕|:heavy_plus_sign:|➖|:heavy_minus_sign:|⬇️|:arrow_down:|📌|:pushpin:|🔒️|:lock:|🚨|:rotating_light:|🌱|:seedling:)", group = "<!-- 5 --> 🧰 Maintenance" },
+    { message = "^(👷|:construction_worker:|🔧|:wrench:|⬆️|:arrow_up:|➕|:heavy_plus_sign:|➖|:heavy_minus_sign:|⬇️|:arrow_down:|📌|:pushpin:|🔒️|:lock:|🚨|:rotating_light:|🌱|:seedling:|🔊|:loud_sound:)", group = "<!-- 5 --> 🧰 Maintenance" },
 ]
 # filter out the commits that are not matched by commit parsers
 filter_commits = false
