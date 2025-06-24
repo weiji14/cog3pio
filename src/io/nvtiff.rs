@@ -10,7 +10,7 @@ use nvtiff_sys::{
 };
 
 /// nvTIFF decoder
-pub(crate) struct CudaCogReader {
+pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
     cuda_slice: CudaSlice<u8>,

@@ -28,6 +28,8 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = "2.5.0"
 
 [dev-dependencies]
+criterion = { git = "https://github.com/vxfield/criterion.rs.git", version = "0.5.1" } # https://github.com/bheisler/criterion.rs/pull/832
+gdal = { version = "0.18.0", features = ["array"] }
 tempfile = "3.10.1"
 
 [features]
@@ -35,6 +37,10 @@ cuda = ["dep:cudarc", "dep:nvtiff-sys"]
 
 [lints.clippy]
 pedantic = "warn"
+
+[[bench]]
+name = "read_cog"
+harness = false
 
 [package.metadata.git-cliff.changelog]
 # template for the changelog header
