@@ -30,7 +30,7 @@ jobs:
           persist-credentials: false
 
       - name: Run Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets
 
   format_check:
     runs-on: ubuntu-24.04

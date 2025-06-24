@@ -8,6 +8,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Data files and folders
+benches/*.tif
+
 # Distribution / packaging
 .Python
 .venv/
