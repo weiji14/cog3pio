@@ -24,6 +24,7 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = "2.5.0"
 
 [dev-dependencies]
+half = { version = "2.6.0", features = ["num-traits"] }
 tempfile = "3.10.1"
 
 [lints.clippy]

@@ -279,6 +279,23 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_read_geotiff_float16_dtype() {
+        let cog_url: &str =
+            "https://github.com/OSGeo/gdal/raw/v3.11.0/autotest/gcore/data/float16.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        let stream = Cursor::new(bytes);
+
+        let array: Array3<half::f16> = read_geotiff(stream).unwrap();
+
+        assert_eq!(array.dim(), (1, 20, 20));
+        assert_eq!(array.mean(), Some(half::f16::from_f32_const(127.125)));
+    }
+
+    #[tokio::test]
     async fn test_cogreader_dlpack() {
         let cog_url: &str = "https://github.com/rasterio/rasterio/raw/1.3.9/tests/data/float32.tif";
         let tif_url = Url::parse(cog_url).unwrap();
