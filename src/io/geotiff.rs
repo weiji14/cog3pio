@@ -50,6 +50,7 @@ impl<R: Read + Seek> CogReader<R> {
             DecodingResult::I16(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::I32(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::I64(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::F16(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::F32(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::F64(img_data) => shape_vec_to_tensor(shape, img_data)?,
         };

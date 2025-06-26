@@ -241,6 +241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66bdac5087071c9178f952a5bcc7a996ff667c1d0c256f23d6512b59fd3dc39d"
 dependencies = [
  "bitflags 2.9.1",
+ "half",
  "ndarray",
  "pyo3",
  "snafu 0.8.6",

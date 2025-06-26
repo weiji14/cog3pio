@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-dlpark = { version = "0.6.0", features = ["ndarray", "pyo3"] }
+dlpark = { version = "0.6.0", features = ["half", "ndarray", "pyo3"] }
 geo = "0.29.0"
 ndarray = "0.16.1"
 numpy = "0.25.0"
