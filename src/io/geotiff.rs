@@ -177,7 +177,11 @@ fn shape_vec_to_tensor<T: InferDataType>(
 }
 
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
-#[allow(clippy::missing_errors_doc)]
+///
+/// # Errors
+///
+/// Will return [`tiff::TiffError::IoError`] (Data type mismatch) if the specified
+/// output data type is different to the dtype of the input TIFF file.
 pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> TiffResult<Array3<T>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
