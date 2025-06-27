@@ -16,11 +16,6 @@ project:
 
 site:
   template: book-theme
-  nav:
-    - title: 📖 API Reference
-      url: /api.html
-    - title: 📆 Changelog
-      url: /changelog.html
   options:
     hide_toc: true
     hide_footer_links: true
