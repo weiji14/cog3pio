@@ -5,48 +5,6 @@ Cloud-optimized GeoTIFF ... Parallel I/O
 Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
 
 
-## Usage
-
-### Rust
-
-### Python
-
-#### NumPy
-
-```python
-import numpy as np
-from cog3pio import read_geotiff
-
-# Read GeoTIFF into a numpy array
-array: np.ndarray = read_geotiff(
-    path="https://github.com/cogeotiff/rio-tiler/raw/6.4.0/tests/fixtures/cog_nodata_nan.tif"
-)
-assert array.shape == (1, 549, 549)  # bands, height, width
-assert array.dtype == "float32"
-```
-
-#### Xarray
-
-```python
-import xarray as xr
-
-# Read GeoTIFF into an xarray.DataArray
-dataarray: xr.DataArray = xr.open_dataarray(
-    filename_or_obj="https://github.com/cogeotiff/rio-tiler/raw/7.8.0/tests/fixtures/cog_dateline.tif",
-    engine="cog3pio",
-)
-assert dataarray.sizes == {'band': 1, 'y': 2355, 'x': 2325}
-assert dataarray.dtype == "uint16"
-```
-
-> [!NOTE]
-> The cog3pio python library's `read_geotiff` function supports reading single or
-> multi-band GeoTIFF files into a float32 array only. If you wish to read into other
-> dtypes (e.g. uint16), please use `xarray.open_dataarray` with `engine="cog3pio"`, or
-> use the cog3pio Rust crate's `read_geotiff` function which supports reading into
-> different dtypes via a turbofish operator!
-
-
 ## Roadmap
 
 Short term (Q1 2024):
