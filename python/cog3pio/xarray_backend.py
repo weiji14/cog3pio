@@ -15,6 +15,22 @@ from cog3pio import CogReader
 class Cog3pioBackendEntrypoint(BackendEntrypoint):
     """
     Xarray backend to read GeoTIFF files using 'cog3pio' engine.
+
+    Examples
+    --------
+    Read a GeoTIFF from a HTTP url into an xarray.DataArray:
+
+    >>> import xarray as xr
+    ...
+    >>> # Read GeoTIFF into an xarray.DataArray
+    >>> dataarray: xr.DataArray = xr.open_dataarray(
+    ...     filename_or_obj="https://github.com/OSGeo/gdal/raw/v3.11.0/autotest/gcore/data/byte_zstd.tif",
+    ...     engine="cog3pio",
+    ... )
+    >>> dataarray.sizes
+    Frozen({'band': 1, 'y': 20, 'x': 20})
+    >>> dataarray.dtype
+    dtype('uint8')
     """
 
     description = "Use .tif files in Xarray"

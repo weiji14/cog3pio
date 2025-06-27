@@ -18,7 +18,8 @@ Notes:
 
 ## PyCapsule (DLPack)
 
-Read GeoTIFF file from a HTTP url into an object that conforms to the
+Read a GeoTIFF file from a HTTP url via the [CogReader](/api.html#dlpack) class into an
+object that conforms to the
 [Python Specification for DLPack](https://dmlc.github.io/dlpack/latest/python_spec.html),
 whereby the `__dlpack__()` method returns a
 [PyCapsule](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule) object containing
@@ -43,7 +44,8 @@ assert array.dtype == "float16"
 
 ## Xarray
 
-Read GeoTIFF file from a HTTP url into an `xarray.DataArray` object (akin to
+Read GeoTIFF file from a HTTP url via the [`Cog3pioBackendEntrypoint`](/api.html#xarray)
+engine into an `xarray.DataArray` object (akin to
 [`rioxarray`](https://corteva.github.io/rioxarray)).
 
 ```python
@@ -60,8 +62,8 @@ assert dataarray.dtype == "uint16"
 
 ## NumPy
 
-Read a GeoTIFF file from a HTTP url into a `numpy.ndarray` (akin to
-[`rasterio`](https://rasterio.readthedocs.io)).
+Read a GeoTIFF file from a HTTP url via the [`read_geotiff`](/api.html#numpy) function
+into a `numpy.ndarray` (akin to [`rasterio`](https://rasterio.readthedocs.io)).
 
 ```python
 import numpy as np
