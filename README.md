@@ -7,20 +7,28 @@ Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
 
 ## Roadmap
 
-Short term (Q1 2024):
+2024 Q1:
 - [x] Multi-band reader to [`ndarray`](https://github.com/rust-ndarray/ndarray) (relying
-      on [`image-tiff`](https://github.com/image-rs/image-tiff))
+      on [`image-tiff`](https://crates.io/crates/tiff))
 - [x] Read from HTTP remote storage (using
-      [`object-store`](https://github.com/apache/arrow-rs/tree/object_store_0.9.0/object_store))
+      [`object-store`](https://crates.io/crates/object_store))
 
-Medium term (Q2-Q4 2024):
+2024 Q2-Q4:
 - [x] Integration with `xarray` as a
       [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
 - [x] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (based
-      on [`geotiff`](https://github.com/georust/geotiff) crate)
+      on [`geotiff`](https://crates.io/crates/geotiff) crate)
 
-Longer term (2025):
-- [ ] Parallel reader (TBD on multi-threaded or asynchronous)
+2025 Q1-Q2:
+- [x] Support for [`DLPack`](https://dmlc.github.io/dlpack/latest/index.html) protocol
+      (through [`dlpark`](https://crates.io/crates/dlpark))
+- [ ] Initial release on crates.io and PyPI
+
+2025 Q3-Q4:
+- [ ] GPU-based decoding (via [`nvTIFF`](https://crates.io/crates/nvtiff-sys))
+- [ ] Asynchronous I/O (refactor to [`async-tiff`](https://crates.io/crates/async-tiff))
+
+2026:
 - [ ] Direct-to-GPU loading
 
 
