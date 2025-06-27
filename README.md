@@ -5,26 +5,6 @@ Cloud-optimized GeoTIFF ... Parallel I/O
 Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
 
 
-## Installation
-
-### Rust
-
-    cargo add --git https://github.com/weiji14/cog3pio.git
-
-### Python
-
-    pip install git+https://github.com/weiji14/cog3pio.git
-
-> [!TIP]
-> The API for this crate/library is still unstable and subject to change, so you may
-> want to pin to a specific git commit using either:
-> - `cargo add --git https://github.com/weiji14/cog3pio.git --rev <sha>`
-> - `pip install git+https://github.com/weiji14/cog3pio.git@<sha>`
->
-> where `<sha>` is a commit hashsum obtained from
-> https://github.com/weiji14/cog3pio/commits/main
-
-
 ## Usage
 
 ### Rust
