@@ -27,4 +27,4 @@ pip install git+https://github.com/weiji14/cog3pio.git
 
 ## User Guide
 
-[Quickstart](quickstart.md) | [API Reference](api.html) | [Changelog](changelog.html)
+[Quickstart](quickstart.html) | [API Reference](api.html) | [Changelog](changelog.html)
