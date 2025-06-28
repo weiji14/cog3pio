@@ -1,0 +1,32 @@
+name: Publish to crates.io
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  publish-to-crates-io:
+    name: Publish Rust 🦀 package 📦 to crates.io
+    runs-on: ubuntu-24.04
+    environment: cratesio # Optional: for enhanced security
+    permissions:
+      id-token: write # Required for OIDC token exchange
+      contents: read # Required to checkout repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # - name: Authenticate with registry
+      #   uses: rust-lang/crates-io-auth-action@v1
+      #   id: auth
+
+      - name: Publish package 📦 to crates.io
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }} # ${{ steps.auth.outputs.token }}
