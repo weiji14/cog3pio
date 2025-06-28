@@ -22,7 +22,7 @@ Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
 2025 Q1-Q2:
 - [x] Support for [`DLPack`](https://dmlc.github.io/dlpack/latest/index.html) protocol
       (through [`dlpark`](https://crates.io/crates/dlpark))
-- [ ] Initial release on crates.io and PyPI
+- [x] Initial release on crates.io and PyPI
 
 2025 Q3-Q4:
 - [ ] GPU-based decoding (via [`nvTIFF`](https://crates.io/crates/nvtiff-sys))

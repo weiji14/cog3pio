@@ -2,6 +2,9 @@
 name = "cog3pio"
 version = "0.0.1"
 edition = "2024"
+description = "Cloud-optimized GeoTIFF ... Parallel I/O"
+readme = "README.md"
+repository = "https://github.com/weiji14/cog3pio"
 license = "MIT OR Apache-2.0"
 rust-version = "1.85.0"
 authors = ["Wei Ji <23487320+weiji14@users.noreply.github.com>"]
