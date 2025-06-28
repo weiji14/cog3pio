@@ -61,4 +61,4 @@ All notable changes to this project will be documented in this file.
 
 ### 🧑‍🤝‍🧑 Contributors
 
-- [@weiji14](https:://github.com/weiji14)
+- [@weiji14](https://github.com/weiji14)

@@ -41,7 +41,7 @@ body = """
 {%- if remote.contributors %}
   ### 🧑‍🤝‍🧑 Contributors
   {% for contributor in remote.contributors %}
-    - [@{{ contributor.username }}](https:://github.com/{{ contributor.username }})
+    - [@{{ contributor.username }}](https://github.com/{{ contributor.username }})
   {%- endfor %}
   {% raw %}\n{% endraw %}\
 {% endif -%}
