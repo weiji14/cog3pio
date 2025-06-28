@@ -7,13 +7,13 @@
 ### Rust
 
 ```bash
-cargo add --git https://github.com/weiji14/cog3pio.git
+cargo add cog3pio
 ```
 
 ### Python
 
 ```bash
-pip install git+https://github.com/weiji14/cog3pio.git
+pip install cog3pio
 ```
 
 > [!TIP]
