@@ -1,0 +1,80 @@
+[[package]]
+name = "cog3pio"
+changelog_path = "docs/changelog.md"
+
+[changelog]
+header = """
+# Changelog\n
+All notable changes to this project will be documented in this file.\n
+"""
+# template for the changelog body
+# https://keats.github.io/tera/docs/#introduction
+body = """
+---\n
+{% if version %}\
+    ## {{ version | trim_start_matches(pat="v") }} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## Unreleased
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | upper_first }}
+    {% for commit in commits
+    | filter(attribute="scope")
+    | sort(attribute="scope") %}
+        - *({{commit.scope}})* {{ commit.message | split(pat="\n") | first | upper_first }}
+        {%- if commit.breaking %}
+        {% raw %}  {% endraw %}- **BREAKING**: {{commit.breaking_description}}
+        {%- endif -%}
+    {%- endfor -%}
+    {% raw %}\n{% endraw %}\
+    {%- for commit in commits %}
+        {%- if commit.scope -%}
+        {% else -%}
+            - {{ commit.message | split(pat="\n") | first | upper_first }}
+            {% if commit.breaking -%}
+            {% raw %}  {% endraw %}- **BREAKING**: {{commit.breaking_description}}
+            {% endif -%}
+        {% endif -%}
+    {% endfor -%}
+    {% raw %}{% endraw %}\
+{% endfor %}\n
+"""
+trim = true
+
+# process each line of a commit as an individual commit
+commit_preprocessors = [
+    # Replace the issue/PR number with the link.
+    { pattern = "\\(#([0-9]+)\\)", replace = "([#${1}](https://github.com/weiji14/cog3pio/pull/${1}))" },
+    # Replace gitmoji
+    { pattern = ':art:', replace = "🎨" },
+    { pattern = ':arrow_down:', replace = "⬇️" },
+    { pattern = ':arrow_up:', replace = "⬆️" },
+    { pattern = ':boom:', replace = "💥" },
+    { pattern = ':bug:', replace = "🐛" },
+    { pattern = ':construction_worker:', replace = "👷" },
+    { pattern = ':heavy_minus_sign:', replace = "➖" },
+    { pattern = ':heavy_plus_sign:', replace = "➕" },
+    { pattern = ':lock:', replace = "🔒️" },
+    { pattern = ':loud_sound:', replace = "🔊|" },
+    { pattern = ':memo:', replace = "📝" },
+    { pattern = ':pushpin:', replace = "📌" },
+    { pattern = ':recycle:', replace = "♻️" },
+    { pattern = ':rocket:', replace = "🚀" },
+    { pattern = ':rotating_light:', replace = "🚨" },
+    { pattern = ':seedling:', replace = "🌱" },
+    { pattern = ':sparkles:', replace = "✨" },
+    { pattern = ':truck:', replace = "🚚" },
+    { pattern = ':wrench:', replace = "🔧" },
+]
+# regex for parsing and grouping commits
+commit_parsers = [
+    # Gitmoji
+    { message = "^(💥|:boom:|🚀|:rocket:)", group = "<!-- 0 --> 🌈 Highlights" },
+    { message = "^(✨|:sparkles:)", group = "<!-- 1 --> ✨ Features" },
+    { message = "^(🐛|:bug:)", group = "<!-- 2 --> 🐛 Bug Fixes" },
+    { message = "^(♻️|:recycle:|🚚|:truck:|🎨|:art:)", group = "<!-- 3 --> 🏭 Refactors" },
+    { message = "^(📝|:memo:)", group = "<!-- 4 --> 📝 Documentation" },
+    { message = "^(👷|:construction_worker:|🔧|:wrench:|⬆️|:arrow_up:|➕|:heavy_plus_sign:|➖|:heavy_minus_sign:|⬇️|:arrow_down:|📌|:pushpin:|🔒️|:lock:|🚨|:rotating_light:|🌱|:seedling:|🔊|:loud_sound:)", group = "<!-- 5 --> 🧰 Maintenance" },
+]
+# sort the commits inside sections by oldest/newest order
+sort_commits = "newest"
