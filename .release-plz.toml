@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.\n
 body = """
 ---\n
 {% if version %}\
-    ## {{ version | trim_start_matches(pat="v") }} - {{ timestamp | date(format="%Y-%m-%d") }}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else %}\
     ## Unreleased
 {% endif %}\
@@ -41,7 +41,7 @@ body = """
 {%- if remote.contributors %}
   ### 🧑‍🤝‍🧑 Contributors
   {% for contributor in remote.contributors %}
-    - [@{{ contributor.username }}](https:://github.com/{{ contributor.username }})
+    - [@{{ contributor.username }}](https://github.com/{{ contributor.username }})
   {%- endfor %}
   {% raw %}\n{% endraw %}\
 {% endif -%}
@@ -65,7 +65,7 @@ commit_preprocessors = [
     { pattern = ':heavy_minus_sign:', replace = "➖" },
     { pattern = ':heavy_plus_sign:', replace = "➕" },
     { pattern = ':lock:', replace = "🔒️" },
-    { pattern = ':loud_sound:', replace = "🔊|" },
+    { pattern = ':loud_sound:', replace = "🔊" },
     { pattern = ':memo:', replace = "📝" },
     { pattern = ':pushpin:', replace = "📌" },
     { pattern = ':recycle:', replace = "♻️" },

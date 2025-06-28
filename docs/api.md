@@ -1,6 +1,7 @@
 # API Reference
 
-These are the Python docs for `cog3pio`.
+These are the Python docs for `cog3pio`, for the Rust docs, see
+<https://docs.rs/cog3pio>.
 
 ## DLPack
 

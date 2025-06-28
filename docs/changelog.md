@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## Unreleased
+## [0.0.1] - 2025-06-28
 
 ### <!-- 0 --> 🌈 Highlights
 
@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### <!-- 1 --> ✨ Features
 
+- ✨ Support decoding ZSTD compressed and half-precision TIFFs ([#46](https://github.com/weiji14/cog3pio/pull/46))
 - ✨ Support reading 3-band RGB images ([#31](https://github.com/weiji14/cog3pio/pull/31))
 - ✨ Support reading uint/int/float dtypes ([#18](https://github.com/weiji14/cog3pio/pull/18))
 - ✨ Support reading multi-band GeoTIFF files ([#13](https://github.com/weiji14/cog3pio/pull/13))
@@ -31,10 +32,13 @@ All notable changes to this project will be documented in this file.
 
 ### <!-- 4 --> 📝 Documentation
 
+- 📝 Move installation and example commands into separate pages ([#47](https://github.com/weiji14/cog3pio/pull/47))
 - 📝 Initialize Python documentation page ([#35](https://github.com/weiji14/cog3pio/pull/35))
 
 ### <!-- 5 --> 🧰 Maintenance
 
+- 👷 GitHub Actions CI workflow to publish to crates.io ([#49](https://github.com/weiji14/cog3pio/pull/49))
+- 🔧 Switch changelog generator config from git-cliff to release-plz ([#48](https://github.com/weiji14/cog3pio/pull/48))
 - 📌 Unpin sphinx-ext-mystmd in docs extras ([#44](https://github.com/weiji14/cog3pio/pull/44))
 - 🔊 Enable verbose logging for pypa/gh-action-pypi-publish ([#42](https://github.com/weiji14/cog3pio/pull/42))
 - 👷 Upload to TestPyPI on prerelease and release tags ([#40](https://github.com/weiji14/cog3pio/pull/40))
@@ -54,3 +58,7 @@ All notable changes to this project will be documented in this file.
 - 👷 Setup benchmark workflow with pytest-codspeed ([#4](https://github.com/weiji14/cog3pio/pull/4))
 - 👷 Setup GitHub Actions Continuous Integration tests ([#2](https://github.com/weiji14/cog3pio/pull/2))
 - 🌱 Initialize Cargo.toml and pyproject.toml with maturin ([#1](https://github.com/weiji14/cog3pio/pull/1))
+
+### 🧑‍🤝‍🧑 Contributors
+
+- [@weiji14](https://github.com/weiji14)

@@ -163,7 +163,7 @@ dependencies = [
 
 [[package]]
 name = "cog3pio"
-version = "0.0.1-beta.5"
+version = "0.0.1"
 dependencies = [
  "bytes",
  "dlpark",
