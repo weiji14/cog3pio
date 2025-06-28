@@ -37,7 +37,17 @@ body = """
         {% endif -%}
     {% endfor -%}
     {% raw %}{% endraw %}\
-{% endfor %}\n
+{% endfor %}
+{%- if remote.contributors %}
+  ### 🧑‍🤝‍🧑 Contributors
+  {% for contributor in remote.contributors %}
+    - [@{{ contributor.username }}](https:://github.com/{{ contributor.username }})
+  {%- endfor %}
+  {% raw %}\n{% endraw %}\
+{% endif -%}
+{%- macro username(commit) -%}
+    {% if commit.remote.username %} {% endif -%}
+{% endmacro -%}
 """
 trim = true
 
