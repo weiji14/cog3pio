@@ -94,8 +94,8 @@ def test_read_geotiff_unsupported_colortype():
     """
     with pytest.raises(
         ValueError,
-        match="The Decoder does not support the image format "
-        r"`RGBPalette with \[8\] bits per sample is unsupported",
+        match="unsupported error: Photometric interpretation "
+        r"RGBPalette with bits per sample \[8\] is unsupported",
     ):
         read_geotiff(
             path="https://github.com/GenericMappingTools/gmtserver-admin/raw/caf0dbd015f0154687076dd31dc8baff62c95040/cache/earth_day_HD.tif"
@@ -109,8 +109,7 @@ def test_read_geotiff_unsupported_dtype():
     """
     with pytest.raises(
         ValueError,
-        match="The Decoder does not support the image format "
-        r"`Sample format \[Unknown\(5\)\] is unsupported",
+        match=r"unsupported error: sample format \[Unknown\(5\)\] is unsupported",
     ):
         read_geotiff(
             path="https://github.com/corteva/rioxarray/raw/0.15.1/test/test_data/input/cint16.tif"

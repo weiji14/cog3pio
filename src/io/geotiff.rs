@@ -50,6 +50,7 @@ impl<R: Read + Seek> CogReader<R> {
             DecodingResult::I16(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::I32(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::I64(img_data) => shape_vec_to_tensor(shape, img_data)?,
+            DecodingResult::F16(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::F32(img_data) => shape_vec_to_tensor(shape, img_data)?,
             DecodingResult::F64(img_data) => shape_vec_to_tensor(shape, img_data)?,
         };
@@ -176,7 +177,11 @@ fn shape_vec_to_tensor<T: InferDataType>(
 }
 
 /// Synchronously read a GeoTIFF file into an [`ndarray::Array`]
-#[allow(clippy::missing_errors_doc)]
+///
+/// # Errors
+///
+/// Will return [`tiff::TiffError::IoError`] (Data type mismatch) if the specified
+/// output data type is different to the dtype of the input TIFF file.
 pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> TiffResult<Array3<T>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
@@ -275,6 +280,23 @@ mod tests {
 
         assert_eq!(array.dim(), (1, 20, 20));
         assert_eq!(array.mean(), Some(126));
+    }
+
+    #[tokio::test]
+    async fn test_read_geotiff_float16_dtype() {
+        let cog_url: &str =
+            "https://github.com/OSGeo/gdal/raw/v3.11.0/autotest/gcore/data/float16.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+        let stream = Cursor::new(bytes);
+
+        let array: Array3<half::f16> = read_geotiff(stream).unwrap();
+
+        assert_eq!(array.dim(), (1, 20, 20));
+        assert_eq!(array.mean(), Some(half::f16::from_f32_const(127.125)));
     }
 
     #[tokio::test]

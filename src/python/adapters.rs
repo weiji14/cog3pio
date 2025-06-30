@@ -28,7 +28,7 @@ use crate::io::geotiff::{CogReader, read_geotiff};
 ///
 /// Examples
 /// --------
-/// Read a GeoTIFF from a HTTP url into a numpy.ndarray:
+/// Read a GeoTIFF from a HTTP url into a DLPack tensor:
 ///
 /// >>> import numpy as np
 /// >>> from cog3pio import CogReader

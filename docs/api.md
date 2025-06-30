@@ -1,8 +1,9 @@
 # API Reference
 
-These are the Python docs for `cog3pio`.
+These are the Python docs for `cog3pio`, for the Rust docs, see
+<https://docs.rs/cog3pio>.
 
-## Classes
+## DLPack
 
 ```{eval-rst}
 .. autoclass:: cog3pio.CogReader
@@ -10,8 +11,14 @@ These are the Python docs for `cog3pio`.
     :special-members: __dlpack__, __dlpack_device__
 ```
 
+## Xarray
 
-## Functions
+```{eval-rst}
+.. autoclass:: cog3pio.xarray_backend.Cog3pioBackendEntrypoint
+```
+
+
+## NumPy
 
 ```{eval-rst}
 .. autofunction:: cog3pio.read_geotiff
