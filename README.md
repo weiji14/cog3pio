@@ -1,5 +1,11 @@
 # cog3pio
 
+[![docs.rs](https://img.shields.io/docsrs/cog3pio?label=docs.rs%20latest)](https://docs.rs/cog3pio)
+[![crates.io](https://img.shields.io/crates/v/cog3pio)](https://crates.io/crates/cog3pio)
+[![Latest version on PyPI](https://img.shields.io/pypi/v/cog3pio)](https://pypi.org/project/cog3pio)
+[![Latest version on conda-forge](https://img.shields.io/conda/v/conda-forge/cog3pio)](https://anaconda.org/conda-forge/cog3pio)
+[![Digital Object Identifier for the Zenodo archive](https://zenodo.org/badge/DOI/10.5281/15702154.svg)](https://doi.org/10.5281/zenodo.15702154)
+
 Cloud-optimized GeoTIFF ... Parallel I/O
 
 Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
