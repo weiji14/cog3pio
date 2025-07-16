@@ -4,9 +4,9 @@ use std::sync::Arc;
 use bytes::Bytes;
 use cudarc::driver::{CudaSlice, CudaStream, DevicePtr};
 use nvtiff_sys::{
-    nvtiffDecodeCheckSupported, nvtiffDecodeImage, nvtiffDecodeParams, nvtiffDecoder,
-    nvtiffDecoderCreateSimple, nvtiffFileInfo, nvtiffStatus_t, nvtiffStream, nvtiffStreamCreate,
-    nvtiffStreamGetFileInfo, nvtiffStreamParse,
+    NvTiffResult, NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage,
+    nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffFileInfo, nvtiffStatus_t,
+    nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetFileInfo, nvtiffStreamParse,
 };
 
 /// nvTIFF decoder
@@ -18,27 +18,33 @@ pub struct CudaCogReader {
 
 impl CudaCogReader {
     /// Create a new Cloud-optimized GeoTIFF decoder that decodes from a stream buffer
-    pub fn new(byte_stream: &Bytes, cuda_stream: &Arc<CudaStream>) -> Self {
+    ///
+    /// # Errors
+    /// Will return [`nvtiff_sys::result::NvTiffError::StatusError`] if nvTIFF failed to
+    /// parse the TIFF data or metadata from the byte stream buffer.
+    pub fn new(byte_stream: &Bytes, cuda_stream: &Arc<CudaStream>) -> NvTiffResult<Self> {
         // Step 0: Init TIFF stream on host (CPU)
         let mut host_stream = std::mem::MaybeUninit::uninit();
         let mut tiff_stream: *mut nvtiffStream = host_stream.as_mut_ptr();
 
         let status_cpustream: nvtiffStatus_t::Type =
-            unsafe { nvtiffStreamCreate(&mut tiff_stream) };
+            unsafe { nvtiffStreamCreate(&raw mut tiff_stream) };
         dbg!(status_cpustream);
-        assert_eq!(status_cpustream, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
+        status_cpustream.result()?;
 
         // Step 1: Parse the TIFF data from byte stream buffer
         let status_parse: u32 =
             unsafe { nvtiffStreamParse(byte_stream.as_ptr(), usize::MAX, tiff_stream) };
         dbg!(status_parse);
-        assert_eq!(status_parse, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
+        status_parse.result()?;
 
         // Step 2: Extract file-level metadata information from the TIFF stream
         let mut file_info = nvtiffFileInfo::default();
-        let status_fileinfo: u32 = unsafe { nvtiffStreamGetFileInfo(tiff_stream, &mut file_info) };
+        let status_fileinfo: u32 =
+            unsafe { nvtiffStreamGetFileInfo(tiff_stream, &raw mut file_info) };
         dbg!(status_fileinfo);
-        assert_eq!(status_fileinfo, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
+        // dbg!(file_info);
+        status_fileinfo.result()?;
 
         // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
         let num_bytes: usize = file_info.image_width as usize // Width
@@ -47,15 +53,21 @@ impl CudaCogReader {
         dbg!(num_bytes);
         let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(num_bytes).unwrap();
 
-        Self {
+        Ok(Self {
             tiff_stream,
             num_bytes,
             cuda_slice: image_stream,
-        }
+        })
     }
 
     /// Decode GeoTIFF image to a `CudaSlice` (`Vec<u8>` on a CUDA device)
-    pub fn to_cuda(&self) -> CudaSlice<u8> {
+    ///
+    /// # Errors
+    ///
+    /// Will raise [`nvtiff_sys::result::NvTiffError::StatusError`] if decoding failed
+    /// due to e.g. TIFF stream not being supported by nvTIFF, missing
+    /// nvCOMP/nvJPEG/nvJPEG2K libraries, etc.
+    pub fn to_cuda(&self) -> NvTiffResult<CudaSlice<u8>> {
         // Step 1b: Init CUDA stream on device (GPU)
         let stream: &Arc<CudaStream> = self.cuda_slice.stream();
         let cuda_stream: *mut nvtiff_sys::CUstream_st = stream.cu_stream().cast::<_>();
@@ -65,9 +77,9 @@ impl CudaCogReader {
         let mut nvtiff_decoder: *mut nvtiffDecoder = decoder_handle.as_mut_ptr();
 
         let status_decoder: u32 =
-            unsafe { nvtiffDecoderCreateSimple(&mut nvtiff_decoder, cuda_stream) };
+            unsafe { nvtiffDecoderCreateSimple(&raw mut nvtiff_decoder, cuda_stream) };
         dbg!(status_decoder);
-        assert_eq!(status_decoder, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
+        status_decoder.result()?;
 
         // Step 3a: Check if image is supported first
         let mut params = std::mem::MaybeUninit::zeroed();
@@ -81,7 +93,9 @@ impl CudaCogReader {
             )
         };
         dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
-        assert_eq!(status_check, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
+        status_check.result()?;
+
+        dbg!(self.tiff_stream); // needed to keep tiff_stream lifetime alive somehow?
 
         // Step 3b: Do the TIFF decoding to allocated device memory
         let (image_ptr, _record): (u64, _) = self.cuda_slice.device_ptr(stream);
@@ -97,12 +111,10 @@ impl CudaCogReader {
             )
         };
         dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
-        assert_eq!(status_decode, nvtiffStatus_t::NVTIFF_STATUS_SUCCESS);
-
-        // todo!();
+        status_decode.result()?;
 
         // self.cuda_slice
-        unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) }
+        Ok(unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) })
     }
 }
 
@@ -127,7 +139,7 @@ mod tests {
         let result = store.get(&location).await.unwrap();
         let bytes = result.bytes().await.unwrap();
 
-        // let v = std::fs::read("images/float32.tif").unwrap();
+        // let v = std::fs::read("benches/float32.tif").unwrap();
         // let bytes = Bytes::copy_from_slice(&v);
 
         // Step 1b: Init CUDA stream on device (GPU)
@@ -135,8 +147,8 @@ mod tests {
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
         // Step 3b: Do the TIFF decoding
-        let reader: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream);
-        let slice: CudaSlice<u8> = reader.to_cuda();
+        let reader: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+        let slice: CudaSlice<u8> = reader.to_cuda().unwrap();
 
         // todo!();
 

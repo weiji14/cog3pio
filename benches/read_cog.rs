@@ -41,8 +41,8 @@ fn read_geotiff_nvtiff(fpath: &str) {
     let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
-    let cog = CudaCogReader::new(&bytes, &cuda_stream);
-    let cuslice: CudaSlice<u8> = cog.to_cuda();
+    let cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+    let cuslice: CudaSlice<u8> = cog.to_cuda().unwrap();
 
     assert_eq!(cuslice.len(), 3 * 10980 * 10980);
     // drop(cog);
