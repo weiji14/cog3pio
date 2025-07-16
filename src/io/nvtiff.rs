@@ -9,7 +9,7 @@ use nvtiff_sys::{
     nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetFileInfo, nvtiffStreamParse,
 };
 
-/// nvTIFF decoder
+/// Cloud-optimized GeoTIFF reader using [`nvTIFF`](https://developer.nvidia.com/nvtiff)
 pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
@@ -17,11 +17,17 @@ pub struct CudaCogReader {
 }
 
 impl CudaCogReader {
-    /// Create a new Cloud-optimized GeoTIFF decoder that decodes from a stream buffer
+    /// Create a new Cloud-optimized GeoTIFF decoder that decodes from a CUDA stream
+    /// buffer
     ///
     /// # Errors
     /// Will return [`nvtiff_sys::result::NvTiffError::StatusError`] if nvTIFF failed to
     /// parse the TIFF data or metadata from the byte stream buffer.
+    ///
+    /// # Panics
+    /// Will panic if [`CudaStream::alloc_zeros`] failed to allocate bytes on CUDA
+    /// device memory, usually due to
+    /// [`cudarc::driver::sys::cudaError_enum::CUDA_ERROR_OUT_OF_MEMORY`]
     pub fn new(byte_stream: &Bytes, cuda_stream: &Arc<CudaStream>) -> NvTiffResult<Self> {
         // Step 0: Init TIFF stream on host (CPU)
         let mut host_stream = std::mem::MaybeUninit::uninit();
@@ -51,7 +57,12 @@ impl CudaCogReader {
             * file_info.image_height as usize // Height
             * (file_info.bits_per_pixel as usize / 8); // Bytes per pixel (e.g. 4 bytes for f32)
         dbg!(num_bytes);
-        let image_stream: CudaSlice<u8> = cuda_stream.alloc_zeros::<u8>(num_bytes).unwrap();
+        let image_stream: CudaSlice<u8> =
+            cuda_stream
+                .alloc_zeros::<u8>(num_bytes)
+                .unwrap_or_else(|err| {
+                    panic!("Failed to allocate {num_bytes} bytes on CUDA device: {err}")
+                });
 
         Ok(Self {
             tiff_stream,
@@ -60,7 +71,7 @@ impl CudaCogReader {
         })
     }
 
-    /// Decode GeoTIFF image to a `CudaSlice` (`Vec<u8>` on a CUDA device)
+    /// Decode GeoTIFF image to a [`CudaSlice`] (`Vec<u8>` on a CUDA device)
     ///
     /// # Errors
     ///
