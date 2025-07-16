@@ -45,6 +45,10 @@ cuda = ["dep:cudarc", "dep:nvtiff-sys"]
 [lints.clippy]
 pedantic = "warn"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [profile.dev]
 opt-level = 1
 
