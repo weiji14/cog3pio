@@ -95,8 +95,6 @@ impl CudaCogReader {
         dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
         status_check.result()?;
 
-        dbg!(self.tiff_stream); // needed to keep tiff_stream lifetime alive somehow?
-
         // Step 3b: Do the TIFF decoding to allocated device memory
         let (image_ptr, _record): (u64, _) = self.cuda_slice.device_ptr(stream);
         let image_out_d = image_ptr as *mut c_void;

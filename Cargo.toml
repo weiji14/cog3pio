@@ -45,6 +45,9 @@ cuda = ["dep:cudarc", "dep:nvtiff-sys"]
 [lints.clippy]
 pedantic = "warn"
 
+[profile.dev]
+opt-level = 1
+
 [[bench]]
 name = "read_cog"
 harness = false
