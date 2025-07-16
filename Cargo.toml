@@ -16,10 +16,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
+cudarc = { version = "0.16.4", features = [
+    "cuda-version-from-build-system",
+], optional = true }
 dlpark = { version = "0.6.0", features = ["half", "ndarray", "pyo3"] }
 geo = "0.29.0"
 ndarray = "0.16.1"
 numpy = "0.25.0"
+nvtiff-sys = { version = "0.1.2", optional = true }
 object_store = { version = "0.9.0", features = ["http"] }
 pyo3 = { version = "0.25.0", features = ["abi3-py312", "extension-module"] }
 tiff = { version = "0.10.0", features = ["zstd"] }
@@ -27,8 +31,27 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = "2.5.0"
 
 [dev-dependencies]
+criterion = { git = "https://github.com/vxfield/criterion.rs.git", version = "0.5.1" } # https://github.com/bheisler/criterion.rs/pull/832
+gdal = { version = "0.18.0", features = ["array"] }
+# comment out gdal-src and gdal-sys if libgdal-dev installed
+gdal-src = { version = "0.2.1", features = ["driver_gtiff", "nobuild"] }
+gdal-sys = { version = "0.11.0", features = ["bundled"] }
 half = { version = "2.6.0", features = ["num-traits"] }
 tempfile = "3.10.1"
 
+[features]
+cuda = ["dep:cudarc", "dep:nvtiff-sys"]
+
 [lints.clippy]
 pedantic = "warn"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.dev]
+opt-level = 1
+
+[[bench]]
+name = "read_cog"
+harness = false

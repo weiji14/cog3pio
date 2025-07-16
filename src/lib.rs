@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![warn(missing_docs)]
 //! # Cloud-optimized GeoTIFF ... Parallel I/O
 //!
