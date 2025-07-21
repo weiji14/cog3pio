@@ -32,7 +32,7 @@ benchmark = [
     "rioxarray",
 ]
 docs = [
-    "jupyter-book>=2.0.0a0",
+    "jupyter-book>=2.0.0b2",
     "myst_parser",
     "sphinx",
     # https://github.com/jupyter-book/sphinx-ext-mystmd/pull/2
