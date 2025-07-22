@@ -24,7 +24,3 @@ pip install cog3pio
 >
 > where `<sha>` is a commit hashsum obtained from
 > https://github.com/weiji14/cog3pio/commits/main
-
-## User Guide
-
-[Quickstart](quickstart.html) | [API Reference](api.html) | [Changelog](changelog.html)
