@@ -315,6 +315,7 @@ mod tests {
         assert_eq!(tensor.shape(), [1, 2, 3]);
         assert_eq!(tensor.data_type(), &DataType::F32);
         let values: Vec<f32> = tensor
+            .as_slice_untyped()
             .to_vec()
             .chunks_exact(4)
             .map(TryInto::try_into)

@@ -28,6 +28,7 @@ use cog3pio::io::nvtiff::CudaCogReader;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 #[cfg(feature = "cuda")]
 use cudarc::driver::{CudaContext, CudaSlice, CudaStream};
+use dlpark::traits::TensorView;
 use gdal::Dataset;
 use gdal::raster::Buffer;
 use ndarray::Array2;
@@ -69,7 +70,7 @@ fn read_geotiff_image_tiff(fpath: &str) {
     let mut cog = CogReader::new(file).unwrap();
     let tensor = cog.dlpack().unwrap();
 
-    assert_eq!(tensor.len(), 3 * 10980 * 10980);
+    assert_eq!(tensor.num_bytes(), 3 * 10980 * 10980);
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
