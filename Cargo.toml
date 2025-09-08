@@ -28,7 +28,7 @@ geo = "0.29.0"
 ndarray = "0.16.1"
 numpy = "0.26.0"
 nvtiff-sys = { version = "0.1.2", optional = true }
-object_store = { version = "0.9.0", features = ["http"] }
+object_store = { version = "0.12.3", features = ["http"] }
 pyo3 = { version = "0.26.0", features = ["abi3-py312", "extension-module"] }
 tiff = { version = "0.10.0", features = ["zstd"] }
 tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
