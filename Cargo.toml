@@ -20,6 +20,7 @@ cudarc = { version = "0.17.3", features = [
     "cuda-version-from-build-system",
 ], optional = true }
 dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", features = [
+    "cuda",
     "half",
     "ndarray",
     "pyo3",

@@ -450,6 +450,7 @@ version = "0.6.0"
 source = "git+https://github.com/SunDoge/dlpark.git?rev=d6c7e17e911a4a0ff80f3c010370e15dd3ac683c#d6c7e17e911a4a0ff80f3c010370e15dd3ac683c"
 dependencies = [
  "bitflags 2.9.1",
+ "cudarc",
  "half",
  "ndarray",
  "pyo3",
