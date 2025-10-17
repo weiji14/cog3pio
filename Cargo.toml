@@ -20,7 +20,6 @@ cudarc = { version = "0.17.3", features = [
     "cuda-version-from-build-system",
 ], optional = true }
 dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", features = [
-    "cuda",
     "half",
     "ndarray",
     "pyo3",
@@ -45,7 +44,7 @@ half = { version = "2.6.0", features = ["num-traits"] }
 tempfile = "3.10.1"
 
 [features]
-cuda = ["dep:cudarc", "dep:nvtiff-sys"]
+cuda = ["cudarc", "dlpark/cuda", "nvtiff-sys"]
 
 [lints.clippy]
 pedantic = "warn"
