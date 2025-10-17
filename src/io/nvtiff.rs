@@ -3,6 +3,8 @@ use std::sync::Arc;
 
 use bytes::Bytes;
 use cudarc::driver::{CudaSlice, CudaStream, DevicePtr};
+use dlpark::SafeManagedTensorVersioned;
+use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResult, NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage,
     nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffFileInfo, nvtiffStatus_t,
@@ -78,7 +80,7 @@ impl CudaCogReader {
     /// Will raise [`nvtiff_sys::result::NvTiffError::StatusError`] if decoding failed
     /// due to e.g. TIFF stream not being supported by nvTIFF, missing
     /// nvCOMP/nvJPEG/nvJPEG2K libraries, etc.
-    pub fn to_cuda(&self) -> NvTiffResult<CudaSlice<u8>> {
+    pub fn dlpack(&self) -> NvTiffResult<SafeManagedTensorVersioned> {
         // Step 1b: Init CUDA stream on device (GPU)
         let stream: &Arc<CudaStream> = self.cuda_slice.stream();
         let cuda_stream: *mut nvtiff_sys::CUstream_st = stream.cu_stream().cast::<_>();
@@ -122,8 +124,15 @@ impl CudaCogReader {
         dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
         status_decode.result()?;
 
-        // self.cuda_slice
-        Ok(unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) })
+        // Create CudaSlice from pointer
+        let cuslice: CudaSlice<u8> =
+            unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) };
+        // Put CudaSlice into DLPack tensor
+        let tensor = SafeManagedTensorVersioned::new(cuslice)
+            // TODO raise error from err string
+            .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?;
+
+        Ok(tensor)
     }
 }
 
@@ -133,13 +142,16 @@ mod tests {
     use std::sync::Arc;
 
     use cudarc::driver::{CudaContext, CudaSlice, CudaStream};
+    use dlpark::SafeManagedTensorVersioned;
+    use dlpark::ffi::DataType;
+    use dlpark::prelude::TensorView;
     use object_store::parse_url;
     use url::Url;
 
     use crate::io::nvtiff::CudaCogReader;
 
     #[tokio::test]
-    async fn test_cudacogreader_to_cuda() {
+    async fn cudacogreader_dlpack() {
         let cog_url: &str =
             "https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/float32.tif";
         let tif_url = Url::parse(cog_url).unwrap();
@@ -151,20 +163,28 @@ mod tests {
         // let v = std::fs::read("benches/float32.tif").unwrap();
         // let bytes = Bytes::copy_from_slice(&v);
 
-        // Step 1b: Init CUDA stream on device (GPU)
+        // Step 1: Init CUDA stream on device (GPU)
         let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
-        // Step 3b: Do the TIFF decoding
-        let reader: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-        let slice: CudaSlice<u8> = reader.to_cuda().unwrap();
+        // Step 2: Do the TIFF decoding
+        let cog: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
-        // todo!();
+        // assert_eq!(tensor.data_type(), &DataType::F32); // TODO should be f32 dtype
+        assert_eq!(tensor.data_type(), &DataType::U8);
+        // assert_eq!(tensor.shape(), [1, 2, 3]); // TODO should be 3D tensor
+        assert_eq!(tensor.shape(), [24]);
 
-        // Step 2c: Transfer decoded bytes from device to host, and check results
-        let mut image_out_h: Vec<u8> = vec![0; slice.num_bytes()];
-        cuda_stream.memcpy_dtoh(&slice, &mut image_out_h).unwrap();
-        // dbg!(image_out_h.clone());
+        // Step 3: Transfer decoded bytes from device to host, and check results
+        let mut image_out_h: Vec<u8> = vec![0; tensor.num_bytes()];
+        let cuslice: CudaSlice<_> = unsafe {
+            cuda_stream.upgrade_device_ptr(tensor.data_ptr() as u64, tensor.num_elements())
+        };
+        cuda_stream
+            .memcpy_dtoh(&cuslice.clone(), &mut image_out_h)
+            .unwrap();
+        dbg!(image_out_h.clone());
         let float_array: Vec<f32> = image_out_h
             // https://stackoverflow.com/questions/77388769/convert-vecu8-to-vecfloat-in-rust
             // .array_chunks::<4>()
