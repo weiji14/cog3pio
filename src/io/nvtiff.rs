@@ -201,6 +201,7 @@ mod tests {
     use dlpark::ffi::DataType;
     use dlpark::prelude::TensorView;
     use object_store::parse_url;
+    use rstest::rstest;
     use url::Url;
 
     use crate::io::nvtiff::CudaCogReader;
@@ -242,5 +243,37 @@ mod tests {
         assert_eq!(image_out_h, vec![1.41, 1.23, 0.78, 0.32, -0.23, -1.88]);
 
         // cuda_stream.synchronize().unwrap(); // put here to keep cuda_stream lifetime alive?
+    }
+
+    #[rstest]
+    #[case::u8("byte.tif", DataType::U8)]
+    #[case::u16("uint16.tif", DataType::U16)]
+    #[case::u32("uint32.tif", DataType::U32)]
+    // #[case::u64("uint64.tif", DataType::U64)] // TiffNotSupported
+    #[case::i16("int16.tif", DataType::I16)]
+    #[case::i32("int32.tif", DataType::I32)]
+    // #[case::i64("int64.tif", DataType::I64)] // TiffNotSupported
+    #[tokio::test]
+    async fn cudacogreader_dlpack_uint_int_dtypes(#[case] filename: &str, #[case] dtype: DataType) {
+        let cog_url: String = format!(
+            "https://github.com/OSGeo/gdal/raw/v3.12.0beta1/autotest/gcore/data/{filename}",
+        );
+        let tif_url = Url::parse(cog_url.as_str()).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+
+        // Step 1: Init CUDA stream on device (GPU)
+        let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
+        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+
+        // Step 2: Do the TIFF decoding
+        let cog: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+
+        assert_eq!(tensor.data_type(), &dtype);
+        // assert_eq!(tensor.shape(), [1, 20, 20]); // TODO should be 3D tensor
+        assert_eq!(tensor.shape(), [400]);
     }
 }
