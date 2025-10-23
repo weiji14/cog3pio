@@ -23,7 +23,7 @@ dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", fea
     "half",
     "ndarray",
     "pyo3",
-], rev = "d6c7e17e911a4a0ff80f3c010370e15dd3ac683c" }
+], rev = "901c671fc0e9f30bbc02ef0039931474e9d839dc" }
 geo = "0.29.0"
 ndarray = "0.16.1"
 numpy = "0.26.0"
@@ -54,8 +54,8 @@ pedantic = "warn"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[profile.dev]
-opt-level = 1
+[profile.test]
+opt-level = 2
 
 [[bench]]
 name = "read_cog"

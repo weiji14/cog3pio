@@ -448,7 +448,7 @@ dependencies = [
 [[package]]
 name = "dlpark"
 version = "0.6.0"
-source = "git+https://github.com/SunDoge/dlpark.git?rev=d6c7e17e911a4a0ff80f3c010370e15dd3ac683c#d6c7e17e911a4a0ff80f3c010370e15dd3ac683c"
+source = "git+https://github.com/SunDoge/dlpark.git?rev=901c671fc0e9f30bbc02ef0039931474e9d839dc#901c671fc0e9f30bbc02ef0039931474e9d839dc"
 dependencies = [
  "bitflags 2.9.1",
  "cudarc",
