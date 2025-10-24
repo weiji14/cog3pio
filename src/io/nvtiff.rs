@@ -97,7 +97,7 @@ impl CudaCogReader {
         })
     }
 
-    /// Decode GeoTIFF image to a [`CudaSlice`] (`Vec<u8>` on a CUDA device)
+    /// Decode GeoTIFF image to a [`dlpark::SafeManagedTensorVersioned`]
     ///
     /// # Errors
     ///
@@ -241,8 +241,6 @@ mod tests {
             .unwrap();
         dbg!(image_out_h.clone());
         assert_eq!(image_out_h, vec![1.41, 1.23, 0.78, 0.32, -0.23, -1.88]);
-
-        // cuda_stream.synchronize().unwrap(); // put here to keep cuda_stream lifetime alive?
     }
 
     #[rstest]
