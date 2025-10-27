@@ -2,17 +2,74 @@ use std::ffi::c_void;
 use std::sync::Arc;
 
 use bytes::Bytes;
-use cudarc::driver::{CudaSlice, CudaStream, DevicePtr};
+use cudarc::driver::{CudaSlice, CudaStream, CudaView, DevicePtr};
+use dlpark::SafeManagedTensorVersioned;
+use dlpark::ffi::{DataType, DataTypeCode};
+use dlpark::traits::InferDataType;
+use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResult, NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage,
-    nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffFileInfo, nvtiffStatus_t,
-    nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetFileInfo, nvtiffStreamParse,
+    nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffFileInfo,
+    nvtiffSampleFormat, nvtiffStatus_t, nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetFileInfo,
+    nvtiffStreamParse,
 };
 
 /// Cloud-optimized GeoTIFF reader using [`nvTIFF`](https://developer.nvidia.com/nvtiff)
+///
+/// # Examples
+///
+/// ## DLPack
+///
+/// Retrieve a GeoTIFF file stream via the [`object_store`] crate, and set up a CUDA
+/// stream via the [`cudarc`] crate. Pass the file stream and CUDA stream into the
+/// [`CudaCogReader::new`](crate::io::nvtiff::CudaCogReader::new) method to instantiate
+/// a [`CudaCogReader`] struct, and call
+/// [`.dlpack()`](crate::io::nvtiff::CudaCogReader::dlpack) to get a
+/// [`dlpark::SafeManagedTensorVersioned`] output.
+///
+/// ```rust
+/// use std::sync::Arc;
+///
+/// use bytes::Bytes;
+/// use cog3pio::io::nvtiff::CudaCogReader;
+/// use cudarc::driver::{CudaContext, CudaStream};
+/// use dlpark::SafeManagedTensorVersioned;
+/// use dlpark::ffi::DataType;
+/// use dlpark::prelude::TensorView;
+/// use object_store::path::Path;
+/// use object_store::{GetResult, ObjectStore, parse_url};
+/// use tokio;
+/// use url::Url;
+///
+/// #[tokio::main]
+/// async fn main() {
+///     let cog_url: &str =
+///         "https://github.com/cogeotiff/rio-tiler/raw/7.9.0/tests/fixtures/cog_nodata_float_nan.tif";
+///     let tif_url: Url = Url::parse(cog_url).unwrap();
+///     let (store, location): (Box<dyn ObjectStore>, Path) = parse_url(&tif_url).unwrap();
+///
+///     let result: GetResult = store.get(&location).await.unwrap();
+///     let bytes: Bytes = result.bytes().await.unwrap();
+///
+///     let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
+///     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+///
+///     // Read GeoTIFF into a dlpark::versioned::SafeManagedTensorVersioned
+///     let mut cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+///     let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+///     assert_eq!(tensor.shape(), [7088886]); // [1, 2667, 2658]
+///     assert_eq!(tensor.data_type(), &DataType::F32);
+/// }
+/// ```
+///
+/// Note that the DLPack output is a flattened 1D array in row-major order (i.e.
+/// rows-first, columns-next). Common dtypes such as uint (u8/u16/u32/u64), int
+/// (i8/i16/i32/i64) and float (f32/f64) should be mostly supported. Other dtypes such
+/// as f16, complex32, etc and certain compression schemes are not supported yet.
 pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
+    dtype: DataType,
     cuda_slice: CudaSlice<u8>,
 }
 
@@ -52,10 +109,30 @@ impl CudaCogReader {
         // dbg!(file_info);
         status_fileinfo.result()?;
 
+        // Step 3a: Determine dtype from sample_format and bits_per_pixel
+        // Assume that all samples/bands have the same dtype
+        let sample_format: u32 = file_info.sample_format[0];
+        let dtype_code: DataTypeCode = match sample_format {
+            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_UINT => DataTypeCode::UInt,
+            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_INT => DataTypeCode::Int,
+            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_IEEEFP => DataTypeCode::Float,
+            _ => unimplemented!(
+                "non uint/int/float dtypes (e.g. complex int/float) not implemented yet"
+            ),
+        };
+        let bits: u16 = file_info.bits_per_pixel / file_info.samples_per_pixel;
+        let dtype: DataType = DataType {
+            code: dtype_code,
+            bits: u8::try_from(bits)
+                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
+            lanes: 1,
+        };
+        let bytes_per_pixel: usize = file_info.bits_per_pixel as usize / 8;
+
         // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
         let num_bytes: usize = file_info.image_width as usize // Width
             * file_info.image_height as usize // Height
-            * (file_info.bits_per_pixel as usize / 8); // Bytes per pixel (e.g. 4 bytes for f32)
+            * bytes_per_pixel; // Bytes per pixel (e.g. 4 bytes for f32)
         dbg!(num_bytes);
         let image_stream: CudaSlice<u8> =
             cuda_stream
@@ -67,18 +144,19 @@ impl CudaCogReader {
         Ok(Self {
             tiff_stream,
             num_bytes,
+            dtype,
             cuda_slice: image_stream,
         })
     }
 
-    /// Decode GeoTIFF image to a [`CudaSlice`] (`Vec<u8>` on a CUDA device)
+    /// Decode GeoTIFF image to a [`dlpark::SafeManagedTensorVersioned`]
     ///
     /// # Errors
     ///
     /// Will raise [`nvtiff_sys::result::NvTiffError::StatusError`] if decoding failed
     /// due to e.g. TIFF stream not being supported by nvTIFF, missing
     /// nvCOMP/nvJPEG/nvJPEG2K libraries, etc.
-    pub fn to_cuda(&self) -> NvTiffResult<CudaSlice<u8>> {
+    pub fn dlpack(&self) -> NvTiffResult<SafeManagedTensorVersioned> {
         // Step 1b: Init CUDA stream on device (GPU)
         let stream: &Arc<CudaStream> = self.cuda_slice.stream();
         let cuda_stream: *mut nvtiff_sys::CUstream_st = stream.cu_stream().cast::<_>();
@@ -122,9 +200,48 @@ impl CudaCogReader {
         dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
         status_decode.result()?;
 
-        // self.cuda_slice
-        Ok(unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) })
+        // dbg!(self.tiff_stream); // TODO need this to avoid panic on status_check/status_decode?
+
+        // Create CudaSlice from pointer
+        let cuslice: CudaSlice<u8> =
+            unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) };
+
+        // Transmute from u8 to actual dtype before putting into DLPack tensor
+        let len_elem: usize = self.num_bytes / (self.dtype.bits as usize / 8);
+        let tensor: SafeManagedTensorVersioned = match self.dtype {
+            DataType::U8 => SafeManagedTensorVersioned::new(cuslice)
+                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?,
+            DataType::U16 => cudaslice_to_tensor::<u16>(cuslice, len_elem)?,
+            DataType::U32 => cudaslice_to_tensor::<u32>(cuslice, len_elem)?,
+            DataType::U64 => cudaslice_to_tensor::<u64>(cuslice, len_elem)?,
+            DataType::I8 => cudaslice_to_tensor::<i8>(cuslice, len_elem)?,
+            DataType::I16 => cudaslice_to_tensor::<i16>(cuslice, len_elem)?,
+            DataType::I32 => cudaslice_to_tensor::<i32>(cuslice, len_elem)?,
+            DataType::I64 => cudaslice_to_tensor::<i64>(cuslice, len_elem)?,
+            DataType::F32 => cudaslice_to_tensor::<f32>(cuslice, len_elem)?,
+            DataType::F64 => cudaslice_to_tensor::<f64>(cuslice, len_elem)?,
+            dtype => {
+                unimplemented!("Converting {dtype:?} into DLPack not supported yet.")
+            }
+        };
+
+        Ok(tensor)
     }
+}
+
+/// Transmute `CudaSlice<u8>` into a `CudaView<T>`, and then convert to a DLPack tensor.
+fn cudaslice_to_tensor<T: InferDataType>(
+    cuslice: CudaSlice<u8>,
+    len_elem: usize,
+) -> NvTiffResult<SafeManagedTensorVersioned> {
+    let cuview: CudaView<_> = unsafe { cuslice.transmute::<T>(len_elem) }
+        .ok_or(NvTiffError::StatusError(NvTiffStatusError::BadTiff))?;
+    let tensor = SafeManagedTensorVersioned::new(cuview)
+        // TODO raise error from err string
+        .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?;
+    cuslice.leak();
+
+    Ok(tensor)
 }
 
 #[cfg(test)]
@@ -133,13 +250,17 @@ mod tests {
     use std::sync::Arc;
 
     use cudarc::driver::{CudaContext, CudaSlice, CudaStream};
+    use dlpark::SafeManagedTensorVersioned;
+    use dlpark::ffi::DataType;
+    use dlpark::prelude::TensorView;
     use object_store::parse_url;
+    use rstest::rstest;
     use url::Url;
 
     use crate::io::nvtiff::CudaCogReader;
 
     #[tokio::test]
-    async fn test_cudacogreader_to_cuda() {
+    async fn cudacogreader_dlpack() {
         let cog_url: &str =
             "https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/float32.tif";
         let tif_url = Url::parse(cog_url).unwrap();
@@ -151,29 +272,59 @@ mod tests {
         // let v = std::fs::read("benches/float32.tif").unwrap();
         // let bytes = Bytes::copy_from_slice(&v);
 
-        // Step 1b: Init CUDA stream on device (GPU)
+        // Step 1: Init CUDA stream on device (GPU)
         let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
-        // Step 3b: Do the TIFF decoding
-        let reader: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-        let slice: CudaSlice<u8> = reader.to_cuda().unwrap();
+        // Step 2: Do the TIFF decoding
+        let cog: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
-        // todo!();
+        assert_eq!(tensor.data_type(), &DataType::F32);
+        // assert_eq!(tensor.shape(), [1, 2, 3]); // TODO should be 3D tensor
+        assert_eq!(tensor.shape(), [6]);
 
-        // Step 2c: Transfer decoded bytes from device to host, and check results
-        let mut image_out_h: Vec<u8> = vec![0; slice.num_bytes()];
-        cuda_stream.memcpy_dtoh(&slice, &mut image_out_h).unwrap();
-        // dbg!(image_out_h.clone());
-        let float_array: Vec<f32> = image_out_h
-            // https://stackoverflow.com/questions/77388769/convert-vecu8-to-vecfloat-in-rust
-            // .array_chunks::<4>()
-            // .copied()
-            .chunks_exact(4)
-            .map(TryInto::try_into)
-            .map(Result::unwrap)
-            .map(f32::from_le_bytes)
-            .collect();
-        assert_eq!(float_array, vec![1.41, 1.23, 0.78, 0.32, -0.23, -1.88]);
+        // Step 3: Transfer decoded bytes from device to host, and check results
+        let mut image_out_h: Vec<f32> = vec![0.0; tensor.num_elements()];
+        let cuslice: CudaSlice<_> = unsafe {
+            cuda_stream.upgrade_device_ptr(tensor.data_ptr() as u64, tensor.num_elements())
+        };
+        cuda_stream
+            .memcpy_dtoh(&cuslice.clone(), &mut image_out_h)
+            .unwrap();
+        dbg!(image_out_h.clone());
+        assert_eq!(image_out_h, vec![1.41, 1.23, 0.78, 0.32, -0.23, -1.88]);
+    }
+
+    #[rstest]
+    #[case::u8("byte.tif", DataType::U8)]
+    #[case::u16("uint16.tif", DataType::U16)]
+    #[case::u32("uint32.tif", DataType::U32)]
+    // #[case::u64("uint64.tif", DataType::U64)] // TiffNotSupported
+    #[case::i16("int16.tif", DataType::I16)]
+    #[case::i32("int32.tif", DataType::I32)]
+    // #[case::i64("int64.tif", DataType::I64)] // TiffNotSupported
+    #[tokio::test]
+    async fn cudacogreader_dlpack_uint_int_dtypes(#[case] filename: &str, #[case] dtype: DataType) {
+        let cog_url: String = format!(
+            "https://github.com/OSGeo/gdal/raw/v3.12.0beta1/autotest/gcore/data/{filename}",
+        );
+        let tif_url = Url::parse(cog_url.as_str()).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+
+        // Step 1: Init CUDA stream on device (GPU)
+        let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
+        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+
+        // Step 2: Do the TIFF decoding
+        let cog: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+
+        assert_eq!(tensor.data_type(), &dtype);
+        // assert_eq!(tensor.shape(), [1, 20, 20]); // TODO should be 3D tensor
+        assert_eq!(tensor.shape(), [400]);
     }
 }

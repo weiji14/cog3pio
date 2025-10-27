@@ -1,23 +1,27 @@
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![warn(missing_docs)]
 //! # Cloud-optimized GeoTIFF ... Parallel I/O
 //!
 //! A reader for [Cloud Optimized GeoTIFF (COG)](https://www.cogeo.org) files.
 //!
-//! Uses [`tiff`] to decode TIFF images. Pixel data is stored with a shape of
-//! (channels, height, width) using either:
-//! - [`CogReader`](crate::io::geotiff::CogReader) - returns a
-//!   [DLPack](https://dmlc.github.io/dlpack/latest) in-memory data structure via
-//!   [`dlpark`](https://docs.rs/dlpark)
-//! - [`read_geotiff`](crate::io::geotiff::read_geotiff) - returns a 3D Array via
-//!   [`ndarray`](https://docs.rs/ndarray)
+//! There are two backends. A CPU one and a GPU (CUDA) one.
 //!
 //! **Note**: Python bindings (via [`pyo3`]) are documented over at
 //! <https://cog3pio.readthedocs.io>.
 //!
-//! # Examples
+//! # CPU decoder
 //!
-//! ## DLPack
+//! Uses [`tiff`] to decode TIFF images. Pixel data is stored with a shape of
+//! (channels, height, width) using either:
+//! - [`CogReader`](crate::io::geotiff::CogReader) - returns a
+//!   [DLPack](https://dmlc.github.io/dlpack/latest) data structure in CPU-memory via
+//!   [`dlpark`](https://docs.rs/dlpark)
+//! - [`read_geotiff`](crate::io::geotiff::read_geotiff) - returns a 3D Array via
+//!   [`ndarray`](https://docs.rs/ndarray)
+//!
+//! ## Examples
+//!
+//! ### DLPack
 //!
 //! Retrieve a GeoTIFF file stream via the [`object_store`] crate, pass it into the
 //! [`CogReader::new`](crate::io::geotiff::CogReader::new) method to instantiate a
@@ -59,7 +63,7 @@
 //! }
 //! ```
 //!
-//! ## Ndarray
+//! ### Ndarray
 //!
 //! Retrieve a GeoTIFF file stream via the [`object_store`] crate, and pass it into the
 //! [`read_geotiff`](crate::io::geotiff::read_geotiff) function to get an
@@ -100,6 +104,14 @@
 //! (`let arr: Array3<f32>`) or via a turbofish operator (`read_geotiff::<f32, _>`).
 //! Currently supported dtypes include uint (u8/u16/u32/u64), int (i8/i16/i32/i64) and
 //! float (f16/f32/f64).
+//!
+//! # GPU (CUDA) decoder
+//!
+//! Uses [`nvtiff_sys`] to decode TIFF images. Pixel data is stored as a flattened 1D
+//! array in row-major order (i.e. rows-first, columns-next). Use:
+//! - [`CudaCogReader`](crate::io::nvtiff::CudaCogReader) - returns a
+//!   [DLPack](https://dmlc.github.io/dlpack/latest) data structure in CUDA-memory via
+//!   [`dlpark`](https://docs.rs/dlpark)
 
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;

@@ -27,7 +27,8 @@ use cog3pio::io::geotiff::CogReader;
 use cog3pio::io::nvtiff::CudaCogReader;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 #[cfg(feature = "cuda")]
-use cudarc::driver::{CudaContext, CudaSlice, CudaStream};
+use cudarc::driver::{CudaContext, CudaStream};
+use dlpark::SafeManagedTensorVersioned;
 use dlpark::traits::TensorView;
 use gdal::Dataset;
 use gdal::raster::Buffer;
@@ -43,9 +44,9 @@ fn read_geotiff_nvtiff(fpath: &str) {
     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
     let cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-    let cuslice: CudaSlice<u8> = cog.to_cuda().unwrap();
+    let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
-    assert_eq!(cuslice.len(), 3 * 10980 * 10980);
+    assert_eq!(tensor.num_elements(), 3 * 10980 * 10980);
     // drop(cog);
     // cuda_stream.synchronize().unwrap();
 }
@@ -68,9 +69,9 @@ fn read_geotiff_image_tiff(fpath: &str) {
     let file = File::open(fpath).unwrap();
 
     let mut cog = CogReader::new(file).unwrap();
-    let tensor = cog.dlpack().unwrap();
+    let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
-    assert_eq!(tensor.num_bytes(), 3 * 10980 * 10980);
+    assert_eq!(tensor.num_elements(), 3 * 10980 * 10980);
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

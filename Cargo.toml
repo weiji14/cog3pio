@@ -16,14 +16,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-cudarc = { version = "0.16.4", features = [
+cudarc = { version = "0.17.3", features = [
     "cuda-version-from-build-system",
 ], optional = true }
 dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", features = [
     "half",
     "ndarray",
     "pyo3",
-], rev = "d6c7e17e911a4a0ff80f3c010370e15dd3ac683c" }
+], rev = "901c671fc0e9f30bbc02ef0039931474e9d839dc" }
 geo = "0.29.0"
 ndarray = "0.16.1"
 numpy = "0.26.0"
@@ -41,10 +41,11 @@ gdal = { version = "0.18.0", features = ["array"] }
 gdal-src = { version = "0.2.1", features = ["driver_gtiff", "nobuild"] }
 gdal-sys = { version = "0.11.0", features = ["bundled"] }
 half = { version = "2.6.0", features = ["num-traits"] }
+rstest = "0.26.1"
 tempfile = "3.10.1"
 
 [features]
-cuda = ["dep:cudarc", "dep:nvtiff-sys"]
+cuda = ["cudarc", "dlpark/cuda", "nvtiff-sys"]
 
 [lints.clippy]
 pedantic = "warn"
@@ -53,8 +54,8 @@ pedantic = "warn"
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
-[profile.dev]
-opt-level = 1
+[profile.test]
+opt-level = 2
 
 [[bench]]
 name = "read_cog"
