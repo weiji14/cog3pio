@@ -61,6 +61,11 @@ use nvtiff_sys::{
 ///     assert_eq!(tensor.data_type(), &DataType::F32);
 /// }
 /// ```
+///
+/// Note that the DLPack output is a flattened 1D array in row-major order (i.e.
+/// rows-first, columns-next). Common dtypes such as uint (u8/u16/u32/u64), int
+/// (i8/i16/i32/i64) and float (f32/f64) should be mostly supported. Other dtypes such
+/// as f16, complex32, etc and certain compression schemes are not supported yet.
 pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
@@ -118,7 +123,8 @@ impl CudaCogReader {
         let bits: u16 = file_info.bits_per_pixel / file_info.samples_per_pixel;
         let dtype: DataType = DataType {
             code: dtype_code,
-            bits: u8::try_from(bits).unwrap(),
+            bits: u8::try_from(bits)
+                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
             lanes: 1,
         };
         let bytes_per_pixel: usize = file_info.bits_per_pixel as usize / 8;
@@ -214,8 +220,8 @@ impl CudaCogReader {
             DataType::I64 => cudaslice_to_tensor::<i64>(cuslice, len_elem)?,
             DataType::F32 => cudaslice_to_tensor::<f32>(cuslice, len_elem)?,
             DataType::F64 => cudaslice_to_tensor::<f64>(cuslice, len_elem)?,
-            _ => {
-                unimplemented!()
+            dtype => {
+                unimplemented!("Converting {dtype:?} into DLPack not supported yet.")
             }
         };
 
@@ -228,7 +234,8 @@ fn cudaslice_to_tensor<T: InferDataType>(
     cuslice: CudaSlice<u8>,
     len_elem: usize,
 ) -> NvTiffResult<SafeManagedTensorVersioned> {
-    let cuview: CudaView<_> = unsafe { cuslice.transmute::<T>(len_elem).unwrap() };
+    let cuview: CudaView<_> = unsafe { cuslice.transmute::<T>(len_elem) }
+        .ok_or(NvTiffError::StatusError(NvTiffStatusError::BadTiff))?;
     let tensor = SafeManagedTensorVersioned::new(cuview)
         // TODO raise error from err string
         .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?;
