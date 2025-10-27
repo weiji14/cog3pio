@@ -14,7 +14,7 @@
 //! Uses [`tiff`] to decode TIFF images. Pixel data is stored with a shape of
 //! (channels, height, width) using either:
 //! - [`CogReader`](crate::io::geotiff::CogReader) - returns a
-//!   [DLPack](https://dmlc.github.io/dlpack/latest) in-memory data structure via
+//!   [DLPack](https://dmlc.github.io/dlpack/latest) data structure in CPU-memory via
 //!   [`dlpark`](https://docs.rs/dlpark)
 //! - [`read_geotiff`](crate::io::geotiff::read_geotiff) - returns a 3D Array via
 //!   [`ndarray`](https://docs.rs/ndarray)
@@ -110,54 +110,8 @@
 //! Uses [`nvtiff_sys`] to decode TIFF images. Pixel data is stored as a flattened 1D
 //! array in row-major order (i.e. rows-first, columns-next). Use:
 //! - [`CudaCogReader`](crate::io::nvtiff::CudaCogReader) - returns a
-//!   [DLPack](https://dmlc.github.io/dlpack/latest) in-memory data structure via
+//!   [DLPack](https://dmlc.github.io/dlpack/latest) data structure in CUDA-memory via
 //!   [`dlpark`](https://docs.rs/dlpark)
-//!
-//! ## Examples
-//!
-//! ### DLPack
-//!
-//! Retrieve a GeoTIFF file stream via the [`object_store`] crate, and set up a CUDA
-//! stream via the [`cudarc`] crate. Pass the file stream and CUDA stream into the
-//! [`CudaCogReader::new`](crate::io::nvtiff::CudaCogReader::new) method to instantiate
-//! a [`CudaCogReader`](crate::io::nvtiff::CudaCogReader) struct, and call
-//! [`.dlpack()`](crate::io::nvtiff::CudaCogReader::dlpack) to get a
-//! [`dlpark::SafeManagedTensorVersioned`] output.
-//!
-//! ```rust
-//! use std::sync::Arc;
-//!
-//! use bytes::Bytes;
-//! use cog3pio::io::nvtiff::CudaCogReader;
-//! use cudarc::driver::{CudaContext, CudaStream};
-//! use dlpark::SafeManagedTensorVersioned;
-//! use dlpark::ffi::DataType;
-//! use dlpark::prelude::TensorView;
-//! use object_store::path::Path;
-//! use object_store::{GetResult, ObjectStore, parse_url};
-//! use tokio;
-//! use url::Url;
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!     let cog_url: &str =
-//!         "https://github.com/cogeotiff/rio-tiler/raw/7.9.0/tests/fixtures/cog_nodata_float_nan.tif";
-//!     let tif_url: Url = Url::parse(cog_url).unwrap();
-//!     let (store, location): (Box<dyn ObjectStore>, Path) = parse_url(&tif_url).unwrap();
-//!
-//!     let result: GetResult = store.get(&location).await.unwrap();
-//!     let bytes: Bytes = result.bytes().await.unwrap();
-//!
-//!     let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
-//!     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
-//!
-//!     // Read GeoTIFF into a dlpark::versioned::SafeManagedTensorVersioned
-//!     let mut cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-//!     let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
-//!     assert_eq!(tensor.shape(), [7088886]); // [1, 2667, 2658]
-//!     assert_eq!(tensor.data_type(), &DataType::F32);
-//! }
-//! ```
 
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
