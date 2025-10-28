@@ -16,9 +16,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-cudarc = { version = "0.17.3", features = [
-    "cuda-version-from-build-system",
-], optional = true }
+cudarc = { version = "0.17.4", features = ["cuda-13000"], optional = true }
 dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", features = [
     "half",
     "ndarray",
