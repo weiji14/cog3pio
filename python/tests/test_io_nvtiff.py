@@ -3,9 +3,10 @@ Test GeoTIFF I/O via nvTIFF backend.
 """
 
 import pytest
-from cog3pio import CudaCogReader
 
 cp = pytest.importorskip("cupy")
+
+from cog3pio import CudaCogReader
 
 
 def test_cudacogreader_to_dlpack():

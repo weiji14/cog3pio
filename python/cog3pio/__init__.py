@@ -2,9 +2,14 @@
 cog3pio - Cloud-optimized GeoTIFF ... Parallel I/O
 """
 
+import contextlib
 from importlib.metadata import version
 
-from .cog3pio import CogReader, CudaCogReader, read_geotiff  # noqa: F401
+from .cog3pio import CogReader, read_geotiff  # noqa: F401
+
+with contextlib.suppress(ImportError):
+    from .cog3pio import CudaCogReader  # noqa: F401
+
 
 __doc__ = cog3pio.__doc__
 __version__ = version("cog3pio")  # e.g. 0.1.2.dev3+g0ab3cd78
