@@ -14,8 +14,10 @@ use pyo3::{Bound, PyErr, wrap_pyfunction};
 use url::Url;
 
 use crate::io::geotiff::{CogReader, read_geotiff};
+#[cfg(feature = "cuda")]
+use crate::python::cudacog::PyCudaCogReader;
 
-/// Python class interface to a Cloud-optimized GeoTIFF reader.
+/// Python class interface to a Cloud-optimized GeoTIFF reader (image-tiff backend).
 ///
 /// Parameters
 /// ----------
@@ -35,8 +37,8 @@ use crate::io::geotiff::{CogReader, read_geotiff};
 /// >>> from cog3pio import CogReader
 /// ...
 /// >>> cog = CogReader(
-/// ... path="https://github.com/rasterio/rasterio/raw/refs/tags/1.4.3/tests/data/RGBA.uint16.tif"
-/// ...)
+/// ...     path="https://github.com/rasterio/rasterio/raw/1.4.3/tests/data/RGBA.uint16.tif"
+/// ... )
 /// >>> array: np.ndarray = np.from_dlpack(cog)
 /// >>> array.shape
 /// (4, 411, 634)
@@ -115,7 +117,7 @@ impl PyCogReader {
 }
 
 /// Read from a filepath or url into a byte stream
-fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
+pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
     // Parse URL into ObjectStore and path
     let file_or_url = match Url::from_file_path(path) {
         // Parse local filepath
@@ -194,6 +196,8 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
 fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Register Python classes
     m.add_class::<PyCogReader>()?;
+    #[cfg(feature = "cuda")]
+    m.add_class::<PyCudaCogReader>()?;
     // Register Python functions
     m.add_function(wrap_pyfunction!(read_geotiff_py, m)?)?;
     Ok(())

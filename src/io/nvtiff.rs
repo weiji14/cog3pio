@@ -70,8 +70,11 @@ pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
     dtype: DataType,
-    cuda_slice: CudaSlice<u8>,
+    pub(crate) cuda_slice: CudaSlice<u8>,
 }
+
+unsafe impl Send for CudaCogReader {} // TODO verify safety!!
+unsafe impl Sync for CudaCogReader {} // TODO verify safety!!
 
 impl CudaCogReader {
     /// Create a new Cloud-optimized GeoTIFF decoder that decodes from a CUDA stream
