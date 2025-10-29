@@ -51,4 +51,4 @@ cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
 
 [tool.maturin]
 python-source = "python"
-features = ["pyo3/extension-module"]
+features = ["pyo3"]
