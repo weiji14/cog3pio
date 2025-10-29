@@ -53,6 +53,7 @@ impl PyCudaCogReader {
 
         let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+        dbg!(&cuda_stream);
 
         let cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
         //.map_err(|err| PyValueError::new_err(err.to_string()))?;

@@ -28,7 +28,7 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 cuda = [
-    "cupy-cuda12x",
+    "cupy-cuda13x",
 ]
 benchmark = [
     "pytest-codspeed",
