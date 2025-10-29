@@ -116,4 +116,5 @@
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
 /// Modules for Python to interface with Rust code
+#[cfg(feature = "pyo3")]
 mod python;

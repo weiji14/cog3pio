@@ -74,6 +74,7 @@ commit_preprocessors = [
     { pattern = ':rotating_light:', replace = "🚨" },
     { pattern = ':seedling:', replace = "🌱" },
     { pattern = ':sparkles:', replace = "✨" },
+    { pattern = ':triangular_flag_on_post:', replace = "🚩" },
     { pattern = ':truck:', replace = "🚚" },
     { pattern = ':wrench:', replace = "🔧" },
 ]
@@ -85,7 +86,7 @@ commit_parsers = [
     { message = "^(🐛|:bug:)", group = "<!-- 2 --> 🐛 Bug Fixes" },
     { message = "^(♻️|:recycle:|🚚|:truck:|🎨|:art:)", group = "<!-- 3 --> 🏭 Refactors" },
     { message = "^(📝|:memo:|🔍️|:mag:)", group = "<!-- 4 --> 📝 Documentation" },
-    { message = "^(👷|:construction_worker:|🔧|:wrench:|⬆️|:arrow_up:|➕|:heavy_plus_sign:|➖|:heavy_minus_sign:|⬇️|:arrow_down:|📌|:pushpin:|🔒️|:lock:|🚨|:rotating_light:|🌱|:seedling:|🔊|:loud_sound:)", group = "<!-- 5 --> 🧰 Maintenance" },
+    { message = "^(👷|:construction_worker:|🔧|:wrench:|⬆️|:arrow_up:|➕|:heavy_plus_sign:|➖|:heavy_minus_sign:|⬇️|:arrow_down:|📌|:pushpin:|🚩|:triangular_flag_on_post:|🔒️|:lock:|🚨|:rotating_light:|🌱|:seedling:|🔊|:loud_sound:)", group = "<!-- 5 --> 🧰 Maintenance" },
 ]
 # sort the commits inside sections by oldest/newest order
 sort_commits = "newest"
