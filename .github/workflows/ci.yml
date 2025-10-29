@@ -53,6 +53,7 @@ jobs:
           - target: x86_64
           - target: aarch64
             runner: ubuntu-24.04-arm
+            arch: sbsa
           - target: armv7
           - target: s390x
           - target: ppc64le
@@ -69,7 +70,7 @@ jobs:
       - name: Install nvTIFF
         run: |
           # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=24.04&target_type=deb_network
-          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+          wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/${{ matrix.platform.arch || 'x86_64' }}/cuda-keyring_1.1-1_all.deb
           sudo dpkg -i cuda-keyring_1.1-1_all.deb
           sudo apt update
           sudo apt install -y nvtiff-cuda-12=0.5.0.*
