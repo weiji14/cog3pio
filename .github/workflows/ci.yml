@@ -82,6 +82,7 @@ jobs:
           args: --features cuda --release --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
+          before-script-linux: "dnf install -y clang-devel"
 
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@aef21716ff3dcae8a1c301d23ec3e4446972a6e3 # v1.49.1
@@ -90,6 +91,7 @@ jobs:
           args: --features cuda --release --out dist --interpreter python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
+          before-script-linux: "dnf install -y clang-devel"
 
       - name: Upload wheels
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
