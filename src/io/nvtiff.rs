@@ -70,8 +70,11 @@ pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
     dtype: DataType,
-    cuda_slice: CudaSlice<u8>,
+    pub(crate) cuda_slice: CudaSlice<u8>,
 }
+
+unsafe impl Send for CudaCogReader {} // TODO verify safety!!
+unsafe impl Sync for CudaCogReader {} // TODO verify safety!!
 
 impl CudaCogReader {
     /// Create a new Cloud-optimized GeoTIFF decoder that decodes from a CUDA stream
@@ -129,7 +132,7 @@ impl CudaCogReader {
         };
         let bytes_per_pixel: usize = file_info.bits_per_pixel as usize / 8;
 
-        // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
+        // Step 3b: Allocate memory on device, pre-fill with zeros
         let num_bytes: usize = file_info.image_width as usize // Width
             * file_info.image_height as usize // Height
             * bytes_per_pixel; // Bytes per pixel (e.g. 4 bytes for f32)
