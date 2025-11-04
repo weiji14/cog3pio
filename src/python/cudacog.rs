@@ -13,6 +13,11 @@ use crate::python::adapters::path_to_stream;
 
 /// Python class interface to a Cloud-optimized GeoTIFF reader (nvTIFF backend).
 ///
+/// Warning
+/// -------
+/// This is an experimental feature only enabled on linux-x86_64 and linux-aarch64
+/// wheel builds.
+///
 /// Parameters
 /// ----------
 /// path : str
@@ -22,6 +27,13 @@ use crate::python::adapters::path_to_stream;
 /// -------
 /// reader : cog3pio.CudaCogReader
 ///     A new CudaCogReader instance for decoding GeoTIFF files.
+///
+/// Raises
+/// ------
+/// ImportError
+///     If ``nvTIFF`` is not installed. Please install it (e.g. via
+///     ``apt install nvtiff-cuda-12`` or ``dnf install nvtiff-cuda-12``) before using
+///     this class.
 ///
 /// Examples
 /// --------

@@ -1,0 +1,7 @@
+name: cog3pio
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - libnvtiff-dev=0.5.0

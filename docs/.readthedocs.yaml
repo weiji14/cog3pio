@@ -9,11 +9,22 @@ build:
   os: "ubuntu-24.04"
   tools:
     nodejs: "23"
-    python: "3.12"
+    python: "mambaforge-23.11"
     rust: "1.86"
   jobs:
+    create_environment:
+      # Patch nvtiff.h (v0.5.0) to remove default arguments and missing enum tag
+      - export CONDA_PREFIX="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV";
+        unset CONDA_DEFAULT_ENV;
+        mamba env update --prefix "$CONDA_PREFIX" --file docs/environment.yml;
+        mamba list;
+        sed --in-place "s/memLimit=0/memLimit/g" $CONDA_PREFIX/include/nvtiff.h;
+        sed --in-place "s/stream=0/stream/g" $CONDA_PREFIX/include/nvtiff.h;
+        sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" $CONDA_PREFIX/include/nvtiff.h
     install:
-      - pip install .[docs]
+      - export CONDA_PREFIX="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV";
+        MATURIN_PEP517_ARGS="--features cuda,pyo3"
+        mamba run --prefix "$CONDA_PREFIX" pip install .[docs]
       # https://github.com/jupyter-book/sphinx-ext-mystmd/pull/2
       - pip install --ignore-installed git+https://github.com/weiji14/sphinx-ext-mystmd@e995908b3a898b9c9d5d3fec4ff1478f1f4c1ccd
       - pip list
@@ -29,3 +40,6 @@ build:
     post_build:
       - "mkdir --parents $READTHEDOCS_OUTPUT/html/"
       - "mv docs/_build/html/* $READTHEDOCS_OUTPUT/html/"
+
+conda:
+  environment: docs/environment.yml
