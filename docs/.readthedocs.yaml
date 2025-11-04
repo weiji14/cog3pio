@@ -23,6 +23,8 @@ build:
         sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" $CONDA_PREFIX/include/nvtiff.h
     install:
       - export CONDA_PREFIX="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV";
+        LD_LIBRARY_PATH="$CONDA_PREFIX/targets/x86_64-linux/include"
+        BINDGEN_EXTRA_CLANG_ARGS="-I $CONDA_PREFIX/include"
         MATURIN_PEP517_ARGS="--features cuda,pyo3"
         mamba run --prefix "$CONDA_PREFIX" pip install .[docs]
       # https://github.com/jupyter-book/sphinx-ext-mystmd/pull/2
