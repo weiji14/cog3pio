@@ -50,7 +50,7 @@ use crate::python::adapters::path_to_stream;
 /// (2271752,)
 /// >>> array.dtype
 /// dtype('uint8')
-#[pyclass]
+#[pyclass(unsendable)]
 #[pyo3(name = "CudaCogReader")]
 pub(crate) struct PyCudaCogReader {
     inner: CudaCogReader,
