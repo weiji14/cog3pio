@@ -5,7 +5,8 @@ use std::sync::Arc;
 use bytes::Bytes;
 use cudarc::driver::{CudaContext, CudaStream};
 use dlpark::SafeManagedTensorVersioned;
-use dlpark::ffi::Device;
+use dlpark::ffi::{DLPACK_MAJOR_VERSION, DLPACK_MINOR_VERSION, Device};
+use pyo3::exceptions::{PyBufferError, PyNotImplementedError, PyValueError, PyWarning};
 use pyo3::{Bound, PyAny, PyResult, pyclass, pymethods};
 
 use crate::io::nvtiff::CudaCogReader;
@@ -75,16 +76,67 @@ impl PyCudaCogReader {
 
     /// Get image pixel data from GeoTIFF as a DLPack capsule
     ///
+    /// Parameters
+    /// ----------
+    /// stream : int | None
+    ///     A Python integer representing a pointer to a stream, on devices that
+    ///     support streams. Device-specific values of stream for CUDA:
+    ///     - None: producer must assume the legacy default stream (default).
+    ///     - 1: the legacy default stream.
+    ///     - 2: the per-thread default stream.
+    ///     - > 2: stream number represented as a Python integer.
+    ///     - 0 is disallowed due to its ambiguity: 0 could mean either None, 1, or 2.
+    ///
+    /// max_version : tuple[int, int] | None
+    ///     The maximum DLPack version that the consumer (i.e., the caller of
+    ///     __dlpack__) supports, in the form of a 2-tuple (major, minor). This method
+    ///     may return a capsule of version max_version (recommended if it does support
+    ///     that), or of a different version. This means the consumer must verify the
+    ///     version even when max_version is passed.
+    ///
     /// Returns
     /// -------
     /// tensor : PyCapsule
     ///     1D tensor in row-major order containing the GeoTIFF pixel data.
-    #[pyo3(signature = (**kwargs))]
+    #[pyo3(signature = (stream=None, max_version=None, **kwargs))]
     fn __dlpack__(
         &self,
+        stream: Option<u8>,
+        max_version: Option<(u32, u32)>,
         kwargs: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<SafeManagedTensorVersioned> {
-        dbg!(kwargs);
+        dbg!(stream, max_version, kwargs);
+
+        let _stream_int: PyResult<_> = if let Some(s_int) = stream {
+            match s_int {
+                0 => unreachable!(), // disallowed due to ambiguity
+                1 => Ok(()),         // legacy default stream
+                2.. => Err(PyNotImplementedError::new_err(
+                    "only legacy default stream (1) is supported for now, got {s_int}",
+                ))?,
+            }
+        } else {
+            Ok(()) // None (default) means to assume legacy default stream
+        };
+
+        let _dlpack_version: PyResult<_> = if let Some((major, minor)) = max_version {
+            if major >= DLPACK_MAJOR_VERSION && minor == DLPACK_MINOR_VERSION {
+                Ok(())
+            } else if major == DLPACK_MAJOR_VERSION {
+                // accept minor version for now
+                Err(PyWarning::new_err(format!(
+                    "DLPack minor version mismatch: producer {DLPACK_MINOR_VERSION}, consumer {minor}. \
+                    Using compatibility mode since major version ({DLPACK_MAJOR_VERSION}) is equal."
+                )))
+            } else {
+                Err(PyNotImplementedError::new_err(
+                    "Only supporting DLPack version {}.{}, but got {major}.{minor}",
+                ))
+            }
+        } else {
+            // no max_version given
+            Err(PyBufferError::new_err("DLPack 0.X not supported"))
+        };
 
         // Convert from ndarray (Rust) to DLPack (Python)
         let tensor: SafeManagedTensorVersioned =
