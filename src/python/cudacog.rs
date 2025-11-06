@@ -64,12 +64,14 @@ impl PyCudaCogReader {
         let stream: Cursor<Bytes> = path_to_stream(path)?;
         let bytes: Bytes = stream.into_inner();
 
-        let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
+        let ctx: Arc<CudaContext> =
+            cudarc::driver::CudaContext::new(0) // Set on GPU:0
+                .map_err(|err| PyValueError::new_err(err.to_string()))?;
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
         dbg!(&cuda_stream);
 
-        let cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-        //.map_err(|err| PyValueError::new_err(err.to_string()))?;
+        let cog = CudaCogReader::new(&bytes, &cuda_stream)
+            .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
         Ok(Self { inner: cog })
     }
@@ -139,9 +141,10 @@ impl PyCudaCogReader {
         };
 
         // Convert from ndarray (Rust) to DLPack (Python)
-        let tensor: SafeManagedTensorVersioned =
-            self.inner.dlpack().expect("failed to convert to dlpack");
-        // .map_err(|err| PyValueError::new_err(err.to_string()))?;
+        let tensor: SafeManagedTensorVersioned = self
+            .inner
+            .dlpack()
+            .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
         Ok(tensor)
     }
