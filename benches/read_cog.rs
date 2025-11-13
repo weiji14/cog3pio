@@ -84,7 +84,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     #[cfg(feature = "cuda")]
     group
         .sample_size(10)
-        .nresamples(1)
+        .nresamples(2)
         .warm_up_time(Duration::from_millis(1))
         .measurement_time(Duration::from_secs(2));
     // .noise_threshold(0.15);

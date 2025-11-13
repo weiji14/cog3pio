@@ -38,7 +38,7 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = { version = "2.5.7", optional = true }
 
 [dev-dependencies]
-criterion = { git = "https://github.com/vxfield/criterion.rs.git", version = "0.5.1" } # https://github.com/bheisler/criterion.rs/pull/832
+criterion = "0.7.0"
 gdal = { version = "0.18.0", features = ["array"] }
 # comment out gdal-src and gdal-sys if libgdal-dev installed
 gdal-src = { version = "0.2.1", features = ["driver_gtiff", "nobuild"] }
