@@ -38,8 +38,8 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = { version = "2.5.7", optional = true }
 
 [dev-dependencies]
-criterion = "0.7.0"
-gdal = { version = "0.18.0", features = ["array"] }
+criterion = { package = "codspeed-criterion-compat", version = "4.1.0" }
+gdal = { version = "0.18.0", features = ["array", "bindgen"] }
 # comment out gdal-src and gdal-sys if libgdal-dev installed
 gdal-src = { version = "0.2.1", features = ["driver_gtiff", "nobuild"] }
 gdal-sys = { version = "0.11.0", features = ["bundled"] }
