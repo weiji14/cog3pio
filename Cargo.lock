@@ -690,8 +690,7 @@ dependencies = [
 [[package]]
 name = "gdal"
 version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e721cea67b420fd4b5cb15ba8145f2f1d3a6931a27fdbfadb46cff02015e1cde"
+source = "git+https://github.com/georust/gdal.git?rev=3df2c28f8c83f80d209b34d46f30d6c35e803e07#3df2c28f8c83f80d209b34d46f30d6c35e803e07"
 dependencies = [
  "bitflags 2.9.1",
  "chrono",
@@ -704,9 +703,8 @@ dependencies = [
 
 [[package]]
 name = "gdal-src"
-version = "0.2.1+3.10.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b34b261d016ad2619fc19ede35ccdde5ca7036665582899303e6999eeabaf474"
+version = "0.3.0+3.11.4"
+source = "git+https://github.com/georust/gdal.git?rev=3df2c28f8c83f80d209b34d46f30d6c35e803e07#3df2c28f8c83f80d209b34d46f30d6c35e803e07"
 dependencies = [
  "cmake",
  "link-cplusplus",
@@ -716,10 +714,8 @@ dependencies = [
 [[package]]
 name = "gdal-sys"
 version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "febef67dc08a956a9ecb04de2b40dbd15ad56be49421aad9ae0cdcbe9a24166c"
+source = "git+https://github.com/georust/gdal.git?rev=3df2c28f8c83f80d209b34d46f30d6c35e803e07#3df2c28f8c83f80d209b34d46f30d6c35e803e07"
 dependencies = [
- "bindgen",
  "gdal-src",
  "pkg-config",
  "semver",
@@ -745,9 +741,9 @@ dependencies = [
 
 [[package]]
 name = "geo-types"
-version = "0.7.13"
+version = "0.7.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9ff16065e5720f376fbced200a5ae0f47ace85fd70b7e54269790281353b6d61"
+checksum = "75a4dcd69d35b2c87a7c83bce9af69fd65c9d68d3833a0ded568983928f3fc99"
 dependencies = [
  "approx",
  "num-traits",
@@ -1721,9 +1717,9 @@ dependencies = [
 
 [[package]]
 name = "proj-sys"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "533a4ed2ab59f7605ecea26db7ed76572d30aed9d2a6a90738bc7f7e7b5a11d8"
+checksum = "a208129995443a4c475464c33308274be1578993b0ad266c9139188ed0dc7e91"
 dependencies = [
  "cmake",
  "flate2",
