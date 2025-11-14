@@ -67,6 +67,18 @@ fn read_geotiff_gdal(fpath: &str) {
         let array: Array2<_> = buffer.to_array().unwrap();
 
         assert_eq!(array.shape(), [10980, 10980]);
+
+        #[cfg(feature = "cuda")]
+        {
+            // Copy from CPU (host) memory to CUDA (device) memory
+            let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
+            let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+            let mut cuda_mem = cuda_stream.alloc_zeros::<u8>(3 * 10980 * 10980).unwrap();
+
+            cuda_stream
+                .memcpy_htod(array.as_slice().unwrap(), &mut cuda_mem)
+                .unwrap();
+        }
     }
 }
 
@@ -78,6 +90,17 @@ fn read_geotiff_image_tiff(fpath: &str) {
     let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
     assert_eq!(tensor.num_elements(), 3 * 10980 * 10980);
+
+    #[cfg(feature = "cuda")]
+    {
+        // Copy from CPU (host) memory to CUDA (device) memory
+        let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
+        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+        let mut cuda_mem = cuda_stream.alloc_zeros::<u8>(3 * 10980 * 10980).unwrap();
+
+        let slice: &[u8] = tensor.as_slice_untyped();
+        cuda_stream.memcpy_htod(slice, &mut cuda_mem).unwrap();
+    }
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
