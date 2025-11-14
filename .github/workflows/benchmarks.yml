@@ -54,7 +54,9 @@ jobs:
           bins: cargo-codspeed
 
       - name: Build the benchmark target(s)
-        run: cargo codspeed build
+        run: |
+          cargo remove --dev gdal-src gdal-sys
+          cargo codspeed build
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@6a8e2b874c338bf81cc5e8be715ada75908d3871 # v4.3.4

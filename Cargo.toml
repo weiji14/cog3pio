@@ -42,8 +42,8 @@ criterion = { package = "codspeed-criterion-compat", version = "4.1.0" }
 gdal = { git = "https://github.com/georust/gdal.git", version = "0.18.0", features = [
     "array",
 ], rev = "3df2c28f8c83f80d209b34d46f30d6c35e803e07" }
-# comment out gdal-src and gdal-sys if libgdal-dev installed
-gdal-src = { git = "https://github.com/georust/gdal.git", version = "0.3.0+3.11.4", features = [
+# comment out gdal-src and gdal-sys if libgdal-dev is installed locally
+gdal-src = { git = "https://github.com/georust/gdal.git", version = "0.3.0", features = [
     "driver_gtiff",
     "nobuild",
 ], rev = "3df2c28f8c83f80d209b34d46f30d6c35e803e07" }
