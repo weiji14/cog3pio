@@ -38,11 +38,18 @@ tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 url = { version = "2.5.7", optional = true }
 
 [dev-dependencies]
-criterion = { git = "https://github.com/vxfield/criterion.rs.git", version = "0.5.1" } # https://github.com/bheisler/criterion.rs/pull/832
-gdal = { version = "0.18.0", features = ["array"] }
-# comment out gdal-src and gdal-sys if libgdal-dev installed
-gdal-src = { version = "0.2.1", features = ["driver_gtiff", "nobuild"] }
-gdal-sys = { version = "0.11.0", features = ["bundled"] }
+criterion = { package = "codspeed-criterion-compat", version = "4.1.0" }
+gdal = { git = "https://github.com/georust/gdal.git", version = "0.18.0", features = [
+    "array",
+], rev = "3df2c28f8c83f80d209b34d46f30d6c35e803e07" }
+# comment out gdal-src and gdal-sys if libgdal-dev is installed locally
+gdal-src = { git = "https://github.com/georust/gdal.git", version = "0.3.0", features = [
+    "driver_gtiff",
+    "nobuild",
+], rev = "3df2c28f8c83f80d209b34d46f30d6c35e803e07" }
+gdal-sys = { git = "https://github.com/georust/gdal.git", version = "0.11.0", features = [
+    "bundled",
+], rev = "3df2c28f8c83f80d209b34d46f30d6c35e803e07" }
 half = { version = "2.6.0", features = ["num-traits"] }
 rstest = "0.26.1"
 tempfile = "3.10.1"
