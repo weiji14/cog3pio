@@ -34,7 +34,7 @@ pyo3 = { version = "0.27.1", features = [
     "extension-module",
 ], optional = true }
 tiff = { version = "0.10.0", features = ["zstd"] }
-tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
+tokio = { version = "1.36.0", features = ["rt-multi-thread"], optional = true }
 url = { version = "2.5.7", optional = true }
 
 [dev-dependencies]
@@ -57,7 +57,7 @@ url = "2.5.7"
 
 [features]
 cuda = ["cudarc", "dlpark/cuda", "nvtiff-sys"]
-pyo3 = ["dlpark/pyo3", "dep:numpy", "dep:pyo3", "dep:url"]
+pyo3 = ["dlpark/pyo3", "dep:numpy", "dep:pyo3", "dep:tokio", "dep:url"]
 
 [lints.clippy]
 pedantic = "warn"
