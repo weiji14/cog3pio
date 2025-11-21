@@ -34,7 +34,7 @@ pyo3 = { version = "0.27.1", features = [
     "extension-module",
 ], optional = true }
 tiff = { version = "0.10.0", features = ["zstd"] }
-tokio = { version = "1.36.0", features = ["rt-multi-thread"], optional = true }
+tokio = { version = "1.48.0", features = ["rt-multi-thread"], optional = true }
 url = { version = "2.5.7", optional = true }
 
 [dev-dependencies]
