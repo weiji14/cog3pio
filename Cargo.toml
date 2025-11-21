@@ -53,6 +53,7 @@ gdal-sys = { git = "https://github.com/georust/gdal.git", version = "0.11.0", fe
 half = { version = "2.6.0", features = ["num-traits"] }
 rstest = "0.26.1"
 tempfile = "3.10.1"
+tokio = { version = "*", features = ["rt-multi-thread"] }
 url = "2.5.7"
 
 [features]
