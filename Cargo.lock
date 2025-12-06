@@ -112,7 +112,7 @@ version = "0.71.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f58bf3d7db68cfbac37cfc485a8d711e87e064c3d0fe0435b92f7a407f9d6b3"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cexpr",
  "clang-sys",
  "itertools 0.13.0",
@@ -134,9 +134,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.9.1"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b8e56985ec62d17e9c1001dc89c88ecd7dc08e47eba5ec7c29c7b5eeecde967"
+checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
 
 [[package]]
 name = "bumpalo"
@@ -471,9 +471,9 @@ dependencies = [
 [[package]]
 name = "dlpark"
 version = "0.6.0"
-source = "git+https://github.com/SunDoge/dlpark.git?rev=2455a562af10a6655465d24d7e9c78996c613e6a#2455a562af10a6655465d24d7e9c78996c613e6a"
+source = "git+https://github.com/SunDoge/dlpark.git?rev=2bedd1fc8ad59e56e3b74c63c94efb3fdc8c2ada#2bedd1fc8ad59e56e3b74c63c94efb3fdc8c2ada"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cudarc",
  "half",
  "ndarray",
@@ -510,7 +510,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -660,9 +660,9 @@ dependencies = [
 [[package]]
 name = "gdal"
 version = "0.18.0"
-source = "git+https://github.com/georust/gdal.git?rev=3df2c28f8c83f80d209b34d46f30d6c35e803e07#3df2c28f8c83f80d209b34d46f30d6c35e803e07"
+source = "git+https://github.com/georust/gdal.git?rev=8b9e04938298055f2a22dce5c21c1a6e73678ecb#8b9e04938298055f2a22dce5c21c1a6e73678ecb"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "chrono",
  "gdal-sys",
  "geo-types",
@@ -674,7 +674,7 @@ dependencies = [
 [[package]]
 name = "gdal-src"
 version = "0.3.0+3.11.4"
-source = "git+https://github.com/georust/gdal.git?rev=3df2c28f8c83f80d209b34d46f30d6c35e803e07#3df2c28f8c83f80d209b34d46f30d6c35e803e07"
+source = "git+https://github.com/georust/gdal.git?rev=8b9e04938298055f2a22dce5c21c1a6e73678ecb#8b9e04938298055f2a22dce5c21c1a6e73678ecb"
 dependencies = [
  "cmake",
  "link-cplusplus",
@@ -684,7 +684,7 @@ dependencies = [
 [[package]]
 name = "gdal-sys"
 version = "0.11.0"
-source = "git+https://github.com/georust/gdal.git?rev=3df2c28f8c83f80d209b34d46f30d6c35e803e07#3df2c28f8c83f80d209b34d46f30d6c35e803e07"
+source = "git+https://github.com/georust/gdal.git?rev=8b9e04938298055f2a22dce5c21c1a6e73678ecb#8b9e04938298055f2a22dce5c21c1a6e73678ecb"
 dependencies = [
  "gdal-src",
  "pkg-config",
@@ -1147,7 +1147,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1230,7 +1230,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.3",
+ "windows-targets 0.53.5",
 ]
 
 [[package]]
@@ -1351,9 +1351,9 @@ dependencies = [
 
 [[package]]
 name = "ndarray"
-version = "0.16.1"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "882ed72dce9365842bf196bdeedf5055305f11fc8c03dee7bb0194a6cad34841"
+checksum = "0c7c9125e8f6f10c9da3aad044cc918cf8784fa34de857b1aa68038eb05a50a9"
 dependencies = [
  "matrixmultiply",
  "num-complex",
@@ -1370,7 +1370,7 @@ version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "cfg-if",
  "cfg_aliases",
  "libc",
@@ -1416,9 +1416,9 @@ dependencies = [
 
 [[package]]
 name = "numpy"
-version = "0.27.0"
+version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fa24ffc88cf9d43f7269d6b6a0d0a00010924a8cc90604a21ef9c433b66998d"
+checksum = "7aac2e6a6e4468ffa092ad43c39b81c79196c2bb773b8db4085f695efe3bba17"
 dependencies = [
  "libc",
  "ndarray",
@@ -1647,9 +1647,9 @@ dependencies = [
 
 [[package]]
 name = "proj-sys"
-version = "0.26.0"
+version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a208129995443a4c475464c33308274be1578993b0ad266c9139188ed0dc7e91"
+checksum = "48ffa255a853264169516c9fc21f524446aca5b091daab6052f2a9b3e5e90359"
 dependencies = [
  "cmake",
  "flate2",
@@ -1783,9 +1783,9 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.5.6",
+ "socket2 0.6.1",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -2058,7 +2058,7 @@ version = "0.38.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ea3e1a662af26cd7a3ba09c0297a31af215563ecf42817c98df621387f4e949"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "errno",
  "libc",
  "linux-raw-sys 0.4.13",
@@ -2071,7 +2071,7 @@ version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c71e83d6afe7ff64890ec6b71d6a69bb8a610ab78ce364b3352876bb4c801266"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "errno",
  "libc",
  "linux-raw-sys 0.9.4",
@@ -2196,7 +2196,7 @@ version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b369d18893388b345804dc0007963c99b7d665ae71d275812d828c6f089640"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
  "core-foundation 0.10.1",
  "core-foundation-sys",
  "libc",
@@ -3113,7 +3113,7 @@ version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f42320e61fe2cfd34354ecb597f86f413484a798ba44a8ca1165c58d42da6c1"
 dependencies = [
- "bitflags 2.9.1",
+ "bitflags 2.10.0",
 ]
 
 [[package]]
