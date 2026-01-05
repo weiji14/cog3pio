@@ -79,20 +79,18 @@ jobs:
           before-script-linux: |
             # Install nvTIFF and clang-devel
             if command -v dnf &> /dev/null; then
-              # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
+              # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
               dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
               dnf clean all
-              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-12-0.5.0.* libnvtiff0-cuda-12-0.5.0.*
-              # Patch nvtiff.h (v0.5.0) to remove default arguments and missing enum tag
-              sed --in-place "s/memLimit=0/memLimit/g" /usr/include/nvtiff.h
-              sed --in-place "s/stream=0/stream/g" /usr/include/nvtiff.h
+              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-13-0.6.0.* libnvtiff0-cuda-13-0.6.0.*
+              # Patch nvtiff.h (v0.6.0) to add missing enum tag
               sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" /usr/include/nvtiff.h
             # elif command -v apt &> /dev/null; then
-            #   # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
+            #   # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
             #   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
             #   dpkg -i cuda-keyring_1.1-1_all.deb
             #   apt update
-            #   apt install -y cuda-crt-13-0 cuda-cudart-dev-13-0 nvtiff-cuda-12=0.5.0.* libclang-dev gcc-multilib
+            #   apt install -y cuda-crt-13-0 cuda-cudart-dev-13-0 nvtiff-cuda-13=0.6.0.* libclang-dev gcc-multilib
             fi
 
       - name: Build free-threaded wheels
@@ -108,17 +106,15 @@ jobs:
               # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
               dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
               dnf clean all
-              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-12-0.5.0.* libnvtiff0-cuda-12-0.5.0.*
-              # Patch nvtiff.h (v0.5.0) to remove default arguments and missing enum tag
-              sed --in-place "s/memLimit=0/memLimit/g" /usr/include/nvtiff.h
-              sed --in-place "s/stream=0/stream/g" /usr/include/nvtiff.h
+              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-13-0.6.0.* libnvtiff0-cuda-13-0.6.0.*
+              # Patch nvtiff.h (v0.6.0) to add missing enum tag
               sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" /usr/include/nvtiff.h
             # elif command -v apt &> /dev/null; then
-            #   # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
+            #   # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
             #   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
             #   dpkg -i cuda-keyring_1.1-1_all.deb
             #   apt update
-            #   apt install -y cuda-crt-13-0 cuda-cudart-dev-13-0 nvtiff-cuda-12=0.5.0.* libclang-dev gcc-multilib
+            #   apt install -y cuda-crt-13-0 cuda-cudart-dev-13-0 nvtiff-cuda-13=0.6.0.* libclang-dev gcc-multilib
             fi
 
       - name: Upload wheels

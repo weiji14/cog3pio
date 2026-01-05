@@ -6,5 +6,5 @@ dependencies:
   - clang
   - cuda-crt
   - cuda-cudart-dev
-  - libnvtiff-dev=0.5.0
+  - libnvtiff-dev=0.6.0
   - python=3.12
