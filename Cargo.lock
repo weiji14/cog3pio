@@ -450,9 +450,9 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "cudarc"
-version = "0.17.7"
+version = "0.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff0da1a70ec91e66731c1752deb9fda3044f1154fe4ceb5873e3f96ed34cafa3"
+checksum = "3aa12038120eb13347a6ae2ffab1d34efe78150125108627fd85044dd4d6ff1e"
 dependencies = [
  "libloading",
 ]
@@ -471,7 +471,7 @@ dependencies = [
 [[package]]
 name = "dlpark"
 version = "0.6.0"
-source = "git+https://github.com/SunDoge/dlpark.git?rev=2bedd1fc8ad59e56e3b74c63c94efb3fdc8c2ada#2bedd1fc8ad59e56e3b74c63c94efb3fdc8c2ada"
+source = "git+https://github.com/SunDoge/dlpark.git?rev=93def2733de9437f50d7f704ddddcf0f67016d88#93def2733de9437f50d7f704ddddcf0f67016d88"
 dependencies = [
  "bitflags 2.10.0",
  "cudarc",
