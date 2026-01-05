@@ -16,18 +16,18 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-cudarc = { version = "0.17.7", features = [
+cudarc = { version = "0.18.2", features = [
     "cuda-version-from-build-system",
     "fallback-latest",
 ], optional = true }
-dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", features = [
+dlpark = { git = "https://github.com/SunDoge/dlpark.git", rev = "93def2733de9437f50d7f704ddddcf0f67016d88", version = "0.6.0", features = [
     "half",
     "ndarray",
-], rev = "2bedd1fc8ad59e56e3b74c63c94efb3fdc8c2ada" }
+] }
 geo = "0.29.0"
 ndarray = "0.17.1"
 numpy = { version = "0.27.1", optional = true }
-nvtiff-sys = { version = "0.1.2", optional = true }
+nvtiff-sys = { version = "0.2.0", optional = true }
 object_store = { version = "0.12.3", features = ["http"] }
 pyo3 = { version = "0.27.1", features = [
     "abi3-py312",
