@@ -9,9 +9,9 @@ use dlpark::traits::InferDataType;
 use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResult, NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage,
-    nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffFileInfo,
-    nvtiffSampleFormat, nvtiffStatus_t, nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetFileInfo,
-    nvtiffStreamParse,
+    nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffImageInfo,
+    nvtiffSampleFormat, nvtiffStatus_t, nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetImageInfo,
+    nvtiffStreamGetNumImages, nvtiffStreamParse,
 };
 
 /// Cloud-optimized GeoTIFF reader using [`nvTIFF`](https://developer.nvidia.com/nvtiff)
@@ -101,17 +101,29 @@ impl CudaCogReader {
         dbg!(status_parse);
         status_parse.result()?;
 
-        // Step 2: Extract file-level metadata information from the TIFF stream
-        let mut file_info = nvtiffFileInfo::default();
-        let status_fileinfo: u32 =
-            unsafe { nvtiffStreamGetFileInfo(tiff_stream, &raw mut file_info) };
-        dbg!(status_fileinfo);
-        // dbg!(file_info);
-        status_fileinfo.result()?;
+        // Step 2a: Extract file-level metadata information from the TIFF stream
+        let mut num_images: u32 = 0;
+        let status_numimages: u32 =
+            unsafe { nvtiffStreamGetNumImages(tiff_stream, &raw mut num_images) };
+        dbg!(status_numimages);
+        status_numimages.result()?;
+
+        // Step 2b: Extract image-level metadata information from the TIFF stream
+        let mut image_info = nvtiffImageInfo::default();
+        let status_imageinfo: u32 = unsafe {
+            nvtiffStreamGetImageInfo(
+                tiff_stream,
+                0, // only decode first image in TIFF for now.
+                &raw mut image_info,
+            )
+        };
+        dbg!(status_imageinfo);
+        // dbg!(image_info);
+        status_imageinfo.result()?;
 
         // Step 3a: Determine dtype from sample_format and bits_per_pixel
         // Assume that all samples/bands have the same dtype
-        let sample_format: u32 = file_info.sample_format[0];
+        let sample_format: u32 = image_info.sample_format[0];
         let dtype_code: DataTypeCode = match sample_format {
             nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_UINT => DataTypeCode::UInt,
             nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_INT => DataTypeCode::Int,
@@ -120,18 +132,18 @@ impl CudaCogReader {
                 "non uint/int/float dtypes (e.g. complex int/float) not implemented yet"
             ),
         };
-        let bits: u16 = file_info.bits_per_pixel / file_info.samples_per_pixel;
+        let bits: u16 = image_info.bits_per_pixel / image_info.samples_per_pixel;
         let dtype: DataType = DataType {
             code: dtype_code,
             bits: u8::try_from(bits)
                 .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
             lanes: 1,
         };
-        let bytes_per_pixel: usize = file_info.bits_per_pixel as usize / 8;
+        let bytes_per_pixel: usize = image_info.bits_per_pixel as usize / 8;
 
-        // Step 3b: Allocate memory on device, pre-fill with zeros
-        let num_bytes: usize = file_info.image_width as usize // Width
-            * file_info.image_height as usize // Height
+        // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
+        let num_bytes: usize = image_info.image_width as usize // Width
+            * image_info.image_height as usize // Height
             * bytes_per_pixel; // Bytes per pixel (e.g. 4 bytes for f32)
         dbg!(num_bytes);
         let image_stream: CudaSlice<u8> =

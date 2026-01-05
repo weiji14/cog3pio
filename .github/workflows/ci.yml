@@ -173,6 +173,9 @@ jobs:
           python-version: "3.12"
           architecture: ${{ matrix.target }}
 
+      - name: Support longpaths
+        run: git config --system core.longpaths true
+
       - name: Build wheels
         uses: PyO3/maturin-action@aef21716ff3dcae8a1c301d23ec3e4446972a6e3 # v1.49.1
         with:

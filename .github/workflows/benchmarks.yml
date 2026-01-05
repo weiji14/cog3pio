@@ -1,7 +1,7 @@
 # Run performance benchmarks
 #
-# Continuous benchmarking using pytest-codspeed. Measures the execution speed
-# of tests marked with @pytest.mark.benchmark decorator.
+# Continuous benchmarking with CodSpeed. Measures the execution speed of Rust benchmarks
+# via cargo-codspeed, and Python tests marked with @pytest.mark.benchmark decorator.
 
 name: Benchmarks
 
@@ -16,10 +16,56 @@ on:
   # performance analysis in order to generate initial data.
   workflow_dispatch:
 
+env:
+  CARGO_TERM_COLOR: always
+
 permissions: {}
 
 jobs:
-  benchmarks:
+  rust-benchmarks:
+    name: "Run Rust benchmarks"
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/osgeo/gdal:ubuntu-small-3.11.5
+      options: --privileged
+    steps:
+      - name: Install dev dependencies and setup git
+        run: |
+          apt update
+          apt install -y build-essential cmake git libclang-dev pkg-config
+          git config --global --add safe.directory $GITHUB_WORKSPACE
+
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Download sample GeoTIFF
+        run: |
+          curl --create-dir --remote-name --output-dir benches https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/37/M/BV/2024/10/S2A_37MBV_20241029_0_L2A/TCI.tif
+          ls -lh benches/
+
+      - name: Setup rust toolchain, cache and cargo-codspeed binary
+        uses: moonrepo/setup-rust@ede6de059f8046a5e236c94046823e2af11ca670 # v1.2.2
+        with:
+          channel: 1.85.0 # msrv
+          cache: false
+          cache-target: release
+          bins: cargo-codspeed
+
+      - name: Build the benchmark target(s)
+        run: |
+          cargo remove --dev gdal-src gdal-sys
+          cargo codspeed build
+
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@6a8e2b874c338bf81cc5e8be715ada75908d3871 # v4.3.4
+        with:
+          mode: instrumentation
+          run: cargo codspeed run
+
+  python-benchmarks:
+    name: "Run Python benchmarks"
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -28,7 +74,7 @@ jobs:
     steps:
       # Checkout current git repository
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
 
@@ -55,7 +101,7 @@ jobs:
 
       # Run the benchmark tests
       - name: Run benchmarks
-        uses: CodSpeedHQ/action@0010eb0ca6e89b80c88e8edaaa07cfe5f3e6664d # v3.5.0
+        uses: CodSpeedHQ/action@6a8e2b874c338bf81cc5e8be715ada75908d3871 # v4.3.4
         with:
-          run: |
-            python -m pytest --verbose --codspeed
+          mode: instrumentation
+          run: python -m pytest --verbose --codspeed

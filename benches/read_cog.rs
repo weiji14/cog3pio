@@ -6,10 +6,10 @@
 // - image-tiff
 //
 // Steps:
-// - Download Sentinel-2 True-Colour Image (TCI) file (318MB, DEFLATE compression) from
+// - Download Sentinel-2 True-Colour Image (TCI) file (318.0MB, DEFLATE compression) from
 //   https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/37/M/BV/2024/10/S2A_37MBV_20241029_0_L2A/TCI.tif
 //   to `benches/` folder.
-// - Run `cargo bench --features cuda`
+// - Run `cargo bench` (CPU-only) or `cargo bench --features cuda` (with CUDA-enabled GPU)
 //
 // References:
 // - https://github.com/microsoft/pytorch-cloud-geotiff-optimization/blob/5fb6d1294163beff822441829dcd63a3791b7808/configs/search.yaml#L6
@@ -30,8 +30,8 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use cudarc::driver::{CudaContext, CudaStream};
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::traits::TensorView;
-use gdal::Dataset;
 use gdal::raster::Buffer;
+use gdal::{Dataset, DatasetOptions, GdalOpenFlags};
 use ndarray::Array2;
 
 // nvtiff
@@ -53,7 +53,13 @@ fn read_geotiff_nvtiff(fpath: &str) {
 
 // gdal
 fn read_geotiff_gdal(fpath: &str) {
-    let ds = Dataset::open(fpath).unwrap();
+    let options = DatasetOptions {
+        open_flags: GdalOpenFlags::default(),
+        allowed_drivers: Some(&["LIBERTIFF"]),
+        open_options: Some(&["NUM_THREADS=4"]),
+        sibling_files: None,
+    };
+    let ds = Dataset::open_ex(fpath, options).unwrap();
 
     for b in 1..3 {
         let band = ds.rasterband(b).unwrap();
@@ -61,6 +67,18 @@ fn read_geotiff_gdal(fpath: &str) {
         let array: Array2<_> = buffer.to_array().unwrap();
 
         assert_eq!(array.shape(), [10980, 10980]);
+
+        #[cfg(feature = "cuda")]
+        {
+            // Copy from CPU (host) memory to CUDA (device) memory
+            let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
+            let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+            let mut cuda_mem = cuda_stream.alloc_zeros::<u8>(3 * 10980 * 10980).unwrap();
+
+            cuda_stream
+                .memcpy_htod(array.as_slice().unwrap(), &mut cuda_mem)
+                .unwrap();
+        }
     }
 }
 
@@ -72,6 +90,17 @@ fn read_geotiff_image_tiff(fpath: &str) {
     let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
 
     assert_eq!(tensor.num_elements(), 3 * 10980 * 10980);
+
+    #[cfg(feature = "cuda")]
+    {
+        // Copy from CPU (host) memory to CUDA (device) memory
+        let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
+        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+        let mut cuda_mem = cuda_stream.alloc_zeros::<u8>(3 * 10980 * 10980).unwrap();
+
+        let slice: &[u8] = tensor.as_slice_untyped();
+        cuda_stream.memcpy_htod(slice, &mut cuda_mem).unwrap();
+    }
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -84,13 +113,13 @@ fn criterion_benchmark(c: &mut Criterion) {
     #[cfg(feature = "cuda")]
     group
         .sample_size(10)
-        .nresamples(1)
+        .nresamples(2)
         .warm_up_time(Duration::from_millis(1))
         .measurement_time(Duration::from_secs(2));
     // .noise_threshold(0.15);
     #[cfg(feature = "cuda")]
     group.bench_with_input(
-        BenchmarkId::new("1_nvTIFF_GPU", "Sentinel-2 TCI"),
+        BenchmarkId::new("0_nvTIFF_GPU", "Sentinel-2 TCI"),
         "benches/TCI.tif",
         |b, p| b.iter(|| read_geotiff_nvtiff(p)),
     );
@@ -98,7 +127,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // CPU decoding using GDAL
     group.sample_size(30);
     group.bench_with_input(
-        BenchmarkId::new("2_gdal_CPU", "Sentinel-2 TCI"),
+        BenchmarkId::new("1_gdal_CPU", "Sentinel-2 TCI"),
         "benches/TCI.tif",
         |b, p| b.iter(|| read_geotiff_gdal(p)),
     );
@@ -106,7 +135,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     // CPU decoding based on image-tiff
     group.sample_size(30);
     group.bench_with_input(
-        BenchmarkId::new("3_image-tiff_CPU", "Sentinel-2 TCI"),
+        BenchmarkId::new("2_image-tiff_CPU", "Sentinel-2 TCI"),
         "benches/TCI.tif",
         |b, p| b.iter(|| read_geotiff_image_tiff(p)),
     );

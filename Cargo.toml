@@ -16,41 +16,42 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 bytes = "1.5.0"
-cudarc = { version = "0.17.7", features = [
+cudarc = { version = "0.18.2", features = [
     "cuda-version-from-build-system",
     "fallback-latest",
 ], optional = true }
-dlpark = { git = "https://github.com/SunDoge/dlpark.git", version = "0.6.0", features = [
+dlpark = { git = "https://github.com/SunDoge/dlpark.git", rev = "93def2733de9437f50d7f704ddddcf0f67016d88", version = "0.6.0", features = [
     "half",
     "ndarray",
-], rev = "2455a562af10a6655465d24d7e9c78996c613e6a" }
+] }
 geo = "0.29.0"
-ndarray = "0.16.1"
-numpy = { version = "0.27.0", optional = true }
-nvtiff-sys = { version = "0.1.3", optional = true }
+ndarray = "0.17.1"
+numpy = { version = "0.27.1", optional = true }
+nvtiff-sys = { version = "0.2.0", optional = true }
 object_store = { version = "0.12.3", features = ["http"] }
 pyo3 = { version = "0.27.1", features = [
     "abi3-py312",
     "extension-module",
 ], optional = true }
 tiff = { version = "0.10.0", features = ["zstd"] }
-tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
+tokio = { version = "1.48.0", features = ["rt-multi-thread"], optional = true }
 url = { version = "2.5.7", optional = true }
 
 [dev-dependencies]
-criterion = { git = "https://github.com/vxfield/criterion.rs.git", version = "0.5.1" } # https://github.com/bheisler/criterion.rs/pull/832
-gdal = { version = "0.18.0", features = ["array"] }
-# comment out gdal-src and gdal-sys if libgdal-dev installed
-gdal-src = { version = "0.2.1", features = ["driver_gtiff", "nobuild"] }
-gdal-sys = { version = "0.11.0", features = ["bundled"] }
+criterion = { package = "codspeed-criterion-compat", version = "4.1.0" }
+gdal = { version = "0.19.0", features = ["array"] }
+# comment out gdal-src and gdal-sys if libgdal-dev is installed locally
+gdal-src = { version = "0.3.0", features = ["driver_gtiff", "nobuild"] }
+gdal-sys = { version = "0.12.0", features = ["bundled"] }
 half = { version = "2.6.0", features = ["num-traits"] }
 rstest = "0.26.1"
 tempfile = "3.10.1"
+tokio = { version = "*", features = ["rt-multi-thread"] }
 url = "2.5.7"
 
 [features]
 cuda = ["cudarc", "dlpark/cuda", "nvtiff-sys"]
-pyo3 = ["dlpark/pyo3", "dep:numpy", "dep:pyo3", "dep:url"]
+pyo3 = ["dlpark/pyo3", "dep:numpy", "dep:pyo3", "dep:tokio", "dep:url"]
 
 [lints.clippy]
 pedantic = "warn"
