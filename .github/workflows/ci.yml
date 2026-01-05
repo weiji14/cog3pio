@@ -51,8 +51,11 @@ jobs:
       matrix:
         platform:
           - target: x86_64
+            feat-flags: "cuda,pyo3"
           - target: aarch64
             runner: ubuntu-24.04-arm
+            arch: sbsa
+            feat-flags: "cuda,pyo3"
           - target: armv7
           - target: s390x
           - target: ppc64le
@@ -70,17 +73,49 @@ jobs:
         uses: PyO3/maturin-action@aef21716ff3dcae8a1c301d23ec3e4446972a6e3 # v1.49.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist
+          args: --features ${{ matrix.feat-flags || 'pyo3' }} --release --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
+          before-script-linux: |
+            # Install nvTIFF and clang-devel
+            if command -v dnf &> /dev/null; then
+              # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
+              dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
+              dnf clean all
+              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-13-0.6.0.* libnvtiff0-cuda-13-0.6.0.*
+              # Patch nvtiff.h (v0.6.0) to add missing enum tag
+              sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" /usr/include/nvtiff.h
+            # elif command -v apt &> /dev/null; then
+            #   # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
+            #   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+            #   dpkg -i cuda-keyring_1.1-1_all.deb
+            #   apt update
+            #   apt install -y cuda-crt-13-0 cuda-cudart-dev-13-0 nvtiff-cuda-13=0.6.0.* libclang-dev gcc-multilib
+            fi
 
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@aef21716ff3dcae8a1c301d23ec3e4446972a6e3 # v1.49.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist --interpreter python3.13t
+          args: --features ${{ matrix.feat-flags || 'pyo3' }} --release --out dist --interpreter python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
+          before-script-linux: |
+            # Install nvTIFF and clang-devel
+            if command -v dnf &> /dev/null; then
+              # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
+              dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
+              dnf clean all
+              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-13-0.6.0.* libnvtiff0-cuda-13-0.6.0.*
+              # Patch nvtiff.h (v0.6.0) to add missing enum tag
+              sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" /usr/include/nvtiff.h
+            # elif command -v apt &> /dev/null; then
+            #   # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_network
+            #   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+            #   dpkg -i cuda-keyring_1.1-1_all.deb
+            #   apt update
+            #   apt install -y cuda-crt-13-0 cuda-cudart-dev-13-0 nvtiff-cuda-13=0.6.0.* libclang-dev gcc-multilib
+            fi
 
       - name: Upload wheels
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

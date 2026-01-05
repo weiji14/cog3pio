@@ -70,7 +70,7 @@ pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
     num_bytes: usize,
     dtype: DataType,
-    cuda_slice: CudaSlice<u8>,
+    pub(crate) cuda_slice: CudaSlice<u8>,
 }
 
 impl CudaCogReader {
