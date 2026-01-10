@@ -51,7 +51,7 @@ use nvtiff_sys::{
 ///     let bytes: Bytes = result.bytes().await.unwrap();
 ///
 ///     let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
-///     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+///     let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
 ///
 ///     // Read GeoTIFF into a dlpark::versioned::SafeManagedTensorVersioned
 ///     let mut cog = CudaCogReader::new(&bytes).unwrap();
@@ -272,7 +272,7 @@ mod tests {
 
         // Step 1: Init CUDA stream on device (GPU)
         let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
-        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+        let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
 
         // Step 2: Do the TIFF decoding
         let cog: CudaCogReader = CudaCogReader::new(&bytes).unwrap();
@@ -315,7 +315,7 @@ mod tests {
 
         // Step 1: Init CUDA stream on device (GPU)
         let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
-        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+        let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
 
         // Step 2: Do the TIFF decoding
         let cog: CudaCogReader = CudaCogReader::new(&bytes).unwrap();
