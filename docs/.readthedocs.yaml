@@ -9,7 +9,7 @@ build:
   os: "ubuntu-24.04"
   tools:
     nodejs: "23"
-    python: "3.12"
+    python: "3.13"
     rust: "1.86"
   jobs:
     install:
