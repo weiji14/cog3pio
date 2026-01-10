@@ -1,11 +1,10 @@
-use std::ffi::c_void;
 use std::sync::Arc;
 
 use bytes::Bytes;
-use cudarc::driver::{CudaSlice, CudaStream, CudaView, DevicePtr};
+use cudarc::driver::{CudaSlice, CudaStream, CudaView};
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DataType, DataTypeCode};
-use dlpark::traits::InferDataType;
+use dlpark::traits::{InferDataType, TensorView};
 use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResult, NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage,
@@ -55,8 +54,8 @@ use nvtiff_sys::{
 ///     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 ///
 ///     // Read GeoTIFF into a dlpark::versioned::SafeManagedTensorVersioned
-///     let mut cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-///     let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+///     let mut cog = CudaCogReader::new(&bytes).unwrap();
+///     let tensor: SafeManagedTensorVersioned = cog.dlpack(&cuda_stream).unwrap();
 ///     assert_eq!(tensor.shape(), [7088886]); // [1, 2667, 2658]
 ///     assert_eq!(tensor.data_type(), &DataType::F32);
 /// }
@@ -68,9 +67,7 @@ use nvtiff_sys::{
 /// as f16, complex32, etc and certain compression schemes are not supported yet.
 pub struct CudaCogReader {
     tiff_stream: *mut nvtiffStream,
-    num_bytes: usize,
-    dtype: DataType,
-    cuda_slice: CudaSlice<u8>,
+    image_info: nvtiffImageInfo,
 }
 
 impl CudaCogReader {
@@ -80,12 +77,7 @@ impl CudaCogReader {
     /// # Errors
     /// Will return [`nvtiff_sys::result::NvTiffError::StatusError`] if nvTIFF failed to
     /// parse the TIFF data or metadata from the byte stream buffer.
-    ///
-    /// # Panics
-    /// Will panic if [`CudaStream::alloc_zeros`] failed to allocate bytes on CUDA
-    /// device memory, usually due to
-    /// [`cudarc::driver::sys::cudaError_enum::CUDA_ERROR_OUT_OF_MEMORY`]
-    pub fn new(byte_stream: &Bytes, cuda_stream: &Arc<CudaStream>) -> NvTiffResult<Self> {
+    pub fn new(byte_stream: &Bytes) -> NvTiffResult<Self> {
         // Step 0: Init TIFF stream on host (CPU)
         let mut host_stream = std::mem::MaybeUninit::uninit();
         let mut tiff_stream: *mut nvtiffStream = host_stream.as_mut_ptr();
@@ -121,43 +113,9 @@ impl CudaCogReader {
         // dbg!(image_info);
         status_imageinfo.result()?;
 
-        // Step 3a: Determine dtype from sample_format and bits_per_pixel
-        // Assume that all samples/bands have the same dtype
-        let sample_format: u32 = image_info.sample_format[0];
-        let dtype_code: DataTypeCode = match sample_format {
-            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_UINT => DataTypeCode::UInt,
-            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_INT => DataTypeCode::Int,
-            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_IEEEFP => DataTypeCode::Float,
-            _ => unimplemented!(
-                "non uint/int/float dtypes (e.g. complex int/float) not implemented yet"
-            ),
-        };
-        let bits: u16 = image_info.bits_per_pixel / image_info.samples_per_pixel;
-        let dtype: DataType = DataType {
-            code: dtype_code,
-            bits: u8::try_from(bits)
-                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
-            lanes: 1,
-        };
-        let bytes_per_pixel: usize = image_info.bits_per_pixel as usize / 8;
-
-        // Step 3b: Allocate memory on device, get pointer, do the TIFF decoding
-        let num_bytes: usize = image_info.image_width as usize // Width
-            * image_info.image_height as usize // Height
-            * bytes_per_pixel; // Bytes per pixel (e.g. 4 bytes for f32)
-        dbg!(num_bytes);
-        let image_stream: CudaSlice<u8> =
-            cuda_stream
-                .alloc_zeros::<u8>(num_bytes)
-                .unwrap_or_else(|err| {
-                    panic!("Failed to allocate {num_bytes} bytes on CUDA device: {err}")
-                });
-
         Ok(Self {
             tiff_stream,
-            num_bytes,
-            dtype,
-            cuda_slice: image_stream,
+            image_info,
         })
     }
 
@@ -168,12 +126,16 @@ impl CudaCogReader {
     /// Will raise [`nvtiff_sys::result::NvTiffError::StatusError`] if decoding failed
     /// due to e.g. TIFF stream not being supported by nvTIFF, missing
     /// nvCOMP/nvJPEG/nvJPEG2K libraries, etc.
-    pub fn dlpack(&self) -> NvTiffResult<SafeManagedTensorVersioned> {
-        // Step 1b: Init CUDA stream on device (GPU)
-        let stream: &Arc<CudaStream> = self.cuda_slice.stream();
+    ///
+    /// # Panics
+    /// Will panic if [`CudaStream::alloc_zeros`] failed to allocate bytes on CUDA
+    /// device memory, usually due to
+    /// [`cudarc::driver::sys::cudaError_enum::CUDA_ERROR_OUT_OF_MEMORY`]
+    pub fn dlpack(&self, stream: &Arc<CudaStream>) -> NvTiffResult<SafeManagedTensorVersioned> {
+        // Step 1a: Init CUDA stream on device (GPU)
         let cuda_stream: *mut nvtiff_sys::CUstream_st = stream.cu_stream().cast::<_>();
 
-        // Step 1c: Init decoder handle
+        // Step 1b: Init decoder handle
         let mut decoder_handle = std::mem::MaybeUninit::zeroed();
         let mut nvtiff_decoder: *mut nvtiffDecoder = decoder_handle.as_mut_ptr();
 
@@ -181,6 +143,35 @@ impl CudaCogReader {
             unsafe { nvtiffDecoderCreateSimple(&raw mut nvtiff_decoder, cuda_stream) };
         dbg!(status_decoder);
         status_decoder.result()?;
+
+        // Step 2a: Determine dtype from sample_format and bits_per_pixel
+        // Assume that all samples/bands have the same dtype
+        let sample_format: u32 = self.image_info.sample_format[0];
+        let dtype_code: DataTypeCode = match sample_format {
+            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_UINT => DataTypeCode::UInt,
+            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_INT => DataTypeCode::Int,
+            nvtiffSampleFormat::NVTIFF_SAMPLEFORMAT_IEEEFP => DataTypeCode::Float,
+            _ => unimplemented!(
+                "non uint/int/float dtypes (e.g. complex int/float) not implemented yet"
+            ),
+        };
+        let bits: u16 = self.image_info.bits_per_pixel / self.image_info.samples_per_pixel;
+        let dtype: DataType = DataType {
+            code: dtype_code,
+            bits: u8::try_from(bits)
+                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
+            lanes: 1,
+        };
+        let bytes_per_pixel: usize = self.image_info.bits_per_pixel as usize / 8;
+
+        // Step 2b: Allocate memory on device
+        let num_bytes: usize = self.image_info.image_width as usize // Width
+            * self.image_info.image_height as usize // Height
+            * bytes_per_pixel; // Bytes per pixel (e.g. 4 bytes for f32)
+        dbg!(num_bytes);
+        let cuslice: CudaSlice<u8> = stream.alloc_zeros::<u8>(num_bytes).unwrap_or_else(|err| {
+            panic!("Failed to allocate {num_bytes} bytes on CUDA device: {err}")
+        });
 
         // Step 3a: Check if image is supported first
         let mut params = std::mem::MaybeUninit::zeroed();
@@ -196,31 +187,10 @@ impl CudaCogReader {
         dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
         status_check.result()?;
 
-        // Step 3b: Do the TIFF decoding to allocated device memory
-        let (image_ptr, _record): (u64, _) = self.cuda_slice.device_ptr(stream);
-        let image_out_d = image_ptr as *mut c_void;
-        let status_decode: u32 = unsafe {
-            nvtiffDecodeImage(
-                self.tiff_stream,
-                nvtiff_decoder,
-                decode_params,
-                0, // image_id
-                image_out_d,
-                cuda_stream,
-            )
-        };
-        dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
-        status_decode.result()?;
-
-        // dbg!(self.tiff_stream); // TODO need this to avoid panic on status_check/status_decode?
-
-        // Create CudaSlice from pointer
-        let cuslice: CudaSlice<u8> =
-            unsafe { stream.upgrade_device_ptr(image_ptr, self.num_bytes) };
-
+        // Step 3b: Prepare DLPack tensor container
         // Transmute from u8 to actual dtype before putting into DLPack tensor
-        let len_elem: usize = self.num_bytes / (self.dtype.bits as usize / 8);
-        let tensor: SafeManagedTensorVersioned = match self.dtype {
+        let len_elem: usize = num_bytes / (dtype.bits as usize / 8);
+        let tensor: SafeManagedTensorVersioned = match dtype {
             DataType::U8 => SafeManagedTensorVersioned::new(cuslice)
                 .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?,
             DataType::U16 => cudaslice_to_tensor::<u16>(cuslice, len_elem)?,
@@ -236,6 +206,22 @@ impl CudaCogReader {
                 unimplemented!("Converting {dtype:?} into DLPack not supported yet.")
             }
         };
+
+        // Step 3c: Do the TIFF decoding to allocated device memory
+        let status_decode: u32 = unsafe {
+            nvtiffDecodeImage(
+                self.tiff_stream,
+                nvtiff_decoder,
+                decode_params,
+                0, // image_id
+                tensor.data_ptr(),
+                cuda_stream,
+            )
+        };
+        dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
+        status_decode.result()?;
+
+        // dbg!(self.tiff_stream); // TODO need this to avoid panic on status_check/status_decode?
 
         Ok(tensor)
     }
@@ -289,8 +275,8 @@ mod tests {
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
         // Step 2: Do the TIFF decoding
-        let cog: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+        let cog: CudaCogReader = CudaCogReader::new(&bytes).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack(&cuda_stream).unwrap();
 
         assert_eq!(tensor.data_type(), &DataType::F32);
         // assert_eq!(tensor.shape(), [1, 2, 3]); // TODO should be 3D tensor
@@ -332,8 +318,8 @@ mod tests {
         let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
         // Step 2: Do the TIFF decoding
-        let cog: CudaCogReader = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-        let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+        let cog: CudaCogReader = CudaCogReader::new(&bytes).unwrap();
+        let tensor: SafeManagedTensorVersioned = cog.dlpack(&cuda_stream).unwrap();
 
         assert_eq!(tensor.data_type(), &dtype);
         // assert_eq!(tensor.shape(), [1, 20, 20]); // TODO should be 3D tensor

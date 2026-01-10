@@ -43,8 +43,8 @@ fn read_geotiff_nvtiff(fpath: &str) {
     let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
     let cuda_stream: Arc<CudaStream> = ctx.default_stream();
 
-    let cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-    let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+    let cog = CudaCogReader::new(&bytes).unwrap();
+    let tensor: SafeManagedTensorVersioned = cog.dlpack(&cuda_stream).unwrap();
 
     assert_eq!(tensor.num_elements(), 3 * 10980 * 10980);
     // drop(cog);
