@@ -41,10 +41,10 @@ fn read_geotiff_nvtiff(fpath: &str) {
     let bytes = Bytes::copy_from_slice(&v);
 
     let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
-    let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+    let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
 
-    let cog = CudaCogReader::new(&bytes, &cuda_stream).unwrap();
-    let tensor: SafeManagedTensorVersioned = cog.dlpack().unwrap();
+    let cog = CudaCogReader::new(&bytes).unwrap();
+    let tensor: SafeManagedTensorVersioned = cog.dlpack(&cuda_stream).unwrap();
 
     assert_eq!(tensor.num_elements(), 3 * 10980 * 10980);
     // drop(cog);
@@ -72,7 +72,7 @@ fn read_geotiff_gdal(fpath: &str) {
         {
             // Copy from CPU (host) memory to CUDA (device) memory
             let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
-            let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+            let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
             let mut cuda_mem = cuda_stream.alloc_zeros::<u8>(3 * 10980 * 10980).unwrap();
 
             cuda_stream
@@ -95,7 +95,7 @@ fn read_geotiff_image_tiff(fpath: &str) {
     {
         // Copy from CPU (host) memory to CUDA (device) memory
         let ctx: Arc<CudaContext> = CudaContext::new(0).unwrap(); // Set on GPU:0
-        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
+        let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
         let mut cuda_mem = cuda_stream.alloc_zeros::<u8>(3 * 10980 * 10980).unwrap();
 
         let slice: &[u8] = tensor.as_slice_untyped();
