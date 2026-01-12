@@ -55,6 +55,7 @@ use crate::python::adapters::path_to_stream;
 #[pyo3(name = "CudaCogReader")]
 pub(crate) struct PyCudaCogReader {
     inner: CudaCogReader,
+    device: usize,
 }
 
 #[pymethods]
@@ -64,16 +65,13 @@ impl PyCudaCogReader {
         let stream: Cursor<Bytes> = path_to_stream(path)?;
         let bytes: Bytes = stream.into_inner();
 
-        let ctx: Arc<CudaContext> =
-            cudarc::driver::CudaContext::new(0) // Set on GPU:0
-                .map_err(|err| PyValueError::new_err(err.to_string()))?;
-        let cuda_stream: Arc<CudaStream> = ctx.default_stream();
-        dbg!(&cuda_stream);
+        let cog =
+            CudaCogReader::new(&bytes).map_err(|err| PyValueError::new_err(err.to_string()))?;
 
-        let cog = CudaCogReader::new(&bytes, &cuda_stream)
-            .map_err(|err| PyValueError::new_err(err.to_string()))?;
-
-        Ok(Self { inner: cog })
+        Ok(Self {
+            inner: cog,
+            device: 0,
+        })
     }
 
     /// Get image pixel data from GeoTIFF as a DLPack capsule
@@ -109,17 +107,23 @@ impl PyCudaCogReader {
     ) -> PyResult<SafeManagedTensorVersioned> {
         dbg!(stream, max_version, kwargs);
 
-        let _stream_int: PyResult<_> = if let Some(s_int) = stream {
+        let ctx: Arc<CudaContext> =
+            CudaContext::new(self.device) // Set on GPU:0
+                .map_err(|err| PyValueError::new_err(err.to_string()))?;
+        let cuda_stream: Arc<CudaStream> = if let Some(s_int) = stream {
             match s_int {
-                0 => unreachable!(), // disallowed due to ambiguity
-                1 => Ok(()),         // legacy default stream
-                2.. => Err(PyNotImplementedError::new_err(
-                    "only legacy default stream (1) is supported for now, got {s_int}",
-                ))?,
+                0 => unreachable!(),              // disallowed due to ambiguity
+                1 => Ok(ctx.default_stream()),    // legacy default stream
+                2 => Ok(ctx.per_thread_stream()), // per-thread default stream
+                3.. => Err(PyNotImplementedError::new_err(
+                    "only legacy default stream (1) or per-thread default stream (2) is
+                    supported for now, got {s_int}",
+                )),
             }
         } else {
-            Ok(()) // None (default) means to assume legacy default stream
-        };
+            Ok(ctx.default_stream()) // None (default) means to assume legacy default stream
+        }?;
+        dbg!(&cuda_stream);
 
         let _dlpack_version: PyResult<_> = if let Some((major, minor)) = max_version {
             if major >= DLPACK_MAJOR_VERSION && minor == DLPACK_MINOR_VERSION {
@@ -143,7 +147,7 @@ impl PyCudaCogReader {
         // Convert from ndarray (Rust) to DLPack (Python)
         let tensor: SafeManagedTensorVersioned = self
             .inner
-            .dlpack()
+            .dlpack(&cuda_stream)
             .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
         Ok(tensor)
@@ -158,7 +162,7 @@ impl PyCudaCogReader {
     /// device : (int, int)
     ///     A tuple (device_type, device_id) in DLPack format.
     fn __dlpack_device__(&self) -> (i32, i32) {
-        let device = Device::cuda(self.inner.cuda_slice.context().ordinal());
+        let device = Device::cuda(self.device); // Hardcoded to GPU:0
         (device.device_type as i32, device.device_id)
     }
 }
