@@ -130,7 +130,7 @@ pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
         .map_err(|_| PyValueError::new_err(format!("Cannot parse url: {file_or_url}")))?;
 
     // Initialize async runtime
-    let runtime = tokio::runtime::Builder::new_current_thread()
+    let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?;
 
