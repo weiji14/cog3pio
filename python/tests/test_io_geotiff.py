@@ -1,5 +1,5 @@
 """
-Test I/O on GeoTIFF files.
+Test GeoTIFF I/O via image-tiff backend.
 """
 
 import os

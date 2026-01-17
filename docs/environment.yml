@@ -1,0 +1,10 @@
+name: cog3pio
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - clang
+  - cuda-crt
+  - cuda-cudart-dev
+  - libnvtiff-dev=0.6.0
+  - python=3.13

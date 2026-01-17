@@ -9,6 +9,9 @@ These are the Python docs for `cog3pio`, for the Rust docs, see
 .. autoclass:: cog3pio.CogReader
     :members:
     :special-members: __dlpack__, __dlpack_device__
+.. autoclass:: cog3pio.CudaCogReader
+    :members:
+    :special-members: __dlpack__, __dlpack_device__
 ```
 
 ## Xarray
