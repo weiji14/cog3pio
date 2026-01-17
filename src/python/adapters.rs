@@ -37,7 +37,7 @@ use crate::python::cudacog::PyCudaCogReader;
 /// >>> from cog3pio import CogReader
 /// ...
 /// >>> cog = CogReader(
-/// ...     path="https://github.com/rasterio/rasterio/raw/1.4.3/tests/data/RGBA.uint16.tif"
+/// ...     path="https://github.com/rasterio/rasterio/raw/1.5.0/tests/data/RGBA.uint16.tif"
 /// ... )
 /// >>> array: np.ndarray = np.from_dlpack(cog)
 /// >>> array.shape
@@ -79,12 +79,12 @@ impl PyCogReader {
 
     /// Get device type and device ID in DLPack format.
     ///
-    /// Meant for use by `from_dlpack()`.
+    /// Meant for use by ``from_dlpack()``.
     ///
     /// Returns
     /// -------
     /// device : (int, int)
-    ///     A tuple (device_type, device_id) in DLPack format.
+    ///     A tuple (``device_type``, ``device_id``) in DLPack format.
     #[staticmethod]
     fn __dlpack_device__() -> (i32, i32) {
         let device = Device::CPU;

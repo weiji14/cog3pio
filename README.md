@@ -31,10 +31,10 @@ Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
 - [x] Initial release on crates.io and PyPI
 
 2025 Q3-Q4:
-- [ ] GPU-based decoding (via [`nvTIFF`](https://crates.io/crates/nvtiff-sys))
-- [ ] Asynchronous I/O (refactor to [`async-tiff`](https://crates.io/crates/async-tiff))
+- [x] GPU-based decoding (via [`nvTIFF`](https://crates.io/crates/nvtiff-sys))
 
 2026:
+- [ ] Asynchronous I/O (refactor to [`async-tiff`](https://crates.io/crates/async-tiff))
 - [ ] Direct-to-GPU loading
 
 
