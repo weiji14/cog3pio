@@ -27,10 +27,10 @@ dlpark = { git = "https://github.com/SunDoge/dlpark.git", rev = "93def2733de9437
 geo = "0.29.0"
 ndarray = "0.17.1"
 numpy = { version = "0.27.1", optional = true }
-nvtiff-sys = { version = "0.2.0", optional = true }
+nvtiff-sys = { version = "0.2.1", optional = true }
 object_store = { version = "0.12.3", features = ["http"] }
 pyo3 = { version = "0.27.1", features = ["abi3-py313", "extension-module"], optional = true }
-tiff = { version = "0.10.0", features = ["zstd"] }
+tiff = { version = "0.11.2", features = ["zstd"] }
 tokio = { version = "1.48.0", features = ["rt-multi-thread"], optional = true }
 url = { version = "2.5.7", optional = true }
 
