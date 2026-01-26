@@ -1,7 +1,7 @@
 // Benchmark tests on reading a Cloud-optimized GeoTIFF (CoG) into memory (CPU or GPU)
 //
 // Libraries compared:
-// - nvTIFF (Enable NVIDIA network repository and do `sudo apt install nvtiff nvcomp-cuda-12`)
+// - nvTIFF (Enable NVIDIA network repository and do `sudo apt install nvtiff nvcomp-cuda-13`)
 // - GDAL
 // - image-tiff
 //
