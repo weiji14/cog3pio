@@ -1,12 +1,15 @@
-use std::io::{Error, Read, Seek};
+use std::io::{Read, Seek};
 
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::traits::InferDataType;
+use exn::{ResultExt, bail};
 use geo::AffineTransform;
 use ndarray::{Array, Array1, Array3, ArrayView3, ArrayViewD};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
-use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
+use tiff::{ColorType, TiffError, TiffUnsupportedError};
+
+use crate::error::{Cog3pioError, Cog3pioResult};
 
 /// Cloud-optimized GeoTIFF reader
 pub struct CogReader<R: Read + Seek> {
@@ -19,26 +22,43 @@ impl<R: Read + Seek> CogReader<R> {
     ///
     /// # Errors
     ///
-    /// Will return [`tiff::TiffFormatError`] if TIFF stream signature cannot be found
-    /// or is invalid, e.g. from a corrupted input file.
-    pub fn new(stream: R) -> TiffResult<Self> {
+    /// Will return [`Cog3pioError::Decode`] wrapping [`tiff::TiffFormatError`] if TIFF
+    /// stream signature cannot be found or is invalid, e.g. from a corrupted input
+    /// file.
+    pub fn new(stream: R) -> Cog3pioResult<Self> {
         // Open TIFF stream with decoder
-        let mut decoder = Decoder::new(stream)?;
+        let mut decoder = Decoder::new(stream).or_raise(|| Cog3pioError::Decode {
+            msg: "failed to instantiate tiff decoder".to_string(),
+        })?;
         decoder = decoder.with_limits(Limits::unlimited());
 
         Ok(Self { decoder })
     }
 
     /// Decode GeoTIFF image to a [`dlpark::SafeManagedTensorVersioned`]
-    #[allow(clippy::missing_errors_doc)]
-    pub fn dlpack(&mut self) -> TiffResult<SafeManagedTensorVersioned> {
+    ///
+    /// # Errors
+    /// Will return either [`Cog3pioError::Decode`] if conversion to DLPack tensor
+    /// failed (e.g. due to incorrect width/height shape), or
+    /// [`Cog3pioError::Unimplemented`] if color type is not supported yet.
+    pub fn dlpack(&mut self) -> Cog3pioResult<SafeManagedTensorVersioned> {
         // Count number of bands
         let num_bands: usize = self.num_samples()?;
         // Get image dimensions
-        let (width, height): (u32, u32) = self.decoder.dimensions()?;
+        let (width, height): (u32, u32) =
+            self.decoder
+                .dimensions()
+                .or_raise(|| Cog3pioError::Decode {
+                    msg: "failed to parse width/height dimensions of image".to_string(),
+                })?;
 
         // Get image pixel data
-        let decode_result = self.decoder.read_image()?;
+        let decode_result: DecodingResult =
+            self.decoder
+                .read_image()
+                .or_raise(|| Cog3pioError::Decode {
+                    msg: "failed to decode the entire image".to_string(),
+                })?;
 
         let shape = (num_bands, height as usize, width as usize);
         let tensor: SafeManagedTensorVersioned = match decode_result {
@@ -59,8 +79,15 @@ impl<R: Read + Seek> CogReader<R> {
     }
 
     /// Number of samples per pixel, also known as channels or bands
-    fn num_samples(&mut self) -> TiffResult<usize> {
-        let color_type = self.decoder.colortype()?;
+    pub(crate) fn num_samples(&mut self) -> Cog3pioResult<usize> {
+        let color_type: ColorType = self
+            .decoder
+            .colortype()
+            .or_raise(|| Cog3pioError::Unimplemented {
+                lib: "image-tiff",
+                msg: "input TIFF's PhotometricInterpretation and/or BitsPerSample combination not supported yet"
+                    .to_string(),
+            })?;
         let num_bands: usize = match color_type {
             ColorType::Multiband {
                 bit_depth: _,
@@ -71,7 +98,11 @@ impl<R: Read + Seek> CogReader<R> {
             _ => {
                 return Err(TiffError::UnsupportedError(
                     TiffUnsupportedError::UnsupportedColorType(color_type),
-                ));
+                ))
+                .or_raise(|| Cog3pioError::Unimplemented {
+                    lib: "cog3pio",
+                    msg: format!("color type {color_type:?} not supported yet"),
+                });
             }
         };
         Ok(num_bands)
@@ -98,24 +129,44 @@ impl<R: Read + Seek> CogReader<R> {
     ///
     /// References:
     /// - <https://docs.ogc.org/is/19-008r4/19-008r4.html#_coordinate_transformations>
-    fn transform(&mut self) -> TiffResult<AffineTransform<f64>> {
+    fn transform(&mut self) -> Cog3pioResult<AffineTransform<f64>> {
         // Get x and y axis rotation (not yet implemented)
         let (x_rotation, y_rotation): (f64, f64) =
             match self.decoder.get_tag_f64_vec(Tag::ModelTransformationTag) {
-                Ok(_model_transformation) => unimplemented!("Non-zero rotation is not handled yet"),
+                Ok(_model_transformation) => {
+                    bail!(Cog3pioError::Unimplemented {
+                        lib: "cog3pio",
+                        msg: "ModelTransformationTag and/or non-zero rotation not supported yet"
+                            .to_string(),
+                    });
+                }
                 Err(_) => (0.0, 0.0),
             };
 
         // Get pixel size in x and y direction
-        let pixel_scale: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelPixelScaleTag)?;
+        let pixel_scale: Vec<f64> = self
+            .decoder
+            .get_tag_f64_vec(Tag::ModelPixelScaleTag)
+            .or_raise(|| Cog3pioError::Decode {
+                msg: "missing ModelPixelScaleTag".to_string(),
+            })?;
         let [x_scale, y_scale, _z_scale] = pixel_scale[0..3] else {
-            return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
+            bail!(Cog3pioError::Decode {
+                msg: "failed to slice ModelPixelScaleTag, not exactly 3 values".to_string()
+            })
         };
 
         // Get x and y coordinates of upper left pixel
-        let tie_points: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelTiepointTag)?;
+        let tie_points: Vec<f64> = self
+            .decoder
+            .get_tag_f64_vec(Tag::ModelTiepointTag)
+            .or_raise(|| Cog3pioError::Decode {
+                msg: "missing ModelTiepointTag".to_string(),
+            })?;
         let [_i, _j, _k, x_origin, y_origin, _z_origin] = tie_points[0..6] else {
-            return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
+            bail!(Cog3pioError::Decode {
+                msg: "failed to slice ModelTiepointTag, not exactly 6 values".to_string()
+            });
         };
 
         // Create affine transformation matrix
@@ -135,9 +186,10 @@ impl<R: Read + Seek> CogReader<R> {
     ///
     /// # Errors
     ///
-    /// Will return [`tiff::TiffFormatError::RequiredTagNotFound`] if the TIFF file is
-    /// missing tags required to build an Affine transformation matrix.
-    pub fn xy_coords(&mut self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
+    /// Will return [`Cog3pioError::Decode`] wrapping
+    /// [`tiff::TiffFormatError::RequiredTagNotFound`] if the TIFF file is missing tags
+    /// required to build an Affine transformation matrix.
+    pub fn xy_coords(&mut self) -> Cog3pioResult<(Array1<f64>, Array1<f64>)> {
         let transform = self.transform()?; // affine transformation matrix
 
         // Get spatial resolution in x and y dimensions
@@ -149,7 +201,12 @@ impl<R: Read + Seek> CogReader<R> {
         let y_origin: &f64 = &(transform.yoff() + y_res / 2.0);
 
         // Get number of pixels along the x and y dimensions
-        let (x_pixels, y_pixels): (u32, u32) = self.decoder.dimensions()?;
+        let (x_pixels, y_pixels): (u32, u32) =
+            self.decoder
+                .dimensions()
+                .or_raise(|| Cog3pioError::Decode {
+                    msg: "failed to parse width/height dimensions of image".to_string(),
+                })?;
 
         // Get xy coordinate of the center of the bottom right pixel
         let x_end: f64 = x_origin + x_res * f64::from(x_pixels);
@@ -165,14 +222,17 @@ impl<R: Read + Seek> CogReader<R> {
 
 /// Convert Vec<T> into an Array3<T> with a shape of (channels, height, width), and then
 /// output it as a DLPack tensor.
-fn shape_vec_to_tensor<T: InferDataType>(
+pub(crate) fn shape_vec_to_tensor<T: InferDataType>(
     shape: (usize, usize, usize),
     vec: Vec<T>,
-) -> TiffResult<SafeManagedTensorVersioned> {
-    let array_data = Array3::from_shape_vec(shape, vec)
-        .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
-    let tensor = SafeManagedTensorVersioned::new(array_data)
-        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+) -> Cog3pioResult<SafeManagedTensorVersioned> {
+    let size: usize = vec.len();
+    let array_data = Array3::from_shape_vec(shape, vec).or_raise(|| Cog3pioError::Decode {
+        msg: format!("failed to convert vector of size {size} to shape {shape:?}").to_string(),
+    })?;
+    let tensor = SafeManagedTensorVersioned::new(array_data).or_raise(|| Cog3pioError::Decode {
+        msg: "failed to convert array to DLPack tensor".to_string(),
+    })?;
     Ok(tensor)
 }
 
@@ -182,7 +242,9 @@ fn shape_vec_to_tensor<T: InferDataType>(
 ///
 /// Will return [`tiff::TiffError::IoError`] (Data type mismatch) if the specified
 /// output data type is different to the dtype of the input TIFF file.
-pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> TiffResult<Array3<T>> {
+pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(
+    stream: R,
+) -> Cog3pioResult<Array3<T>> {
     // Open TIFF stream with decoder
     let mut reader = CogReader::new(stream)?;
 
@@ -192,14 +254,24 @@ pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> Tiff
     // Count number of bands
     let num_bands: usize = reader.num_samples()?;
     // Get image dimensions
-    let (width, height): (u32, u32) = reader.decoder.dimensions()?;
+    let (width, height): (u32, u32) =
+        reader
+            .decoder
+            .dimensions()
+            .or_raise(|| Cog3pioError::Decode {
+                msg: "failed to parse width/height dimensions of image".to_string(),
+            })?;
 
     // Convert DLPack tensor to ndarray
-    let view = ArrayViewD::<T>::try_from(&tensor)
-        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
-    let array: ArrayView3<T> = view
-        .into_shape_with_order((num_bands, height as usize, width as usize))
-        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+    let view = ArrayViewD::<T>::try_from(&tensor).or_raise(|| Cog3pioError::Decode {
+        msg: "failed to convert DLPack tensor into an Array".to_string(),
+    })?;
+    let shape = (num_bands, height as usize, width as usize);
+    let array: ArrayView3<T> =
+        view.into_shape_with_order(shape)
+            .or_raise(|| Cog3pioError::Decode {
+                msg: format!("failed to reshape Array into shape {shape:?}"),
+            })?;
 
     Ok(array.to_owned())
 }
