@@ -162,7 +162,7 @@ impl CudaCogReader {
         let dtype: DataType = DataType {
             code: dtype_code,
             bits: u8::try_from(bits)
-                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
+                .or_raise(|| NvTiffError::StatusError(NvTiffStatusError::TiffNotSupported))?,
             lanes: 1,
         };
         let bytes_per_pixel: usize = self.image_info.bits_per_pixel as usize / 8;
@@ -195,7 +195,7 @@ impl CudaCogReader {
         let len_elem: usize = num_bytes / (dtype.bits as usize / 8);
         let tensor: SafeManagedTensorVersioned = match dtype {
             DataType::U8 => SafeManagedTensorVersioned::new(cuslice)
-                .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?,
+                .or_raise(|| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?,
             DataType::U16 => cudaslice_to_tensor::<u16>(cuslice, len_elem)?,
             DataType::U32 => cudaslice_to_tensor::<u32>(cuslice, len_elem)?,
             DataType::U64 => cudaslice_to_tensor::<u64>(cuslice, len_elem)?,
