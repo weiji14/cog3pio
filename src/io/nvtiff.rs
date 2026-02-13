@@ -5,6 +5,7 @@ use cudarc::driver::{CudaSlice, CudaStream, CudaView};
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DataType, DataTypeCode};
 use dlpark::traits::{InferDataType, TensorView};
+use exn::{OptionExt, ResultExt};
 use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage, nvtiffDecodeParams,
@@ -235,10 +236,9 @@ fn cudaslice_to_tensor<T: InferDataType>(
     len_elem: usize,
 ) -> NvTiffResult<SafeManagedTensorVersioned> {
     let cuview: CudaView<_> = unsafe { cuslice.transmute::<T>(len_elem) }
-        .ok_or(NvTiffError::StatusError(NvTiffStatusError::BadTiff))?;
+        .ok_or_raise(|| NvTiffError::StatusError(NvTiffStatusError::BadTiff))?;
     let tensor = SafeManagedTensorVersioned::new(cuview)
-        // TODO raise error from err string
-        .map_err(|_| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?;
+        .or_raise(|| NvTiffError::StatusError(NvTiffStatusError::AllocatorFailure))?;
     cuslice.leak();
 
     Ok(tensor)
