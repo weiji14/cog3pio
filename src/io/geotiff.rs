@@ -9,6 +9,8 @@ use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
 use tiff::{ColorType, TiffError, TiffFormatError, TiffUnsupportedError};
 
+use crate::traits::Transform;
+
 type TiffResult<T> = exn::Result<T, TiffError>;
 
 /// Cloud-optimized GeoTIFF reader
@@ -79,9 +81,13 @@ impl<R: Read + Seek> CogReader<R> {
         };
         Ok(num_bands)
     }
+}
 
-    /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to transform
-    /// image pixel (row, col) coordinates to and from geographic/projected (x, y) coordinates.
+impl<R: Read + Seek> Transform for &mut CogReader<R> {
+    type Err = TiffError;
+    /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to
+    /// transform image pixel (row, col) coordinates to and from geographic/projected
+    /// (x, y) coordinates.
     ///
     /// ```text
     /// | x' |   | a b c | | x |
@@ -101,7 +107,14 @@ impl<R: Read + Seek> CogReader<R> {
     ///
     /// References:
     /// - <https://docs.ogc.org/is/19-008r4/19-008r4.html#_coordinate_transformations>
-    fn transform(&mut self) -> TiffResult<AffineTransform<f64>> {
+    ///
+    /// # Errors
+    ///
+    /// Will return [`TiffFormatError::InvalidTag`] if the Affine transformation matrix
+    /// cannot be created from the underlying TIFF tag metadata, due to invalid or
+    /// unimplemented parsing of [`Tag::ModelPixelScaleTag`], [`Tag::ModelTiepointTag`]
+    /// or [`Tag::ModelTransformationTag`].
+    fn transform(self) -> TiffResult<AffineTransform<f64>> {
         // Get x and y axis rotation (not yet implemented)
         let (x_rotation, y_rotation): (f64, f64) =
             match self.decoder.get_tag_f64_vec(Tag::ModelTransformationTag) {
@@ -131,16 +144,15 @@ impl<R: Read + Seek> CogReader<R> {
 
     /// Get list of x and y coordinates
     ///
-    /// Determined based on an [`geo::AffineTransform`] matrix built from the
-    /// [`tiff::tags::Tag::ModelPixelScaleTag`] and
-    /// [`tiff::tags::Tag::ModelTiepointTag`] tags. Note that non-zero rotation (set by
-    /// [`tiff::tags::Tag::ModelTransformationTag`]) is currently unsupported.
+    /// Determined based on an [`AffineTransform`] matrix built from
+    /// [`Tag::ModelPixelScaleTag`] and [`Tag::ModelTiepointTag`]. Note that non-zero
+    /// rotation (set by [`Tag::ModelTransformationTag`]) is currently unsupported.
     ///
     /// # Errors
     ///
-    /// Will return [`tiff::TiffFormatError::RequiredTagNotFound`] if the TIFF file is
+    /// Will return [`TiffFormatError::RequiredTagNotFound`] if the TIFF file is
     /// missing tags required to build an Affine transformation matrix.
-    pub fn xy_coords(&mut self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
+    fn xy_coords(self) -> TiffResult<(Array1<f64>, Array1<f64>)> {
         let transform = self.transform()?; // affine transformation matrix
 
         // Get spatial resolution in x and y dimensions
@@ -237,6 +249,7 @@ mod tests {
     use url::Url;
 
     use crate::io::geotiff::{CogReader, read_geotiff, shape_vec_to_tensor};
+    use crate::traits::Transform;
 
     #[test]
     fn test_read_geotiff() {
@@ -367,9 +380,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_cogreader_transform() {
+    async fn cogreader_transform() {
         let cog_url: &str =
-            "https://github.com/cogeotiff/rio-tiler/raw/6.4.0/tests/fixtures/cog_nodata_nan.tif";
+            "https://github.com/cogeotiff/rio-tiler/raw/8.0.5/tests/fixtures/cog_nodata_nan.tif";
         let tif_url = Url::parse(cog_url).unwrap();
         let (store, location) = parse_url(&tif_url).unwrap();
 
