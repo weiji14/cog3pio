@@ -24,7 +24,7 @@ dlpark = { git = "https://github.com/SunDoge/dlpark.git", rev = "93def2733de9437
     "half",
     "ndarray",
 ] }
-exn = "0.3.0-rc.2"
+exn = "0.3.0"
 geo = "0.29.0"
 ndarray = "0.17.1"
 numpy = { version = "0.27.1", optional = true }
