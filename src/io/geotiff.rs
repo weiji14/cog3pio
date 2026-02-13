@@ -2,11 +2,14 @@ use std::io::{Error, Read, Seek};
 
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::traits::InferDataType;
+use exn::bail;
 use geo::AffineTransform;
 use ndarray::{Array, Array1, Array3, ArrayView3, ArrayViewD};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
-use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
+use tiff::{ColorType, TiffError, TiffFormatError, TiffUnsupportedError};
+
+type TiffResult<T> = exn::Result<T, TiffError>;
 
 /// Cloud-optimized GeoTIFF reader
 pub struct CogReader<R: Read + Seek> {
@@ -69,7 +72,7 @@ impl<R: Read + Seek> CogReader<R> {
             ColorType::Gray(_) => 1,
             ColorType::RGB(_) => 3,
             _ => {
-                return Err(TiffError::UnsupportedError(
+                bail!(TiffError::UnsupportedError(
                     TiffUnsupportedError::UnsupportedColorType(color_type),
                 ));
             }
@@ -109,13 +112,13 @@ impl<R: Read + Seek> CogReader<R> {
         // Get pixel size in x and y direction
         let pixel_scale: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelPixelScaleTag)?;
         let [x_scale, y_scale, _z_scale] = pixel_scale[0..3] else {
-            return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
+            bail!(TiffError::FormatError(TiffFormatError::InvalidTag));
         };
 
         // Get x and y coordinates of upper left pixel
         let tie_points: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelTiepointTag)?;
         let [_i, _j, _k, x_origin, y_origin, _z_origin] = tie_points[0..6] else {
-            return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
+            bail!(TiffError::FormatError(TiffFormatError::InvalidTag));
         };
 
         // Create affine transformation matrix
@@ -170,7 +173,7 @@ fn shape_vec_to_tensor<T: InferDataType>(
     vec: Vec<T>,
 ) -> TiffResult<SafeManagedTensorVersioned> {
     let array_data = Array3::from_shape_vec(shape, vec)
-        .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
+        .map_err(|_| TiffError::FormatError(TiffFormatError::InconsistentSizesEncountered))?;
     let tensor = SafeManagedTensorVersioned::new(array_data)
         .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
     Ok(tensor)
