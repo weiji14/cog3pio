@@ -96,7 +96,7 @@ impl PyCogReader {
     ///
     /// Determined based on an Affine transformation matrix built from the
     /// `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
-    /// rotation (set by `ModelTransformationTag` is currently unsupported.
+    /// rotation (set by `ModelTransformationTag`) is currently unsupported.
     ///
     /// Returns
     /// -------

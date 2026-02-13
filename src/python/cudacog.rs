@@ -6,11 +6,13 @@ use bytes::Bytes;
 use cudarc::driver::{CudaContext, CudaStream};
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DLPACK_MAJOR_VERSION, DLPACK_MINOR_VERSION, Device};
+use numpy::{PyArray1, ToPyArray};
 use pyo3::exceptions::{PyBufferError, PyNotImplementedError, PyValueError, PyWarning};
-use pyo3::{Bound, PyAny, PyResult, pyclass, pymethods};
+use pyo3::{Bound, PyAny, PyResult, Python, pyclass, pymethods};
 
 use crate::io::nvtiff::CudaCogReader;
 use crate::python::adapters::path_to_stream;
+use crate::traits::Transform;
 
 /// Python class interface to a Cloud-optimized GeoTIFF reader (nvTIFF backend) that
 /// decodes to GPU (CUDA) memory.
@@ -174,5 +176,29 @@ impl PyCudaCogReader {
     fn __dlpack_device__(&self) -> (i32, i32) {
         let device = Device::cuda(self.device); // Hardcoded to GPU:0
         (device.device_type as i32, device.device_id)
+    }
+
+    // Get list of x and y coordinates.
+    //
+    // Determined based on an Affine transformation matrix built from the
+    // `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
+    // rotation (set by `ModelTransformationTag`) is currently unsupported.
+    //
+    // Returns
+    // -------
+    // coords : (np.ndarray, np.ndarray)
+    //    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
+    //    x- and y-coordinates.
+    #[allow(clippy::type_complexity)]
+    fn xy_coords<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> PyResult<(Bound<'py, PyArray1<f64>>, Bound<'py, PyArray1<f64>>)> {
+        let (x_coords, y_coords) = self
+            .inner
+            .xy_coords()
+            .map_err(|err| PyValueError::new_err(err.frame().to_string()))?;
+
+        Ok((x_coords.to_pyarray(py), y_coords.to_pyarray(py)))
     }
 }
