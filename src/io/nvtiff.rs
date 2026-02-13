@@ -221,7 +221,7 @@ impl CudaCogReader {
                 cuda_stream,
             )
         };
-        dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
+        // dbg!(status_decode); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 8: NVTIFF_STATUS_INTERNAL_ERROR
         status_decode.result()?;
 
         // dbg!(self.tiff_stream); // TODO need this to avoid panic on status_check/status_decode?
