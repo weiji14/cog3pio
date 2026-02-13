@@ -7,11 +7,13 @@ use dlpark::ffi::{DataType, DataTypeCode};
 use dlpark::traits::{InferDataType, TensorView};
 use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
-    NvTiffResult, NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage,
-    nvtiffDecodeParams, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffImageInfo,
-    nvtiffSampleFormat, nvtiffStatus_t, nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetImageInfo,
-    nvtiffStreamGetNumImages, nvtiffStreamParse,
+    NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage, nvtiffDecodeParams,
+    nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffImageInfo, nvtiffSampleFormat, nvtiffStatus_t,
+    nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetImageInfo, nvtiffStreamGetNumImages,
+    nvtiffStreamParse,
 };
+
+type NvTiffResult<T> = exn::Result<T, NvTiffError>;
 
 /// Cloud-optimized GeoTIFF reader using [`nvTIFF`](https://developer.nvidia.com/nvtiff)
 ///
@@ -84,20 +86,20 @@ impl CudaCogReader {
 
         let status_cpustream: nvtiffStatus_t::Type =
             unsafe { nvtiffStreamCreate(&raw mut tiff_stream) };
-        dbg!(status_cpustream);
+        // dbg!(status_cpustream);
         status_cpustream.result()?;
 
         // Step 1: Parse the TIFF data from byte stream buffer
         let status_parse: u32 =
             unsafe { nvtiffStreamParse(byte_stream.as_ptr(), usize::MAX, tiff_stream) };
-        dbg!(status_parse);
+        // dbg!(status_parse);
         status_parse.result()?;
 
         // Step 2a: Extract file-level metadata information from the TIFF stream
         let mut num_images: u32 = 0;
         let status_numimages: u32 =
             unsafe { nvtiffStreamGetNumImages(tiff_stream, &raw mut num_images) };
-        dbg!(status_numimages);
+        // dbg!(status_numimages);
         status_numimages.result()?;
 
         // Step 2b: Extract image-level metadata information from the TIFF stream
@@ -109,7 +111,7 @@ impl CudaCogReader {
                 &raw mut image_info,
             )
         };
-        dbg!(status_imageinfo);
+        // dbg!(status_imageinfo);
         // dbg!(image_info);
         status_imageinfo.result()?;
 
@@ -141,7 +143,7 @@ impl CudaCogReader {
 
         let status_decoder: u32 =
             unsafe { nvtiffDecoderCreateSimple(&raw mut nvtiff_decoder, cuda_stream) };
-        dbg!(status_decoder);
+        // dbg!(status_decoder);
         status_decoder.result()?;
 
         // Step 2a: Determine dtype from sample_format and bits_per_pixel
@@ -168,7 +170,7 @@ impl CudaCogReader {
         let num_bytes: usize = self.image_info.image_width as usize // Width
             * self.image_info.image_height as usize // Height
             * bytes_per_pixel; // Bytes per pixel (e.g. 4 bytes for f32)
-        dbg!(num_bytes);
+        // dbg!(num_bytes);
         let cuslice: CudaSlice<u8> = stream.alloc_zeros::<u8>(num_bytes).unwrap_or_else(|err| {
             panic!("Failed to allocate {num_bytes} bytes on CUDA device: {err}")
         });
@@ -184,7 +186,7 @@ impl CudaCogReader {
                 0, // image_id
             )
         };
-        dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
+        // dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
         status_check.result()?;
 
         // Step 3b: Prepare DLPack tensor container
@@ -324,5 +326,27 @@ mod tests {
         assert_eq!(tensor.data_type(), &dtype);
         // assert_eq!(tensor.shape(), [1, 20, 20]); // TODO should be 3D tensor
         assert_eq!(tensor.shape(), [400]);
+    }
+
+    #[tokio::test]
+    async fn unimplemented_error() {
+        let cog_url: &str =
+            "https://github.com/image-rs/image-tiff/raw/v0.11.2/tests/images/tiled-cmyk-i8.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+
+        let ctx: Arc<CudaContext> = cudarc::driver::CudaContext::new(0).unwrap(); // Set on GPU:0
+        let cuda_stream: Arc<CudaStream> = ctx.per_thread_stream();
+
+        let cog = CudaCogReader::new(&bytes).unwrap();
+        let result = cog.dlpack(&cuda_stream);
+
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Status error: Attempting to decode a TIFF stream that is not supported by the nvTIFF library."
+        );
     }
 }
