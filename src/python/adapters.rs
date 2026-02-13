@@ -16,6 +16,7 @@ use url::Url;
 use crate::io::geotiff::{CogReader, read_geotiff};
 #[cfg(feature = "cuda")]
 use crate::python::cudacog::PyCudaCogReader;
+use crate::traits::Transform;
 
 /// Python class interface to a Cloud-optimized GeoTIFF reader (image-tiff backend).
 ///

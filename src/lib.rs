@@ -118,3 +118,6 @@ pub mod io;
 /// Modules for Python to interface with Rust code
 #[cfg(feature = "pyo3")]
 mod python;
+/// Modules for common traits
+mod traits;
+pub use self::traits::Transform;
