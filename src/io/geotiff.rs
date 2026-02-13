@@ -2,11 +2,14 @@ use std::io::{Error, Read, Seek};
 
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::traits::InferDataType;
+use exn::{ResultExt, bail};
 use geo::AffineTransform;
 use ndarray::{Array, Array1, Array3, ArrayView3, ArrayViewD};
 use tiff::decoder::{Decoder, DecodingResult, Limits};
 use tiff::tags::Tag;
-use tiff::{ColorType, TiffError, TiffFormatError, TiffResult, TiffUnsupportedError};
+use tiff::{ColorType, TiffError, TiffFormatError, TiffUnsupportedError};
+
+type TiffResult<T> = exn::Result<T, TiffError>;
 
 /// Cloud-optimized GeoTIFF reader
 pub struct CogReader<R: Read + Seek> {
@@ -69,7 +72,7 @@ impl<R: Read + Seek> CogReader<R> {
             ColorType::Gray(_) => 1,
             ColorType::RGB(_) => 3,
             _ => {
-                return Err(TiffError::UnsupportedError(
+                bail!(TiffError::UnsupportedError(
                     TiffUnsupportedError::UnsupportedColorType(color_type),
                 ));
             }
@@ -109,13 +112,13 @@ impl<R: Read + Seek> CogReader<R> {
         // Get pixel size in x and y direction
         let pixel_scale: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelPixelScaleTag)?;
         let [x_scale, y_scale, _z_scale] = pixel_scale[0..3] else {
-            return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
+            bail!(TiffError::FormatError(TiffFormatError::InvalidTag));
         };
 
         // Get x and y coordinates of upper left pixel
         let tie_points: Vec<f64> = self.decoder.get_tag_f64_vec(Tag::ModelTiepointTag)?;
         let [_i, _j, _k, x_origin, y_origin, _z_origin] = tie_points[0..6] else {
-            return Err(TiffError::FormatError(TiffFormatError::InvalidTag));
+            bail!(TiffError::FormatError(TiffFormatError::InvalidTag));
         };
 
         // Create affine transformation matrix
@@ -169,10 +172,17 @@ fn shape_vec_to_tensor<T: InferDataType>(
     shape: (usize, usize, usize),
     vec: Vec<T>,
 ) -> TiffResult<SafeManagedTensorVersioned> {
-    let array_data = Array3::from_shape_vec(shape, vec)
-        .map_err(|_| TiffFormatError::InconsistentSizesEncountered)?;
-    let tensor = SafeManagedTensorVersioned::new(array_data)
-        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+    let size: usize = vec.len();
+    let array_data = Array3::from_shape_vec(shape, vec).or_raise(|| {
+        TiffError::IoError(Error::other(
+            format!("failed to convert vector of size {size} to shape {shape:?}").to_string(),
+        ))
+    })?;
+    let tensor = SafeManagedTensorVersioned::new(array_data).or_raise(|| {
+        TiffError::IoError(Error::other(
+            "failed to convert array to DLPack tensor".to_string(),
+        ))
+    })?;
     Ok(tensor)
 }
 
@@ -195,11 +205,19 @@ pub fn read_geotiff<T: InferDataType + Clone, R: Read + Seek>(stream: R) -> Tiff
     let (width, height): (u32, u32) = reader.decoder.dimensions()?;
 
     // Convert DLPack tensor to ndarray
-    let view = ArrayViewD::<T>::try_from(&tensor)
-        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+    let view = ArrayViewD::<T>::try_from(&tensor).or_raise(|| {
+        TiffError::IoError(Error::other(
+            "failed to convert DLPack tensor into an Array".to_string(),
+        ))
+    })?;
+    let shape = (num_bands, height as usize, width as usize);
     let array: ArrayView3<T> = view
         .into_shape_with_order((num_bands, height as usize, width as usize))
-        .map_err(|err| TiffError::IoError(Error::other(err.to_string())))?;
+        .or_raise(|| {
+            TiffError::IoError(Error::other(
+                format!("failed to reshape Array into shape {shape:?}").to_string(),
+            ))
+        })?;
 
     Ok(array.to_owned())
 }
@@ -218,7 +236,7 @@ mod tests {
     use tiff::encoder::{TiffEncoder, colortype};
     use url::Url;
 
-    use crate::io::geotiff::{CogReader, read_geotiff};
+    use crate::io::geotiff::{CogReader, read_geotiff, shape_vec_to_tensor};
 
     #[test]
     fn test_read_geotiff() {
@@ -297,6 +315,15 @@ mod tests {
 
         assert_eq!(array.dim(), (1, 20, 20));
         assert_eq!(array.mean(), Some(half::f16::from_f32_const(127.125)));
+    }
+
+    #[test]
+    fn reshape_error() {
+        let result = shape_vec_to_tensor((1, 2, 3), vec![0, 1, 2]);
+        assert_eq!(
+            unsafe { result.unwrap_err_unchecked().to_string() },
+            "failed to convert vector of size 3 to shape (1, 2, 3)"
+        );
     }
 
     #[tokio::test]
