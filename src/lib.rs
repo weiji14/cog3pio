@@ -113,9 +113,6 @@
 //!   [DLPack](https://dmlc.github.io/dlpack/latest) data structure in CUDA-memory via
 //!   [`dlpark`](https://docs.rs/dlpark)
 
-/// Modules for error handling
-mod error;
-pub use self::error::{Cog3pioError, Cog3pioResult};
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
 /// Modules for Python to interface with Rust code
