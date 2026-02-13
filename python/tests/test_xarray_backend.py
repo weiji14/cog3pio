@@ -33,9 +33,11 @@ def test_xarray_backend_open_dataarray(engine):
     Ensure that passing engine='cog3pio' to xarray.open_dataarray works, and benchmark
     against engine="rasterio" (rioxarray).
     """
+    backend_kwargs = {"use_cuda": False} if engine == "cog3pio" else {}
     with xr.open_dataarray(
         filename_or_obj="https://github.com/cogeotiff/rio-tiler/raw/6.4.1/tests/fixtures/cog_nodata_nan.tif",
         engine=engine,
+        backend_kwargs=backend_kwargs,
     ) as da:
         assert da.sizes == {'band': 1, 'y': 549, 'x': 549}
         assert da.x.min() == 500080.0
