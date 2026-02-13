@@ -242,7 +242,7 @@ mod tests {
     use dlpark::ffi::DataType;
     use dlpark::prelude::TensorView;
     use geo::AffineTransform;
-    use ndarray::{Array3, s};
+    use ndarray::{Array, Array3, s};
     use object_store::parse_url;
     use tempfile::tempfile;
     use tiff::encoder::{TiffEncoder, colortype};
@@ -391,11 +391,15 @@ mod tests {
         let stream = Cursor::new(bytes);
 
         let mut cog = CogReader::new(stream).unwrap();
-        let transform = cog.transform().unwrap();
 
+        let transform = cog.transform().unwrap();
         assert_eq!(
             transform,
             AffineTransform::new(200.0, 0.0, 499_980.0, 0.0, -200.0, 5_300_040.0)
         );
+
+        let (x_coords, y_coords) = cog.xy_coords().unwrap();
+        assert_eq!(x_coords, Array::linspace(500_080., 609_680., 549));
+        assert_eq!(y_coords, Array::linspace(5_299_940.0, 5_190_340.0, 549));
     }
 }

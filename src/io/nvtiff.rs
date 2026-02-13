@@ -1,3 +1,4 @@
+use std::ffi::c_void;
 use std::sync::Arc;
 
 use bytes::Bytes;
@@ -6,13 +7,17 @@ use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DataType, DataTypeCode};
 use dlpark::traits::{InferDataType, TensorView};
 use exn::{OptionExt, ResultExt};
+use geo::AffineTransform;
+use ndarray::{Array, Array1};
 use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage, nvtiffDecodeParams,
     nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffImageInfo, nvtiffSampleFormat, nvtiffStatus_t,
     nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetImageInfo, nvtiffStreamGetNumImages,
-    nvtiffStreamParse,
+    nvtiffStreamGetTagValue, nvtiffStreamParse, nvtiffTag,
 };
+
+use crate::traits::Transform;
 
 type NvTiffResult<T> = exn::Result<T, NvTiffError>;
 
@@ -230,6 +235,134 @@ impl CudaCogReader {
     }
 }
 
+impl Transform for &CudaCogReader {
+    type Err = NvTiffError;
+    /// Affine transformation for 2D matrix extracted from TIFF tag metadata, used to
+    /// transform image pixel (row, col) coordinates to and from geographic/projected
+    /// (x, y) coordinates.
+    ///
+    /// ```text
+    /// | x' |   | a b c | | x |
+    /// | y' | = | d e f | | y |
+    /// | 1  |   | 0 0 1 | | 1 |
+    /// ```
+    ///
+    /// where (`x'` and `y'`) are world coordinates, and (`x`, `y`) are the pixel's
+    /// image coordinates. Letters a to f represent:
+    ///
+    /// - `a` - width of a pixel (x-resolution)
+    /// - `b` - row rotation (typically zero)
+    /// - `c` - x-coordinate of the *center* of the upper-left pixel (x-origin)
+    /// - `d` - column rotation (typically zero)
+    /// - `e` - height of a pixel (y-resolution, typically negative)
+    /// - `f` - y-coordinate of the *center* of the upper-left pixel (y-origin)
+    ///
+    /// References:
+    /// - <https://docs.ogc.org/is/19-008r4/19-008r4.html#_coordinate_transformations>
+    ///
+    /// # Errors
+    ///
+    /// Will return [`NvTiffError::StatusError`] if the Affine transformation matrix
+    /// cannot be created from the underlying TIFF tag metadata, due to invalid or
+    /// unimplemented parsing of [`nvtiffTag::NVTIFF_TAG_MODEL_PIXEL_SCALE`],
+    /// [`nvtiffTag::NVTIFF_TAG_MODEL_TIE_POINT`] or
+    /// [`nvtiffTag::NVTIFF_TAG_MODEL_TRANSFORMATION`].
+    fn transform(self) -> NvTiffResult<AffineTransform<f64>> {
+        // Get x and y axis rotation (not yet implemented)
+        let transformation = &mut [f64::NAN; 16];
+        let status_transformationinfo: u32 = unsafe {
+            nvtiffStreamGetTagValue(
+                self.tiff_stream,
+                0, // image_id
+                nvtiffTag::NVTIFF_TAG_MODEL_TRANSFORMATION,
+                transformation.as_mut_ptr().cast::<c_void>(),
+                16,
+            )
+        };
+        // dbg!(status_transformationinfo);
+        let (x_rotation, y_rotation): (f64, f64) = match status_transformationinfo.result() {
+            Ok(()) => {
+                unimplemented!("ModelTransformationTag and/or non-zero rotation not supported yet")
+            }
+            Err(_) => (0.0, 0.0),
+        };
+
+        // Get pixel size in x and y direction
+        let pixel_scale = &mut [f64::NAN; 3];
+        let status_pixelscaleinfo: u32 = unsafe {
+            nvtiffStreamGetTagValue(
+                self.tiff_stream,
+                0, // image_id
+                nvtiffTag::NVTIFF_TAG_MODEL_PIXEL_SCALE,
+                pixel_scale.as_mut_ptr().cast::<c_void>(),
+                3,
+            )
+        };
+        // dbg!(status_pixelscaleinfo);
+        status_pixelscaleinfo.result()?;
+        let [x_scale, y_scale, _z_scale] = *pixel_scale;
+
+        // Get x and y coordinates of upper left pixel
+        let tie_points = &mut [f64::NAN; 6];
+        let status_tiepointinfo: u32 = unsafe {
+            nvtiffStreamGetTagValue(
+                self.tiff_stream,
+                0, // image_id
+                nvtiffTag::NVTIFF_TAG_MODEL_TIE_POINT,
+                tie_points.as_mut_ptr().cast::<c_void>(),
+                6,
+            )
+        };
+        // dbg!(status_tiepointinfo);
+        status_tiepointinfo.result()?;
+        let [_i, _j, _k, x_origin, y_origin, _z_origin] = *tie_points;
+
+        // Create affine transformation matrix
+        let transform = AffineTransform::new(
+            x_scale, x_rotation, x_origin, y_rotation, -y_scale, y_origin,
+        );
+
+        Ok(transform)
+    }
+
+    // Get list of x and y coordinates.
+    //
+    // Determined based on an Affine transformation matrix built from the
+    // `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
+    // rotation (set by `ModelTransformationTag` is currently unsupported.
+    //
+    // Returns
+    // -------
+    // coords : (np.ndarray, np.ndarray)
+    //    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
+    //    x- and y-coordinates.
+    fn xy_coords(self) -> NvTiffResult<(Array1<f64>, Array1<f64>)> {
+        let transform: AffineTransform = self.transform()?;
+
+        // Get spatial resolution in x and y dimensions
+        let x_res: &f64 = &transform.a();
+        let y_res: &f64 = &transform.e();
+
+        // Get xy coordinate of the center of the top left pixel
+        let x_origin: &f64 = &(transform.xoff() + x_res / 2.0);
+        let y_origin: &f64 = &(transform.yoff() + y_res / 2.0);
+
+        // Get number of pixels along the x and y dimensions
+        let x_pixels: u32 = self.image_info.image_width;
+        let y_pixels: u32 = self.image_info.image_height;
+
+        // Get xy coordinate of the center of the bottom right pixel
+        let x_end: f64 = x_origin + x_res * f64::from(x_pixels);
+        let y_end: f64 = y_origin + y_res * f64::from(y_pixels);
+
+        // Get array of x-coordinates and y-coordinates
+        let x_coords = Array::range(x_origin.to_owned(), x_end, x_res.to_owned());
+        let y_coords = Array::range(y_origin.to_owned(), y_end, y_res.to_owned());
+
+        Ok((x_coords, y_coords))
+    }
+}
+
 /// Transmute `CudaSlice<u8>` into a `CudaView<T>`, and then convert to a DLPack tensor.
 fn cudaslice_to_tensor<T: InferDataType>(
     cuslice: CudaSlice<u8>,
@@ -253,11 +386,14 @@ mod tests {
     use dlpark::SafeManagedTensorVersioned;
     use dlpark::ffi::DataType;
     use dlpark::prelude::TensorView;
+    use geo::AffineTransform;
+    use ndarray::Array;
     use object_store::parse_url;
     use rstest::rstest;
     use url::Url;
 
     use crate::io::nvtiff::CudaCogReader;
+    use crate::traits::Transform;
 
     #[tokio::test]
     async fn cudacogreader_dlpack() {
@@ -348,5 +484,28 @@ mod tests {
             result.err().unwrap().to_string(),
             "Status error: Attempting to decode a TIFF stream that is not supported by the nvTIFF library."
         );
+    }
+
+    #[tokio::test]
+    async fn cudacogreader_transform() {
+        let cog_url: &str =
+            "https://github.com/cogeotiff/rio-tiler/raw/8.0.5/tests/fixtures/cog_nodata_nan.tif";
+        let tif_url = Url::parse(cog_url).unwrap();
+        let (store, location) = parse_url(&tif_url).unwrap();
+
+        let result = store.get(&location).await.unwrap();
+        let bytes = result.bytes().await.unwrap();
+
+        let cog: CudaCogReader = CudaCogReader::new(&bytes).unwrap();
+
+        let transform = cog.transform().unwrap();
+        assert_eq!(
+            transform,
+            AffineTransform::new(200.0, 0.0, 499_980.0, 0.0, -200.0, 5_300_040.0)
+        );
+
+        let (x_coords, y_coords) = cog.xy_coords().unwrap();
+        assert_eq!(x_coords, Array::linspace(500_080., 609_680., 549));
+        assert_eq!(y_coords, Array::linspace(5_299_940.0, 5_190_340.0, 549));
     }
 }
