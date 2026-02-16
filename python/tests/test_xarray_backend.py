@@ -2,10 +2,20 @@
 Tests for xarray 'cog3pio' backend engine.
 """
 
+import time
+
 import cog3pio  # noqa: F401
 import numpy as np
 import pytest
 import xarray as xr
+
+try:
+    import cupy as cp
+
+    HAS_CUPY = True
+except ImportError:
+    HAS_CUPY = False
+
 
 try:
     import rioxarray
@@ -18,23 +28,30 @@ except ImportError:
 # %%
 @pytest.mark.benchmark
 @pytest.mark.parametrize(
-    "engine",
+    ("engine", "backend_kwargs"),
     [
-        "cog3pio",
+        ("cog3pio", {"device": None}),  # CPU
         pytest.param(
-            "rasterio",
+            "cog3pio",
+            {"device": (2, 0)},  # CUDA:0
+            marks=pytest.mark.skipif(
+                condition=not HAS_CUPY, reason="Could not import 'cupy'"
+            ),
+        ),
+        pytest.param(
+            "rasterio",  # CPU
+            {},
             marks=pytest.mark.skipif(
                 condition=not HAS_RIOXARRAY, reason="Could not import 'rioxarray'"
             ),
         ),
     ],
 )
-def test_xarray_backend_open_dataarray(engine):
+def test_xarray_backend_open_dataarray(engine, backend_kwargs):
     """
     Ensure that passing engine='cog3pio' to xarray.open_dataarray works, and benchmark
     against engine="rasterio" (rioxarray).
     """
-    backend_kwargs = {"use_cuda": False} if engine == "cog3pio" else {}
     with xr.open_dataarray(
         filename_or_obj="https://github.com/cogeotiff/rio-tiler/raw/6.4.1/tests/fixtures/cog_nodata_nan.tif",
         engine=engine,
