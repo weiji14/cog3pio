@@ -50,7 +50,6 @@ body = """
 {% endmacro -%}
 """
 trim = true
-
 # process each line of a commit as an individual commit
 commit_preprocessors = [
     # Replace the issue/PR number with the link.
@@ -64,6 +63,7 @@ commit_preprocessors = [
     { pattern = ':construction_worker:', replace = "👷" },
     { pattern = ':heavy_minus_sign:', replace = "➖" },
     { pattern = ':heavy_plus_sign:', replace = "➕" },
+    { pattern = ':label:', replace = "🏷️" },
     { pattern = ':lock:', replace = "🔒️" },
     { pattern = ':loud_sound:', replace = "🔊" },
     { pattern = ':mag:', replace = "🔍️" },

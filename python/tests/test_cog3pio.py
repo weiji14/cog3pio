@@ -1,6 +1,9 @@
+from cog3pio import __doc__, __version__
 from packaging.version import Version
 
-from cog3pio import __version__
+
+def test_doc():
+    assert __doc__ == "cog3pio - Cloud-optimized GeoTIFF ... Parallel I/O."
 
 
 def test_version():
