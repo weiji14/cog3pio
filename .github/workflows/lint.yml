@@ -44,6 +44,26 @@ jobs:
       - name: Run Rustfmt
         run: cargo fmt --check -- --config imports_granularity=Module,group_imports=StdExternalCrate
 
+  stubtest:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Run mypy stubtest
+        run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install .[tests]
+          stubtest cog3pio --ignore-missing-stub --ignore-disjoint-bases
+
   zizmor:
     runs-on: ubuntu-24.04
     steps:
