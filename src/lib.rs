@@ -119,6 +119,7 @@ pub mod io;
 #[cfg(feature = "pyo3")]
 mod python;
 #[doc(hidden)]
+#[cfg(feature = "pyo3")]
 pub use self::python::adapters::stub_info;
 /// Modules for common traits
 mod traits;
