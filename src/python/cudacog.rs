@@ -26,6 +26,8 @@ use crate::traits::Transform;
 /// ----------
 /// path : str
 ///     The path to the file, or a url to a remote file.
+/// device_id : int
+///     The CUDA GPU device number to decode the TIFF data on. Default is 0.
 ///
 /// Returns
 /// -------
@@ -48,6 +50,7 @@ use crate::traits::Transform;
 /// ...
 /// >>> cog = CudaCogReader(
 /// ...     path="https://github.com/rasterio/rasterio/raw/1.5.0/tests/data/RGBA.byte.tif"
+/// ...     device_id=0,
 /// ... )
 /// >>> array: cp.ndarray = cp.from_dlpack(cog)
 /// >>> array.shape
@@ -58,13 +61,14 @@ use crate::traits::Transform;
 #[pyo3(name = "CudaCogReader")]
 pub(crate) struct PyCudaCogReader {
     inner: CudaCogReader,
-    device: usize,
+    device: Device,
 }
 
 #[pymethods]
 impl PyCudaCogReader {
     #[new]
-    fn new(path: &str) -> PyResult<Self> {
+    #[pyo3(signature = (path, device_id=0))]
+    fn new(path: &str, device_id: usize) -> PyResult<Self> {
         let stream: Cursor<Bytes> = path_to_stream(path)?;
         let bytes: Bytes = stream.into_inner();
 
@@ -73,7 +77,7 @@ impl PyCudaCogReader {
 
         Ok(Self {
             inner: cog,
-            device: 0,
+            device: Device::cuda(device_id),
         })
     }
 
@@ -110,18 +114,29 @@ impl PyCudaCogReader {
     ///     If ``stream``>2 is passed in, as only legacy default stream (1) or
     ///     per-thread default stream (2) is supported for now. Or if ``max_version`` is
     ///     incompatible with the DLPack major version in this library.
-    #[pyo3(signature = (stream=None, max_version=None, **kwargs))]
+    #[pyo3(signature = (stream=None, max_version=None, dl_device=None, **kwargs))]
     fn __dlpack__(
         &self,
         stream: Option<u8>,
         max_version: Option<(u32, u32)>,
+        dl_device: Option<(usize, usize)>,
         kwargs: Option<&Bound<'_, PyAny>>,
     ) -> PyResult<SafeManagedTensorVersioned> {
         // dbg!(stream, max_version, kwargs);
 
-        let ctx: Arc<CudaContext> =
-            CudaContext::new(self.device) // Set on GPU:0
-                .map_err(|err| PyValueError::new_err(err.to_string()))?;
+        let device: Device = if let Some((device_type_int, device_id)) = dl_device {
+            match device_type_int {
+                2 => Ok(Device::cuda(device_id)),
+                _ => Err(PyNotImplementedError::new_err(format!(
+                    "Only DLPack device_type 2 (CUDA) is allowed, got {device_type_int}"
+                ))),
+            }
+        } else {
+            Ok(self.device)
+        }?;
+
+        let ctx: Arc<CudaContext> = CudaContext::new(usize::try_from(device.device_id)?)
+            .map_err(|err| PyValueError::new_err(err.to_string()))?;
         let cuda_stream: Arc<CudaStream> = if let Some(s_uint) = stream {
             match s_uint {
                 0 => unreachable!(),              // disallowed due to ambiguity
@@ -174,8 +189,7 @@ impl PyCudaCogReader {
     /// device : (int, int)
     ///     A tuple (``device_type``, ``device_id``) in DLPack format.
     fn __dlpack_device__(&self) -> (i32, i32) {
-        let device = Device::cuda(self.device); // Hardcoded to GPU:0
-        (device.device_type as i32, device.device_id)
+        (self.device.device_type as i32, self.device.device_id)
     }
 
     // Get list of x and y coordinates.

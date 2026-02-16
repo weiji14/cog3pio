@@ -2,6 +2,7 @@
 Tests for xarray 'cog3pio' backend engine.
 """
 
+import cog3pio  # noqa: F401
 import numpy as np
 import pytest
 import xarray as xr
