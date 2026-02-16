@@ -11,6 +11,9 @@ use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
 use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, pymodule};
 use pyo3::types::PyModuleMethods;
 use pyo3::{Bound, PyErr, wrap_pyfunction};
+use pyo3_stub_gen::define_stub_info_gatherer;
+use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyfunction};
+use pyo3_stub_gen_derive::gen_stub_pymethods;
 use url::Url;
 
 use crate::io::geotiff::{CogReader, read_geotiff};
@@ -45,12 +48,14 @@ use crate::traits::Transform;
 /// (4, 411, 634)
 /// >>> array.dtype
 /// dtype('uint16')
+#[gen_stub_pyclass]
 #[pyclass]
 #[pyo3(name = "CogReader")]
 struct PyCogReader {
     inner: CogReader<Cursor<Bytes>>,
 }
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl PyCogReader {
     #[new]
@@ -68,6 +73,7 @@ impl PyCogReader {
     /// -------
     /// tensor : PyCapsule
     ///     3D tensor of shape (band, height, width) containing the GeoTIFF pixel data.
+    #[gen_stub(skip)]
     fn __dlpack__(&mut self) -> PyResult<SafeManagedTensorVersioned> {
         // Convert from ndarray (Rust) to DLPack (Python)
         let tensor: SafeManagedTensorVersioned = self
@@ -177,6 +183,7 @@ pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// >>> array = read_geotiff("https://github.com/pka/georaster/raw/v0.2.0/data/tiff/float32.tif")
 /// >>> array.shape
 /// (1, 20, 20)
+#[gen_stub_pyfunction]
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
@@ -203,3 +210,6 @@ fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(read_geotiff_py, m)?)?;
     Ok(())
 }
+
+// Define a function to gather stub information.
+define_stub_info_gatherer!(stub_info);

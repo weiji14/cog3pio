@@ -6,13 +6,18 @@ description = "Cloud-optimized GeoTIFF ... Parallel I/O"
 readme = "README.md"
 repository = "https://github.com/weiji14/cog3pio"
 license = "MIT OR Apache-2.0"
-rust-version = "1.85.0"
+rust-version = "1.91.0"
 authors = ["Wei Ji <23487320+weiji14@users.noreply.github.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "cog3pio"
 crate-type = ["cdylib", "rlib"]
+name = "cog3pio"
+
+[[bin]]
+doc = false
+name = "stub_gen"
+required-features = ["pyo3"]
 
 [dependencies]
 bytes = "1.5.0"
