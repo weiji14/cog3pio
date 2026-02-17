@@ -8,8 +8,7 @@ version: 2
 build:
   os: "ubuntu-24.04"
   tools:
-    nodejs: "23"
-    python: "mambaforge-23.11"
+    python: "miniforge3-25.11"
     rust: "1.91"
   jobs:
     create_environment:
@@ -31,12 +30,10 @@ build:
       - pip list
     post_install:
       - zensical --version
-    pre_build:
-      - "zensical build"
-      - "ls -lh site/"
     build:
       html:
         - "zensical build"
+        - "ls -lh site/"
     post_build:
       - "mkdir --parents $READTHEDOCS_OUTPUT/html/"
       - "cp --recursive site/* $READTHEDOCS_OUTPUT/html/"
