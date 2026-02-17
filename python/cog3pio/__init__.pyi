@@ -8,6 +8,7 @@ import types
 import typing
 __all__ = [
     "CogReader",
+    "CudaCogReader",
     "read_geotiff",
 ]
 
@@ -82,6 +83,99 @@ class CogReader:
         coords : (numpy.ndarray, numpy.ndarray)
            A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
            GeoTIFF's x- and y-coordinates.
+        """
+
+@typing.final
+class CudaCogReader:
+    r"""
+    Python class interface to a Cloud-optimized GeoTIFF reader (nvTIFF backend) that
+    decodes to GPU (CUDA) memory.
+    
+    Warning
+    -------
+    This is an experimental feature only enabled on linux-x86_64 and linux-aarch64
+    wheel builds.
+    
+    Parameters
+    ----------
+    path : str
+        The path to the file, or a url to a remote file.
+    
+    Returns
+    -------
+    reader : cog3pio.CudaCogReader
+        A new CudaCogReader instance for decoding GeoTIFF files.
+    
+    Raises
+    ------
+    ImportError
+        If ``nvTIFF`` is not installed. Please install it (e.g. via
+        ``apt install nvtiff-cuda-13`` or ``dnf install nvtiff-cuda-13``) before using
+        this class.
+    
+    Examples
+    --------
+    Read a GeoTIFF from a HTTP url into a DLPack tensor:
+    
+    >>> import cupy as cp
+    >>> from cog3pio import CudaCogReader
+    ...
+    >>> cog = CudaCogReader(
+    ...     path="https://github.com/rasterio/rasterio/raw/1.5.0/tests/data/RGBA.byte.tif"
+    ... )
+    >>> array: cp.ndarray = cp.from_dlpack(cog)
+    >>> array.shape
+    (2271752,)
+    >>> array.dtype
+    dtype('uint8')
+    """
+    def __new__(cls, path: builtins.str) -> CudaCogReader: ...
+    def __dlpack__(self, stream: typing.Optional[builtins.int] = None, max_version: typing.Optional[tuple[builtins.int, builtins.int]] = None, **kwargs: typing.Any) -> types.CapsuleType:
+        r"""
+        Get image pixel data from GeoTIFF as a DLPack capsule.
+        
+        Parameters
+        ----------
+        stream : int | None
+            A Python integer representing a pointer to a stream, on devices that
+            support streams. Device-specific values of stream for CUDA:
+        
+            - ``None``: producer must assume the legacy default stream (default).
+            - ``1``: the legacy default stream.
+            - ``2``: the per-thread default stream.
+            - ``> 2``: stream number represented as a Python integer.
+            - ``0`` is disallowed due to its ambiguity: ``0`` could mean either
+              ``None``, ``1``, or ``2``.
+        
+        max_version : tuple[int, int] | None
+            The maximum DLPack version that the consumer (i.e., the caller of
+            ``__dlpack__``) supports, in the form of a 2-tuple (``major``, ``minor``).
+            This method may return a capsule of version max_version (recommended if it
+            does support that), or of a different version. This means the consumer must
+            verify the version even when max_version is passed.
+        
+        Returns
+        -------
+        tensor : types.CapsuleType
+            1D tensor in row-major order containing the GeoTIFF pixel data.
+        
+        Raises
+        ------
+        NotImplementedError
+            If ``stream``>2 is passed in, as only legacy default stream (1) or
+            per-thread default stream (2) is supported for now. Or if ``max_version`` is
+            incompatible with the DLPack major version in this library.
+        """
+    def __dlpack_device__(self) -> tuple[builtins.int, builtins.int]:
+        r"""
+        Get device type and device ID in DLPack format.
+        
+        Meant for use by ``from_dlpack()``.
+        
+        Returns
+        -------
+        device : (int, int)
+            A tuple (``device_type``, ``device_id``) in DLPack format.
         """
 
 def read_geotiff(path: builtins.str) -> numpy.typing.NDArray[numpy.float32]:

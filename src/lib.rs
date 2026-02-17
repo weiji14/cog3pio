@@ -115,12 +115,17 @@
 
 /// Modules for handling Input/Output of GeoTIFF data
 pub mod io;
+
 /// Modules for Python to interface with Rust code
 #[cfg(feature = "pyo3")]
 mod python;
 #[doc(hidden)]
 #[cfg(feature = "pyo3")]
-pub use self::python::adapters::stub_info;
+pub use self::python::adapters;
+#[doc(hidden)]
+#[cfg(feature = "cuda")]
+pub use self::python::cudacog;
+
 /// Modules for common traits
 mod traits;
 pub use self::traits::Transform;

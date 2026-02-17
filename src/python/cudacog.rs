@@ -8,6 +8,8 @@ use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DLPACK_MAJOR_VERSION, DLPACK_MINOR_VERSION, Device};
 use pyo3::exceptions::{PyBufferError, PyNotImplementedError, PyValueError, PyWarning};
 use pyo3::{Bound, PyAny, PyResult, pyclass, pymethods};
+use pyo3_stub_gen::define_stub_info_gatherer;
+use pyo3_stub_gen_derive::{gen_stub_pyclass, gen_stub_pymethods};
 
 use crate::io::nvtiff::CudaCogReader;
 use crate::python::adapters::path_to_stream;
@@ -52,6 +54,7 @@ use crate::python::adapters::path_to_stream;
 /// (2271752,)
 /// >>> array.dtype
 /// dtype('uint8')
+#[gen_stub_pyclass]
 #[pyclass(unsendable)]
 #[pyo3(name = "CudaCogReader")]
 pub(crate) struct PyCudaCogReader {
@@ -59,6 +62,7 @@ pub(crate) struct PyCudaCogReader {
     device: usize,
 }
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl PyCudaCogReader {
     #[new]
@@ -108,6 +112,7 @@ impl PyCudaCogReader {
     ///     If ``stream``>2 is passed in, as only legacy default stream (1) or
     ///     per-thread default stream (2) is supported for now. Or if ``max_version`` is
     ///     incompatible with the DLPack major version in this library.
+    #[gen_stub(override_return_type(type_repr="types.CapsuleType", imports=("types")))]
     #[pyo3(signature = (stream=None, max_version=None, **kwargs))]
     fn __dlpack__(
         &self,
@@ -176,3 +181,6 @@ impl PyCudaCogReader {
         (device.device_type as i32, device.device_id)
     }
 }
+
+// Define a function to gather stub information.
+define_stub_info_gatherer!(stub_info);

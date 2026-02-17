@@ -120,9 +120,9 @@ impl PyCogReader {
     ///
     /// Returns
     /// -------
-    /// coords : (np.ndarray, np.ndarray)
-    ///    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
-    ///    x- and y-coordinates.
+    /// coords : (numpy.ndarray, numpy.ndarray)
+    ///    A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
+    ///    GeoTIFF's x- and y-coordinates.
     #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
@@ -179,7 +179,7 @@ pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 ///
 /// Returns
 /// -------
-/// array : np.ndarray
+/// array : numpy.ndarray
 ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
 ///
 /// Raises
