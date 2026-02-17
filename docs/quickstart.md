@@ -10,7 +10,8 @@ Take your pick:
 | numpy     |      ✅         |     ❌      |     ❌    |
 
 Notes:
-- [DLPack - an in-memory tensor structure]( https://data-apis.org/array-api/latest/design_topics/data_interchange.html#dlpack-an-in-memory-tensor-structure)
+
+- [DLPack - an in-memory tensor structure](https://data-apis.org/array-api/latest/design_topics/data_interchange.html#dlpack-an-in-memory-tensor-structure)
 - Coordinates in xarray are computed from the GeoTIFF's affine transformation
 - Currently supported dtypes include uint (u8/u16/u32/u64), int (i8/i16/i32/i64) and
   float (f16/f32/f64).
@@ -18,12 +19,13 @@ Notes:
 
 ## PyCapsule (DLPack)
 
-Read a GeoTIFF file from a HTTP url via the [`CogReader`](../api#dlpack) class into an
-object that conforms to the
+Read a GeoTIFF file from a HTTP url via the [`CogReader`][cog3pio.CogReader] class into
+an object that conforms to the
 [Python Specification for DLPack](https://dmlc.github.io/dlpack/latest/python_spec.html),
 whereby the `__dlpack__()` method returns a
 [PyCapsule](https://docs.python.org/3/c-api/capsule.html#c.PyCapsule) object containing
-a [`DLManagedTensorVersioned`](https://dmlc.github.io/dlpack/latest/c_api.html#c.DLManagedTensorVersioned).
+a [`DLManagedTensorVersioned`](https://dmlc.github.io/dlpack/latest/c_api.html#c.DLManagedTensorVersioned)
+object.
 
 ```python
 import numpy as np
@@ -44,8 +46,9 @@ assert array.dtype == "float16"
 
 ## Xarray
 
-Read GeoTIFF file from a HTTP url via the [`Cog3pioBackendEntrypoint`](../api#xarray)
-engine into an `xarray.DataArray` object (akin to
+Read GeoTIFF file from a HTTP url via the
+[`Cog3pioBackendEntrypoint`](api#cog3pio.xarray_backend.Cog3pioBackendEntrypoint) engine
+into an [xarray.DataArray][] object (akin to
 [`rioxarray`](https://corteva.github.io/rioxarray)).
 
 ```python
@@ -62,8 +65,9 @@ assert dataarray.dtype == "uint16"
 
 ## NumPy
 
-Read a GeoTIFF file from a HTTP url via the [`read_geotiff`](../api#numpy) function
-into a `numpy.ndarray` (akin to [`rasterio`](https://rasterio.readthedocs.io)).
+Read a GeoTIFF file from a HTTP url via the [`read_geotiff`][cog3pio.read_geotiff]
+function into a [`numpy.ndarray`][] (akin to
+[`rasterio`](https://rasterio.readthedocs.io)).
 
 ```python
 import numpy as np
@@ -77,8 +81,9 @@ assert array.shape == (1, 549, 549)  # bands, height, width
 assert array.dtype == "float32"
 ```
 
-> [!NOTE]
-> The `read_geotiff` function supports reading single or multi-band GeoTIFF files into a
-> float32 array only. If you wish to read into other dtypes (e.g. uint16), please use
-> the [Xarray](quickstart#xarray) or [DLPack](quickstart#pycapsule-dlpack) methods
-> instead which supports reading into different dtypes.
+!!! note
+
+    The [`read_geotiff`][cog3pio.read_geotiff] function supports reading single or
+    multi-band GeoTIFF files into a float32 array only. If you wish to read into other
+    dtypes (e.g. uint16), please use the [Xarray](quickstart#xarray) or [DLPack](quickstart#pycapsule-dlpack) methods instead which supports reading into different
+    dtypes.

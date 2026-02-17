@@ -1,0 +1,107 @@
+# ============================================================================
+#
+# The configuration produced by default is meant to highlight the features
+# that Zensical provides and to serve as a starting point for your own
+# projects. See https://zensical.org/docs/setup/basics/ for more options.
+#
+# ============================================================================
+
+[project]
+site_name = "cog3pio"
+site_description = "Cloud-optimized GeoTIFF ... Parallel I/O"
+repo_url = "https://github.com/weiji14/cog3pio"
+edit_uri = "edit/main/docs/"
+site_url = "https://cog3pio.readthedocs.io/"
+copyright = """
+By the cog3pio team
+"""
+nav = [
+    { "cog3pio" = "index.md" },
+    { "🚅 Quickstart" = "quickstart.md" },
+    { "📖 API Reference" = "api.md" },
+    { "📆 Changelog" = "changelog.md" },
+]
+
+# ----------------------------------------------------------------------------
+# Section for configuring theme options
+# ----------------------------------------------------------------------------
+[project.theme]
+# favicon = "images/favicon.png"
+language = "en"
+features = [
+    "content.action.edit",
+    "content.action.view",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.instant.progress",
+    "navigation.path",
+    "navigation.prune",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+]
+font = false
+
+[[project.theme.palette]]
+accent = "green"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+accent = "green"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+[project.theme.icon]
+logo = "lucide/cloud-cog"
+
+# ----------------------------------------------------------------------------
+# The "extensions" and "plugins" sections contains more settings.
+# ----------------------------------------------------------------------------
+[project.markdown_extensions.admonition]
+
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.toc]
+toc_depth = 4
+permalink = "⚓︎"
+
+[project.plugins.mkdocstrings.handlers.python]
+inventories = [
+    "https://data-apis.org/array-api/latest/objects.inv",
+    "https://dmlc.github.io/dlpack/latest/objects.inv",
+    "https://docs.python.org/3/objects.inv",
+    "https://docs.xarray.dev/en/latest/objects.inv",
+    "https://numpy.org/doc/stable/objects.inv",
+]
+paths = ["python/cog3pio"]
+
+[project.plugins.mkdocstrings.handlers.python.options]
+# General
+find_stubs_package = true
+show_source = true
+# Heading
+heading_level = 3
+parameter_headings = true
+show_category_heading = true
+show_root_heading = true
+show_symbol_type_heading = true
+# Members
+inherited_members = true
+# Docstrings
+docstring_style = "numpy"
+docstring_section_style = "list"
+# Signatures
+# separate_signature = true
+# signature_crossrefs = true
+# show_signature_annotations = true

@@ -77,7 +77,7 @@ impl PyCogReader {
     /// Raises
     /// ------
     /// NotImplementedError
-    ///     If ``stream`` is not ``None``, as only decoding to the CPU is supported.
+    ///     If `stream` is not `None`, as only decoding to the CPU is supported.
     #[gen_stub(override_return_type(type_repr="types.CapsuleType", imports=("types")))]
     #[pyo3(signature = (stream=None))]
     fn __dlpack__(&mut self, stream: Option<u8>) -> PyResult<SafeManagedTensorVersioned> {
@@ -100,12 +100,12 @@ impl PyCogReader {
 
     /// Get device type and device ID in DLPack format.
     ///
-    /// Meant for use by ``from_dlpack()``.
+    /// Meant for use by [`from_dlpack()`][array_api.from_dlpack].
     ///
     /// Returns
     /// -------
     /// device : (int, int)
-    ///     A tuple (``device_type``, ``device_id``) in DLPack format.
+    ///     A tuple (`device_type`, `device_id`) in DLPack format.
     #[staticmethod]
     fn __dlpack_device__() -> (i32, i32) {
         let device = Device::CPU;
@@ -121,8 +121,8 @@ impl PyCogReader {
     /// Returns
     /// -------
     /// coords : (numpy.ndarray, numpy.ndarray)
-    ///    A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
-    ///    GeoTIFF's x- and y-coordinates.
+    ///     A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
+    ///     GeoTIFF's x- and y-coordinates.
     #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
@@ -186,7 +186,7 @@ pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// ------
 /// ValueError
 ///     If a TIFF which has a non-float32 dtype is passed in. Please use
-///     `cog3pio.CogReader` for reading TIFFs with other dtypes (e.g. uint16).
+///     [cog3pio.CogReader][] for reading TIFFs with other dtypes (e.g. uint16).
 ///
 /// Examples
 /// --------
