@@ -31,15 +31,16 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
     Frozen({'band': 1, 'y': 20, 'x': 20})
     >>> dataarray.dtype
     dtype('uint8')
+
     """
 
     description = "Use .tif files in Xarray"
-    open_dataset_parameters = ["filename_or_obj"]
+    open_dataset_parameters = ("filename_or_obj", "drop_variables")
     url = "https://github.com/weiji14/cog3pio"
 
     def open_dataset(
         self,
-        filename_or_obj: str,
+        filename_or_obj: str,  # type: ignore[override]
         *,
         drop_variables=None,
         # other backend specific keyword arguments
@@ -54,7 +55,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
         dataarray: xr.DataArray = xr.DataArray(
             data=array,
             coords={
-                "band": np.arange(stop=channels, dtype=np.uint8),
+                "band": np.arange(channels, dtype=np.uint8),
                 "y": y_coords,
                 "x": x_coords,
             },

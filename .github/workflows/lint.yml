@@ -44,6 +44,45 @@ jobs:
       - name: Run Rustfmt
         run: cargo fmt --check -- --config imports_granularity=Module,group_imports=StdExternalCrate
 
+  stubtest:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Build wheels
+        uses: PyO3/maturin-action@b1bd829e37fef14c63f19162034228a2f3dc1021 # v1.50.0
+        with:
+          target: x86_64
+          args: --features cuda,pyo3 --out dist
+          sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          manylinux: "2_28"
+          before-script-linux: |
+            # Install nvTIFF and clang-devel
+            if command -v dnf &> /dev/null; then
+              # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
+              dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
+              dnf clean all
+              dnf install -y clang-devel cuda-crt-13-0 cuda-cudart-devel-13-0 nvtiff-cuda-13-0.6.0.* libnvtiff0-cuda-13-0.6.0.*
+              # Patch nvtiff.h (v0.6.0) to add missing enum tag
+              sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" /usr/include/nvtiff.h
+            fi
+
+      - name: Run mypy stubtest
+        run: |
+          set -e
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip install cog3pio[tests] --find-links dist --force-reinstall
+          stubtest cog3pio --ignore-missing-stub --ignore-disjoint-bases
+
   zizmor:
     runs-on: ubuntu-24.04
     steps:

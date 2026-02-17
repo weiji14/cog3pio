@@ -38,6 +38,7 @@ docs = [
     "zensical",
 ]
 tests = [
+    "mypy",
     "pytest",
 ]
 
@@ -45,8 +46,8 @@ tests = [
 cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
 
 [tool.maturin]
-python-source = "python"
 features = ["pyo3"]
+python-source = "python"
 
 [tool.pytest]
 addopts = [
