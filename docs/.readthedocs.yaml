@@ -8,9 +8,8 @@ version: 2
 build:
   os: "ubuntu-24.04"
   tools:
-    nodejs: "23"
     python: "mambaforge-23.11"
-    rust: "1.86"
+    rust: "1.91"
   jobs:
     create_environment:
       # Patch nvtiff.h (v0.6.0) to add missing enum tag
@@ -28,21 +27,16 @@ build:
         BINDGEN_EXTRA_CLANG_ARGS="-I $CONDA_PREFIX/targets/x86_64-linux/include"
         MATURIN_PEP517_ARGS="--features cuda,pyo3"
         mamba run --prefix "$CONDA_PREFIX" pip install .[docs]
-      # https://github.com/jupyter-book/sphinx-ext-mystmd/pull/2
-      - pip install --ignore-installed git+https://github.com/weiji14/sphinx-ext-mystmd@e995908b3a898b9c9d5d3fec4ff1478f1f4c1ccd
       - pip list
     post_install:
-      - npm install -g mystmd
-      - myst --version
-    pre_build:
-      - "cd docs/ && sphinx-build --builder myst . _build/myst-asts"
-      - "ls -lh docs/_build/"
+      - zensical --version
     build:
       html:
-        - "cd docs/ && myst build --html"
+        - "zensical build"
+        - "ls -lh site/"
     post_build:
       - "mkdir --parents $READTHEDOCS_OUTPUT/html/"
-      - "mv docs/_build/html/* $READTHEDOCS_OUTPUT/html/"
+      - "cp --recursive site/* $READTHEDOCS_OUTPUT/html/"
 
 conda:
   environment: docs/environment.yml

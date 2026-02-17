@@ -15,7 +15,7 @@ benches/*.tif
 .Python
 .venv/
 env/
-bin/
+#bin/
 build/
 develop-eggs/
 dist/
@@ -32,5 +32,5 @@ venv/
 .installed.cfg
 *.egg
 
-# MyST build outputs
-_build
+# Zensical build outputs
+site

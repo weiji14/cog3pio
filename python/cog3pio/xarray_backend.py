@@ -26,7 +26,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
 
     Examples
     --------
-    Read a GeoTIFF from a HTTP url into an xarray.DataArray:
+    Read a GeoTIFF from a HTTP url into an [xarray.DataArray][]:
 
     >>> import xarray as xr
     ...
@@ -49,7 +49,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
 
     def open_dataset(
         self,
-        filename_or_obj: str,
+        filename_or_obj: str,  # type: ignore[override]
         *,
         drop_variables=None,
         device: tuple[int, int] | None = (2, 0),
@@ -58,7 +58,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
         mask_and_scale=None,
     ) -> xr.Dataset:
         """
-        Backend open_dataset method used by Xarray in :py:func:`~xarray.open_dataset`.
+        Backend open_dataset method used by Xarray in [xarray.open_dataset][].
 
         Parameters
         ----------
@@ -112,7 +112,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
         dataarray: xr.DataArray = xr.DataArray(
             data=array,
             coords={
-                "band": np.arange(stop=channels, dtype=np.uint8),
+                "band": np.arange(channels, dtype=np.uint8),
                 "y": y_coords,
                 "x": x_coords,
             },
