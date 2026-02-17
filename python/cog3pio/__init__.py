@@ -1,6 +1,4 @@
-"""
-cog3pio - Cloud-optimized GeoTIFF ... Parallel I/O
-"""
+"""cog3pio - Cloud-optimized GeoTIFF ... Parallel I/O."""
 
 import contextlib
 from importlib.metadata import version
@@ -11,7 +9,6 @@ with contextlib.suppress(ImportError):
     from .cog3pio import CudaCogReader  # noqa: F401
 
 
-__doc__ = cog3pio.__doc__
 __version__ = version("cog3pio")  # e.g. 0.1.2.dev3+g0ab3cd78
 
 if hasattr(cog3pio, "__all__"):

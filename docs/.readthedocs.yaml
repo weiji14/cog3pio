@@ -10,7 +10,7 @@ build:
   tools:
     nodejs: "23"
     python: "mambaforge-23.11"
-    rust: "1.86"
+    rust: "1.91"
   jobs:
     create_environment:
       # Patch nvtiff.h (v0.6.0) to add missing enum tag

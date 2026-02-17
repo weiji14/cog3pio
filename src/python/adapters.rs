@@ -7,10 +7,13 @@ use dlpark::ffi::Device;
 use ndarray::Array3;
 use numpy::{PyArray1, PyArray3, ToPyArray};
 use object_store::{ObjectStore, parse_url};
-use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
+use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyNotImplementedError, PyValueError};
 use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, pymodule};
 use pyo3::types::PyModuleMethods;
 use pyo3::{Bound, PyErr, wrap_pyfunction};
+use pyo3_stub_gen::define_stub_info_gatherer;
+use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyfunction};
+use pyo3_stub_gen_derive::gen_stub_pymethods;
 use url::Url;
 
 use crate::io::geotiff::{CogReader, read_geotiff};
@@ -45,12 +48,14 @@ use crate::traits::Transform;
 /// (4, 411, 634)
 /// >>> array.dtype
 /// dtype('uint16')
+#[gen_stub_pyclass]
 #[pyclass]
 #[pyo3(name = "CogReader")]
 struct PyCogReader {
     inner: CogReader<Cursor<Bytes>>,
 }
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl PyCogReader {
     #[new]
@@ -66,9 +71,24 @@ impl PyCogReader {
     ///
     /// Returns
     /// -------
-    /// tensor : PyCapsule
+    /// tensor : types.CapsuleType
     ///     3D tensor of shape (band, height, width) containing the GeoTIFF pixel data.
-    fn __dlpack__(&mut self) -> PyResult<SafeManagedTensorVersioned> {
+    ///
+    /// Raises
+    /// ------
+    /// NotImplementedError
+    ///     If ``stream`` is not ``None``, as only decoding to the CPU is supported.
+    #[gen_stub(override_return_type(type_repr="types.CapsuleType", imports=("types")))]
+    #[pyo3(signature = (stream=None))]
+    fn __dlpack__(&mut self, stream: Option<u8>) -> PyResult<SafeManagedTensorVersioned> {
+        if stream.is_some() {
+            Err(PyNotImplementedError::new_err(
+                "stream values other than `None` not supported.",
+            ))
+        } else {
+            Ok(())
+        }?;
+
         // Convert from ndarray (Rust) to DLPack (Python)
         let tensor: SafeManagedTensorVersioned = self
             .inner
@@ -100,9 +120,9 @@ impl PyCogReader {
     ///
     /// Returns
     /// -------
-    /// coords : (np.ndarray, np.ndarray)
-    ///    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
-    ///    x- and y-coordinates.
+    /// coords : (numpy.ndarray, numpy.ndarray)
+    ///    A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
+    ///    GeoTIFF's x- and y-coordinates.
     #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &mut self,
@@ -159,7 +179,7 @@ pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 ///
 /// Returns
 /// -------
-/// array : np.ndarray
+/// array : numpy.ndarray
 ///     3D array of shape (band, height, width) containing the GeoTIFF pixel data.
 ///
 /// Raises
@@ -177,6 +197,7 @@ pub(crate) fn path_to_stream(path: &str) -> PyResult<Cursor<Bytes>> {
 /// >>> array = read_geotiff("https://github.com/pka/georaster/raw/v0.2.0/data/tiff/float32.tif")
 /// >>> array.shape
 /// (1, 20, 20)
+#[gen_stub_pyfunction]
 #[pyfunction]
 #[pyo3(name = "read_geotiff")]
 fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyArray3<f32>>> {
@@ -203,3 +224,6 @@ fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(read_geotiff_py, m)?)?;
     Ok(())
 }
+
+// Define a function to gather stub information.
+define_stub_info_gatherer!(stub_info);

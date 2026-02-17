@@ -15,7 +15,7 @@ benches/*.tif
 .Python
 .venv/
 env/
-bin/
+#bin/
 build/
 develop-eggs/
 dist/
