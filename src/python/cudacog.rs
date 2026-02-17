@@ -159,6 +159,15 @@ impl PyCudaCogReader {
             Err(PyBufferError::new_err("DLPack 0.X not supported"))
         };
 
+        if kwargs.is_some() {
+            // TODO handle dl_device and copy
+            Err(PyNotImplementedError::new_err(
+                "`dl_device` and/or `copy` arguments not yet implemented.",
+            ))
+        } else {
+            Ok(())
+        }?;
+
         // Convert from ndarray (Rust) to DLPack (Python)
         let tensor: SafeManagedTensorVersioned = self
             .inner
