@@ -99,7 +99,7 @@ impl PyCudaCogReader {
     ///
     /// Returns
     /// -------
-    /// tensor : PyCapsule
+    /// tensor : types.CapsuleType
     ///     1D tensor in row-major order containing the GeoTIFF pixel data.
     ///
     /// Raises

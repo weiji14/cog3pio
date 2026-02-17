@@ -4,6 +4,7 @@
 import builtins
 import numpy
 import numpy.typing
+import types
 import typing
 __all__ = [
     "CogReader",
@@ -42,6 +43,20 @@ class CogReader:
     dtype('uint16')
     """
     def __new__(cls, path: builtins.str) -> CogReader: ...
+    def __dlpack__(self, stream: typing.Optional[builtins.int] = None) -> types.CapsuleType:
+        r"""
+        Get image pixel data from GeoTIFF as a DLPack capsule
+        
+        Returns
+        -------
+        tensor : types.CapsuleType
+            3D tensor of shape (band, height, width) containing the GeoTIFF pixel data.
+        
+        Raises
+        ------
+        NotImplementedError
+            If ``stream`` is not ``None``, as only decoding to the CPU is supported.
+        """
     @staticmethod
     def __dlpack_device__() -> tuple[builtins.int, builtins.int]:
         r"""

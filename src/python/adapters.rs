@@ -7,7 +7,7 @@ use dlpark::ffi::Device;
 use ndarray::Array3;
 use numpy::{PyArray1, PyArray3, ToPyArray};
 use object_store::{ObjectStore, parse_url};
-use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyValueError};
+use pyo3::exceptions::{PyBufferError, PyFileNotFoundError, PyNotImplementedError, PyValueError};
 use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, pymodule};
 use pyo3::types::PyModuleMethods;
 use pyo3::{Bound, PyErr, wrap_pyfunction};
@@ -71,10 +71,24 @@ impl PyCogReader {
     ///
     /// Returns
     /// -------
-    /// tensor : PyCapsule
+    /// tensor : types.CapsuleType
     ///     3D tensor of shape (band, height, width) containing the GeoTIFF pixel data.
-    #[gen_stub(skip)]
-    fn __dlpack__(&mut self) -> PyResult<SafeManagedTensorVersioned> {
+    ///
+    /// Raises
+    /// ------
+    /// NotImplementedError
+    ///     If ``stream`` is not ``None``, as only decoding to the CPU is supported.
+    #[gen_stub(override_return_type(type_repr="types.CapsuleType", imports=("types")))]
+    #[pyo3(signature = (stream=None))]
+    fn __dlpack__(&mut self, stream: Option<u8>) -> PyResult<SafeManagedTensorVersioned> {
+        if stream.is_some() {
+            Err(PyNotImplementedError::new_err(
+                "stream values other than `None` not supported.",
+            ))
+        } else {
+            Ok(())
+        }?;
+
         // Convert from ndarray (Rust) to DLPack (Python)
         let tensor: SafeManagedTensorVersioned = self
             .inner
