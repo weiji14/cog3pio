@@ -18,7 +18,7 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
 
     Examples
     --------
-    Read a GeoTIFF from a HTTP url into an xarray.DataArray:
+    Read a GeoTIFF from a HTTP url into an [xarray.DataArray][]:
 
     >>> import xarray as xr
     ...
@@ -46,6 +46,20 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
         # other backend specific keyword arguments
         # `chunks` and `cache` DO NOT go here, they are handled by xarray
     ) -> xr.Dataset:
+        """
+        Backend open_dataset method used by Xarray in [xarray.open_dataset][].
+
+        Parameters
+        ----------
+        filename_or_obj : str
+            File path or url to a TIFF (.tif) image file that can be read by the
+            nvTIFF or image-tiff backend library.
+
+        Returns
+        -------
+        xarray.Dataset
+
+        """
         cog = CogReader(path=filename_or_obj)
 
         array: np.ndarray = np.from_dlpack(cog)

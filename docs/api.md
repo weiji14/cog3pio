@@ -5,24 +5,17 @@ These are the Python docs for `cog3pio`, for the Rust docs, see
 
 ## DLPack
 
-```{eval-rst}
-.. autoclass:: cog3pio.CogReader
-    :members:
-    :special-members: __dlpack__, __dlpack_device__
-.. autoclass:: cog3pio.CudaCogReader
-    :members:
-    :special-members: __dlpack__, __dlpack_device__
-```
+::: cog3pio.CudaCogReader
+::: cog3pio.CogReader
+
 
 ## Xarray
 
-```{eval-rst}
-.. autoclass:: cog3pio.xarray_backend.Cog3pioBackendEntrypoint
-```
-
+::: cog3pio.xarray_backend.Cog3pioBackendEntrypoint
+    options:
+      members:
+      - open_dataset
 
 ## NumPy
 
-```{eval-rst}
-.. autofunction:: cog3pio.read_geotiff
-```
+::: cog3pio.read_geotiff

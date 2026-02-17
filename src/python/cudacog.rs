@@ -35,8 +35,8 @@ use crate::python::adapters::path_to_stream;
 /// Raises
 /// ------
 /// ImportError
-///     If ``nvTIFF`` is not installed. Please install it (e.g. via
-///     ``apt install nvtiff-cuda-13`` or ``dnf install nvtiff-cuda-13``) before using
+///     If `nvTIFF` is not installed. Please install it (e.g. via
+///     `apt install nvtiff-cuda-13` or `dnf install nvtiff-cuda-13`) before using
 ///     this class.
 ///
 /// Examples
@@ -87,18 +87,18 @@ impl PyCudaCogReader {
     ///     A Python integer representing a pointer to a stream, on devices that
     ///     support streams. Device-specific values of stream for CUDA:
     ///
-    ///     - ``None``: producer must assume the legacy default stream (default).
-    ///     - ``1``: the legacy default stream.
-    ///     - ``2``: the per-thread default stream.
-    ///     - ``> 2``: stream number represented as a Python integer.
-    ///     - ``0`` is disallowed due to its ambiguity: ``0`` could mean either
-    ///       ``None``, ``1``, or ``2``.
+    ///     - `None`: producer must assume the legacy default stream (default).
+    ///     - `1`: the legacy default stream.
+    ///     - `2`: the per-thread default stream.
+    ///     - `> 2`: stream number represented as a Python integer.
+    ///     - `0` is disallowed due to its ambiguity: `0` could mean either
+    ///       `None`, `1`, or `2`.
     ///
     /// max_version : tuple[int, int] | None
     ///     The maximum DLPack version that the consumer (i.e., the caller of
-    ///     ``__dlpack__``) supports, in the form of a 2-tuple (``major``, ``minor``).
-    ///     This method may return a capsule of version max_version (recommended if it
-    ///     does support that), or of a different version. This means the consumer must
+    ///     `__dlpack__`) supports, in the form of a 2-tuple (`major`, `minor`). This
+    ///     method may return a capsule of version max_version (recommended if it does
+    ///     support that), or of a different version. This means the consumer must
     ///     verify the version even when max_version is passed.
     ///
     /// Returns
@@ -109,8 +109,10 @@ impl PyCudaCogReader {
     /// Raises
     /// ------
     /// NotImplementedError
-    ///     If ``stream``>2 is passed in, as only legacy default stream (1) or
-    ///     per-thread default stream (2) is supported for now. Or if ``max_version`` is
+    ///     If [`stream`][cog3pio.CudaCogReader.__dlpack__(stream)]>2 is passed in, as
+    ///     only legacy default stream (1) or per-thread default stream (2) is supported
+    ///     for now. Or if
+    ///     [`max_version`](cog3pio.CudaCogReader.__dlpack__(max_version)) is
     ///     incompatible with the DLPack major version in this library.
     #[gen_stub(override_return_type(type_repr="types.CapsuleType", imports=("types")))]
     #[pyo3(signature = (stream=None, max_version=None, **kwargs))]
@@ -179,12 +181,12 @@ impl PyCudaCogReader {
 
     /// Get device type and device ID in DLPack format.
     ///
-    /// Meant for use by ``from_dlpack()``.
+    /// Meant for use by [`from_dlpack()`][array_api.from_dlpack].
     ///
     /// Returns
     /// -------
     /// device : (int, int)
-    ///     A tuple (``device_type``, ``device_id``) in DLPack format.
+    ///     A tuple (`device_type`, `device_id`) in DLPack format.
     fn __dlpack_device__(&self) -> (i32, i32) {
         let device = Device::cuda(self.device); // Hardcoded to GPU:0
         (device.device_type as i32, device.device_id)

@@ -35,6 +35,7 @@ benchmark = [
     "rioxarray",
 ]
 docs = [
+    "mkdocstrings-python",
     "zensical",
 ]
 tests = [
