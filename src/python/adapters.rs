@@ -12,8 +12,7 @@ use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, 
 use pyo3::types::PyModuleMethods;
 use pyo3::{Bound, PyErr, wrap_pyfunction};
 use pyo3_stub_gen::define_stub_info_gatherer;
-use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyfunction};
-use pyo3_stub_gen_derive::gen_stub_pymethods;
+use pyo3_stub_gen_derive::{gen_stub_pyclass, gen_stub_pyfunction, gen_stub_pymethods};
 use url::Url;
 
 use crate::io::geotiff::{CogReader, read_geotiff};

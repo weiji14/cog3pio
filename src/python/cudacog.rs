@@ -71,7 +71,7 @@ pub(crate) struct PyCudaCogReader {
 #[pymethods]
 impl PyCudaCogReader {
     #[new]
-    #[pyo3(signature = (path, device_id=0))]
+    #[pyo3(signature = (path, device_id))]
     fn new(path: &str, device_id: usize) -> PyResult<Self> {
         let stream: Cursor<Bytes> = path_to_stream(path)?;
         let bytes: Bytes = stream.into_inner();
@@ -179,9 +179,9 @@ impl PyCudaCogReader {
         };
 
         if kwargs.is_some() {
-            // TODO handle dl_device and copy
+            // TODO handle copy
             Err(PyNotImplementedError::new_err(
-                "`dl_device` and/or `copy` arguments not yet implemented.",
+                "`copy` argument is yet implemented.",
             ))
         } else {
             Ok(())
