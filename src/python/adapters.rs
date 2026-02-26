@@ -210,9 +210,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
     Ok(array.to_pyarray(py))
 }
 
-/// A Python module implemented in Rust. The name of this function must match
-/// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
-/// import the module.
+/// cog3pio - Cloud-optimized GeoTIFF ... Parallel I/O.
 #[pymodule]
 fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Register Python classes

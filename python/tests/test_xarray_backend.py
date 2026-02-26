@@ -30,10 +30,11 @@ except ImportError:
 @pytest.mark.parametrize(
     ("engine", "backend_kwargs"),
     [
-        ("cog3pio", {"device": None}),  # CPU
+        pytest.param("cog3pio", {"device": None}, id="cog3pio"),  # CPU
         pytest.param(
             "cog3pio",
             {"device": (2, 0)},  # CUDA:0
+            id="cog3pio-cuda",
             marks=pytest.mark.skipif(
                 condition=not HAS_CUPY, reason="Could not import 'cupy'"
             ),
@@ -41,6 +42,7 @@ except ImportError:
         pytest.param(
             "rasterio",  # CPU
             {},
+            id="rasterio",
             marks=pytest.mark.skipif(
                 condition=not HAS_RIOXARRAY, reason="Could not import 'rioxarray'"
             ),

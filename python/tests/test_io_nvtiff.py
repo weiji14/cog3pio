@@ -28,7 +28,8 @@ def test_cudacogreader_to_dlpack():
     """
     with cp.cuda.Stream(null=True):  # use legacy default stream
         cog = CudaCogReader(
-            path="https://github.com/rasterio/rasterio/raw/1.5.0/tests/data/float32.tif"
+            path="https://github.com/rasterio/rasterio/raw/1.5.0/tests/data/float32.tif",
+            device_id=0,
         )
 
         assert hasattr(cog, "__dlpack__")
@@ -69,7 +70,7 @@ def test_benchmark_tocupy(engine):
 
             def cog_to_cupy():
                 with cp.cuda.Stream(ptds=True):  # use per-thread default stream
-                    cog = CudaCogReader(path=tiff)
+                    cog = CudaCogReader(path=tiff, device_id=0)
                     array: cp.ndarray = cp.from_dlpack(cog)
                     assert array.shape == (3616812,)
 

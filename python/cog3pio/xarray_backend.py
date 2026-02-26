@@ -3,6 +3,7 @@ An xarray backend for reading GeoTIFF files using the 'cog3pio' engine.
 """
 
 import os
+from collections.abc import Iterable
 
 import numpy as np
 import xarray as xr
@@ -47,11 +48,11 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
     open_dataset_parameters = ("filename_or_obj", "drop_variables", "device")
     url = "https://github.com/weiji14/cog3pio"
 
-    def open_dataset(
+    def open_dataset(  # type: ignore[override]
         self,
-        filename_or_obj: str,  # type: ignore[override]
+        filename_or_obj: str,
         *,
-        drop_variables=None,
+        drop_variables: str | Iterable[str] | None = None,
         device: tuple[int, int] | None = (2, 0),
         # other backend specific keyword arguments
         # `chunks` and `cache` DO NOT go here, they are handled by xarray
@@ -89,18 +90,18 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
                 x_coords, y_coords = cog.xy_coords()  # TODO consider using rasterix
                 channels, _height, _width = array.shape
             case 2:  # CUDA (nvTIFF backend)
-                import cupy as cp
+                import cupy as cp  # type: ignore[import-untyped]
 
                 from cog3pio import CudaCogReader
 
                 with cp.cuda.Stream(ptds=True):
-                    cog = CudaCogReader(path=filename_or_obj, device_id=device_id)
-                    array_: cp.ndarray = cp.from_dlpack(cog)  # 1-D Array
-                    x_coords, y_coords = cog.xy_coords()  # TODO consider using rasterix
+                    cog_ = CudaCogReader(path=filename_or_obj, device_id=device_id)
+                    array_: cp.ndarray = cp.from_dlpack(cog_)  # 1-D Array
+                    x_coords, y_coords = cog_.xy_coords()  # TODO consider rasterix
                     height, width = (len(y_coords), len(x_coords))
-                    channels: int = len(array_) // (height * width)
+                    channels_: int = len(array_) // (height * width)
                     # TODO make API to get proper 3-D shape directly, or use cuTENSOR
-                    array_ = array_.reshape(height, width, channels)  # HWC
+                    array_ = array_.reshape(height, width, channels_)  # HWC
                     array = array_.transpose(2, 0, 1)  # CHW
             case _:
                 msg = (

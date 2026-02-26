@@ -76,7 +76,7 @@ class CogReader:
         
         Determined based on an Affine transformation matrix built from the
         `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
-        rotation (set by `ModelTransformationTag` is currently unsupported.
+        rotation (set by `ModelTransformationTag`) is currently unsupported.
         
         Returns
         -------
@@ -100,6 +100,8 @@ class CudaCogReader:
     ----------
     path : str
         The path to the file, or a url to a remote file.
+    device_id : int
+        The CUDA GPU device number to decode the TIFF data on. Default is 0.
     
     Returns
     -------
@@ -122,6 +124,7 @@ class CudaCogReader:
     ...
     >>> cog = CudaCogReader(
     ...     path="https://github.com/rasterio/rasterio/raw/1.5.0/tests/data/RGBA.byte.tif"
+    ...     device_id=0,
     ... )
     >>> array: cp.ndarray = cp.from_dlpack(cog)
     >>> array.shape
@@ -129,7 +132,7 @@ class CudaCogReader:
     >>> array.dtype
     dtype('uint8')
     """
-    def __new__(cls, path: builtins.str) -> CudaCogReader: ...
+    def __new__(cls, path: builtins.str, device_id: builtins.int) -> CudaCogReader: ...
     def __dlpack__(self, stream: typing.Optional[builtins.int] = None, max_version: typing.Optional[tuple[builtins.int, builtins.int]] = None, dl_device: typing.Optional[tuple[builtins.int, builtins.int]] = None, copy: typing.Optional[builtins.bool] = None) -> types.CapsuleType:
         r"""
         Get image pixel data from GeoTIFF as a DLPack capsule.
@@ -202,6 +205,20 @@ class CudaCogReader:
         -------
         device : (int, int)
             A tuple (`device_type`, `device_id`) in DLPack format.
+        """
+    def xy_coords(self) -> tuple[numpy.typing.NDArray[numpy.float64], numpy.typing.NDArray[numpy.float64]]:
+        r"""
+        Get list of x and y coordinates.
+        
+        Determined based on an Affine transformation matrix built from the
+        `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
+        rotation (set by `ModelTransformationTag`) is currently unsupported.
+        
+        Returns
+        -------
+        coords : (np.ndarray, np.ndarray)
+            A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
+            x- and y-coordinates.
         """
 
 def read_geotiff(path: builtins.str) -> numpy.typing.NDArray[numpy.float32]:
