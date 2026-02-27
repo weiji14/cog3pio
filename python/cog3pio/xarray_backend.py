@@ -99,9 +99,9 @@ class Cog3pioBackendEntrypoint(BackendEntrypoint):
                     array_: cp.ndarray = cp.from_dlpack(cog_)  # 1-D Array
                     x_coords, y_coords = cog_.xy_coords()  # TODO consider rasterix
                     height, width = (len(y_coords), len(x_coords))
-                    channels_: int = len(array_) // (height * width)
+                    channels: int = len(array_) // (height * width)  # type: ignore[no-redef]
                     # TODO make API to get proper 3-D shape directly, or use cuTENSOR
-                    array_ = array_.reshape(height, width, channels_)  # HWC
+                    array_ = array_.reshape(height, width, channels)  # HWC
                     array = array_.transpose(2, 0, 1)  # CHW
             case _:
                 msg = (
