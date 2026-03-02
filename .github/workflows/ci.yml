@@ -140,7 +140,11 @@ jobs:
           arch: ${{ matrix.platform.target }}
           distro: ubuntu24.04
           githubToken: ${{ github.token }}
+          # Mount the dist directory as /dist in the container
+          dockerRunArgs: |
+            --volume "${PWD}/dist:/dist"
           install: |
+            ls -lh /dist
             apt update
             apt install -y --no-install-recommends \
                         gcc g++ gfortran libopenblas-dev liblapack-dev ninja-build \
@@ -150,7 +154,7 @@ jobs:
             python3 -m venv .venv
             source .venv/bin/activate
             pip3 install -U pip
-            pip3 install cog3pio[tests] --find-links dist --force-reinstall
+            pip3 install cog3pio[tests] --find-links /dist --force-reinstall
             pytest --verbose
 
   windows:
