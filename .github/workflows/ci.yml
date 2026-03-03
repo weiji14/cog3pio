@@ -123,12 +123,6 @@ jobs:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist/
 
-      - name: Download built wheels
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
-        with:
-          name: wheels-linux-${{ matrix.platform.target }}
-          path: ~/dist
-
       - name: pytest
         if: ${{ endswith(matrix.platform.target, '64') }} # x86_64 and aarch64
         shell: bash
@@ -136,7 +130,8 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install cog3pio[tests] --find-links ~/dist --force-reinstall
+          pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
+          pip install cog3pio[tests]
           pytest --verbose
 
       - name: pytest
@@ -144,10 +139,8 @@ jobs:
         uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         with:
           arch: ${{ matrix.platform.target }}
-          distro: ubuntu24.04
+          distro: ubuntu_devel
           githubToken: ${{ github.token }}
-          # Mount the dist directory as /dist in the container
-          dockerRunArgs: --volume ~/dist:/dist
           install: |
             apt update
             apt install -y --no-install-recommends \
@@ -155,11 +148,12 @@ jobs:
                         pkg-config python3-pip python3-dev python3-venv
           run: |
             set -e
-            ls -lh /artifacts
             python3 -m venv .venv
             source .venv/bin/activate
             pip3 install -U pip
-            pip3 install cog3pio[tests] --find-links /dist --force-reinstall
+            ls -lh dist/
+            pip3 install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
+            pip3 install cog3pio[tests]
             pytest --verbose
 
   windows:
