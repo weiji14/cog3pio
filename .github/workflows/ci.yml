@@ -123,6 +123,12 @@ jobs:
           name: wheels-linux-${{ matrix.platform.target }}
           path: dist/
 
+      - name: Download built wheels
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: wheels-linux-${{ matrix.platform.target }}
+          path: ~/dist
+
       - name: pytest
         if: ${{ endswith(matrix.platform.target, '64') }} # x86_64 and aarch64
         shell: bash
@@ -130,15 +136,8 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pip install cog3pio[tests] --find-links ~/dist --force-reinstall
           pytest --verbose
-
-      - name: Download all multiarch artifacts
-        if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
-        with:
-          name: wheels-linux-${{ matrix.platform.target }}
-          path: ~/artifacts
 
       - name: pytest
         if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
@@ -147,8 +146,8 @@ jobs:
           arch: ${{ matrix.platform.target }}
           distro: ubuntu24.04
           githubToken: ${{ github.token }}
-          # Mount the artifacts directory as /artifacts in the container
-          dockerRunArgs: --volume ~/artifacts:/artifacts
+          # Mount the dist directory as /dist in the container
+          dockerRunArgs: --volume ~/dist:/dist
           install: |
             apt update
             apt install -y --no-install-recommends \
@@ -160,7 +159,7 @@ jobs:
             python3 -m venv .venv
             source .venv/bin/activate
             pip3 install -U pip
-            pip3 install cog3pio[tests] --find-links /artifacts --force-reinstall
+            pip3 install cog3pio[tests] --find-links /dist --force-reinstall
             pytest --verbose
 
   windows:
