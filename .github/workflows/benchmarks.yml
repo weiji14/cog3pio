@@ -85,7 +85,7 @@ jobs:
 
       # Build binary distribution wheel
       - name: Build wheels
-        uses: PyO3/maturin-action@60d11847b29f81ca5375519a8eb33cc336ba4bfa # v1.41.0
+        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: x86_64
           args: --release --out dist --find-interpreter
