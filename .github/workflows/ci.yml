@@ -73,7 +73,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --features ${{ matrix.feat-flags || 'pyo3' }} --release --out dist
+          args: --release --locked --compatibility pypi --features ${{ matrix.feat-flags || 'pyo3' }} --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
           before-script-linux: |
@@ -97,7 +97,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --features ${{ matrix.feat-flags || 'pyo3' }} --release --out dist --interpreter python3.13t
+          args: --release --locked --compatibility pypi --features ${{ matrix.feat-flags || 'pyo3' }} --out dist --interpreter python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
           before-script-linux: |
@@ -185,7 +185,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist
+          args: --release --locked --compatibility pypi --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
@@ -197,7 +197,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i python3.14t
+          args: --release --locked --compatibility pypi --out dist -i python3.14t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels
@@ -238,14 +238,14 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist
+          args: --release --locked --compatibility pypi --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Build free-threaded wheels
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --out dist -i python3.13t
+          args: --release --locked --compatibility pypi --out dist -i python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
       - name: Upload wheels

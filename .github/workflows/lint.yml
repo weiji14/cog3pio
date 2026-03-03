@@ -61,7 +61,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: x86_64
-          args: --features cuda,pyo3 --out dist
+          args: --locked --features cuda,pyo3 --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
           before-script-linux: |
