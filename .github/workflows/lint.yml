@@ -80,7 +80,8 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
+          pip install cog3pio[tests]
           stubtest cog3pio --ignore-missing-stub --ignore-disjoint-bases
 
   zizmor:
