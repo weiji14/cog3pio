@@ -7,7 +7,7 @@ use cudarc::driver::{CudaContext, CudaStream};
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DLPACK_MAJOR_VERSION, DLPACK_MINOR_VERSION, Device};
 use pyo3::exceptions::{PyBufferError, PyNotImplementedError, PyValueError, PyWarning};
-use pyo3::{Bound, PyAny, PyResult, pyclass, pymethods};
+use pyo3::{Bound, PyResult, Python, pyclass, pymethods};
 use pyo3_stub_gen::define_stub_info_gatherer;
 use pyo3_stub_gen_derive::{gen_stub_pyclass, gen_stub_pymethods};
 
@@ -113,6 +113,11 @@ impl PyCudaCogReader {
     ///     device type cannot be handled by the producer, this function will raise
     ///     [BufferError][].
     ///
+    /// copy : bool | None
+    ///     Boolean indicating whether or not to copy the input. Currently only `None`
+    ///     is supported, meaning the function must reuse the existing memory buffer if
+    ///     possible and copy otherwise (copy is not actually implemented).
+    ///
     /// Returns
     /// -------
     /// tensor : types.CapsuleType
@@ -121,26 +126,31 @@ impl PyCudaCogReader {
     /// Raises
     /// ------
     /// NotImplementedError
-    ///     If [`stream`][cog3pio.CudaCogReader.__dlpack__(stream)]>2 is passed in, as
-    ///     only legacy default stream (1) or per-thread default stream (2) is supported
-    ///     for now. Or if
-    ///     [`max_version`](cog3pio.CudaCogReader.__dlpack__(max_version)) is
-    ///     incompatible with the DLPack major version in this library.
+    ///     If either of these cases happen:
+    ///
+    ///     - [`stream`][cog3pio.CudaCogReader.__dlpack__(stream)]>2 is passed in, as
+    ///       only legacy default stream (1) or per-thread default stream (2) is
+    ///       supported for now.
+    ///     - [`max_version`](cog3pio.CudaCogReader.__dlpack__(max_version)) is
+    ///       incompatible with the DLPack major version in this library.
+    ///     - [`copy`](cog3pio.CudaCogReader.__dlpack__(copy)) is set to a value other
+    ///       than `None` as
+    ///       [Copy keyword argument behavior](https://data-apis.org/array-api/2025.12/design_topics/copies_views_and_mutation.html#copy-keyword-argument-behavior)
+    ///       is not handled yet.
     /// BufferError
     ///     If trying to decode to non-CUDA memory, i.e. when
     ///     [`dl_device`][cog3pio.CudaCogReader.__dlpack__(dl_device)] is not `None`, or
-    ///     set to a tuple other than `(2, x)`.
+    ///     set to a tuple other than `(2, x)`. This error may also be raised if trying
+    ///     to decode to an unsupported version from the DLPack 0.x series.
     #[gen_stub(override_return_type(type_repr="types.CapsuleType", imports=("types")))]
-    #[pyo3(signature = (stream=None, max_version=None, dl_device=None, **kwargs))]
+    #[pyo3(signature = (stream=None, max_version=None, dl_device=None, copy=None))]
     fn __dlpack__(
         &self,
         stream: Option<u8>,
         max_version: Option<(u32, u32)>,
         dl_device: Option<(usize, usize)>,
-        kwargs: Option<&Bound<'_, PyAny>>,
+        copy: Option<bool>,
     ) -> PyResult<SafeManagedTensorVersioned> {
-        // dbg!(stream, max_version, kwargs);
-
         let device: Device = if let Some((device_type_int, device_id)) = dl_device {
             match device_type_int {
                 2 => Ok(Device::cuda(device_id)),
@@ -188,10 +198,11 @@ impl PyCudaCogReader {
             Err(PyBufferError::new_err("DLPack 0.X not supported"))
         };
 
-        if kwargs.is_some() {
-            // TODO handle copy
+        if copy.is_some() {
+            // TODO handle copy=True or copy=False
+            dbg!(copy);
             Err(PyNotImplementedError::new_err(
-                "`copy` argument is yet implemented.",
+                "`copy!=None` argument is not yet implemented.",
             ))
         } else {
             Ok(())

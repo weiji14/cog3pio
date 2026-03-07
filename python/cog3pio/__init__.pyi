@@ -133,7 +133,7 @@ class CudaCogReader:
     dtype('uint8')
     """
     def __new__(cls, path: builtins.str, device_id: builtins.int) -> CudaCogReader: ...
-    def __dlpack__(self, stream: typing.Optional[builtins.int] = None, max_version: typing.Optional[tuple[builtins.int, builtins.int]] = None, dl_device: typing.Optional[tuple[builtins.int, builtins.int]] = None, **kwargs: typing.Any) -> types.CapsuleType:
+    def __dlpack__(self, stream: typing.Optional[builtins.int] = None, max_version: typing.Optional[tuple[builtins.int, builtins.int]] = None, dl_device: typing.Optional[tuple[builtins.int, builtins.int]] = None, copy: typing.Optional[builtins.bool] = None) -> types.CapsuleType:
         r"""
         Get image pixel data from GeoTIFF as a DLPack capsule.
         
@@ -165,6 +165,11 @@ class CudaCogReader:
             device type cannot be handled by the producer, this function will raise
             [BufferError][].
         
+        copy : bool | None
+            Boolean indicating whether or not to copy the input. Currently only `None`
+            is supported, meaning the function must reuse the existing memory buffer if
+            possible and copy otherwise (copy is not actually implemented).
+        
         Returns
         -------
         tensor : types.CapsuleType
@@ -173,15 +178,22 @@ class CudaCogReader:
         Raises
         ------
         NotImplementedError
-            If [`stream`][cog3pio.CudaCogReader.__dlpack__(stream)]>2 is passed in, as
-            only legacy default stream (1) or per-thread default stream (2) is supported
-            for now. Or if
-            [`max_version`](cog3pio.CudaCogReader.__dlpack__(max_version)) is
-            incompatible with the DLPack major version in this library.
+            If either of these cases happen:
+        
+            - [`stream`][cog3pio.CudaCogReader.__dlpack__(stream)]>2 is passed in, as
+              only legacy default stream (1) or per-thread default stream (2) is
+              supported for now.
+            - [`max_version`](cog3pio.CudaCogReader.__dlpack__(max_version)) is
+              incompatible with the DLPack major version in this library.
+            - [`copy`](cog3pio.CudaCogReader.__dlpack__(copy)) is set to a value other
+              than `None` as
+              [Copy keyword argument behavior](https://data-apis.org/array-api/2025.12/design_topics/copies_views_and_mutation.html#copy-keyword-argument-behavior)
+              is not handled yet.
         BufferError
             If trying to decode to non-CUDA memory, i.e. when
             [`dl_device`][cog3pio.CudaCogReader.__dlpack__(dl_device)] is not `None`, or
-            set to a tuple other than `(2, x)`.
+            set to a tuple other than `(2, x)`. This error may also be raised if trying
+            to decode to an unsupported version from the DLPack 0.x series.
         """
     def __dlpack_device__(self) -> tuple[builtins.int, builtins.int]:
         r"""
