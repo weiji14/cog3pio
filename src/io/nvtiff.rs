@@ -325,17 +325,18 @@ impl Transform for &CudaCogReader {
         Ok(transform)
     }
 
-    // Get list of x and y coordinates.
-    //
-    // Determined based on an Affine transformation matrix built from the
-    // `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
-    // rotation (set by `ModelTransformationTag` is currently unsupported.
-    //
-    // Returns
-    // -------
-    // coords : (np.ndarray, np.ndarray)
-    //    A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
-    //    x- and y-coordinates.
+    /// Get list of x and y coordinates
+    ///
+    /// Determined based on an [`AffineTransform`] matrix built from
+    /// [`nvtiffTag::NVTIFF_TAG_MODEL_PIXEL_SCALE`] and
+    /// [`nvtiffTag::NVTIFF_TAG_MODEL_TIE_POINT`]. Note that non-zero
+    /// rotation (set by [`nvtiffTag::NVTIFF_TAG_MODEL_TRANSFORMATION`]) is currently
+    /// unsupported.
+    ///
+    /// # Errors
+    ///
+    /// Will return [`NvTiffStatusError::TagNotFound`] if the TIFF file is
+    /// missing tags required to build an Affine transformation matrix.
     fn xy_coords(self) -> NvTiffResult<(Array1<f64>, Array1<f64>)> {
         let transform: AffineTransform = self.transform()?;
 

@@ -7,7 +7,7 @@ use cudarc::driver::{CudaContext, CudaStream};
 use dlpark::SafeManagedTensorVersioned;
 use dlpark::ffi::{DLPACK_MAJOR_VERSION, DLPACK_MINOR_VERSION, Device};
 use pyo3::exceptions::{PyBufferError, PyNotImplementedError, PyValueError, PyWarning};
-use pyo3::{Bound, PyResult, Python, pyclass, pymethods};
+use pyo3::{PyResult, pyclass, pymethods};
 use pyo3_stub_gen::define_stub_info_gatherer;
 use pyo3_stub_gen_derive::{gen_stub_pyclass, gen_stub_pymethods};
 
