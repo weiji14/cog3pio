@@ -29,7 +29,7 @@ use crate::traits::Transform;
 /// path : str
 ///     The path to the file, or a url to a remote file.
 /// device_id : int
-///     The CUDA GPU device number to decode the TIFF data on. Default is 0.
+///     The CUDA GPU device number to decode the TIFF data on.
 ///
 /// Returns
 /// -------
