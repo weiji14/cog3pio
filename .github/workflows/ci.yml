@@ -48,7 +48,7 @@ jobs:
   linux:
     runs-on: ${{ matrix.platform.runner || 'ubuntu-24.04' }}
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: linux-${{ matrix.platform.target }}-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
@@ -162,7 +162,7 @@ jobs:
   windows:
     runs-on: windows-2025
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: windows-${{ matrix.platform.target }}-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
@@ -218,7 +218,7 @@ jobs:
   macos:
     runs-on: ${{ matrix.platform.runner }}
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: macos-${{ matrix.platform.target }}-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
