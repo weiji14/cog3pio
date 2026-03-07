@@ -7,7 +7,7 @@ fn main() -> Result<()> {
         let stub = cog3pio::adapters::stub_info()?;
         stub.generate()?;
     }
-    #[cfg(feature = "cuda")]
+    #[cfg(all(feature = "cuda", feature = "pyo3"))]
     {
         let stub = cog3pio::cudacog::stub_info()?;
         stub.generate()?;

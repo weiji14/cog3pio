@@ -12,8 +12,7 @@ use pyo3::prelude::{PyModule, PyResult, Python, pyclass, pyfunction, pymethods, 
 use pyo3::types::PyModuleMethods;
 use pyo3::{Bound, PyErr, wrap_pyfunction};
 use pyo3_stub_gen::define_stub_info_gatherer;
-use pyo3_stub_gen::derive::{gen_stub_pyclass, gen_stub_pyfunction};
-use pyo3_stub_gen_derive::gen_stub_pymethods;
+use pyo3_stub_gen_derive::{gen_stub_pyclass, gen_stub_pyfunction, gen_stub_pymethods};
 use url::Url;
 
 use crate::io::geotiff::{CogReader, read_geotiff};
@@ -116,7 +115,7 @@ impl PyCogReader {
     ///
     /// Determined based on an Affine transformation matrix built from the
     /// `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
-    /// rotation (set by `ModelTransformationTag` is currently unsupported.
+    /// rotation (set by `ModelTransformationTag`) is currently unsupported.
     ///
     /// Returns
     /// -------
@@ -211,9 +210,7 @@ fn read_geotiff_py<'py>(path: &str, py: Python<'py>) -> PyResult<Bound<'py, PyAr
     Ok(array.to_pyarray(py))
 }
 
-/// A Python module implemented in Rust. The name of this function must match
-/// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
-/// import the module.
+/// cog3pio - Cloud-optimized GeoTIFF ... Parallel I/O.
 #[pymodule]
 fn cog3pio(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Register Python classes
