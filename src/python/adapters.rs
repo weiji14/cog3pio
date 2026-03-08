@@ -16,7 +16,7 @@ use pyo3_stub_gen_derive::{gen_stub_pyclass, gen_stub_pyfunction, gen_stub_pymet
 use url::Url;
 
 use crate::io::geotiff::{CogReader, read_geotiff};
-#[cfg(feature = "cuda")]
+#[cfg(all(feature = "cuda", not(doctest)))]
 use crate::python::cudacog::PyCudaCogReader;
 use crate::traits::Transform;
 
