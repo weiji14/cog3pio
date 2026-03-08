@@ -123,7 +123,7 @@ mod python;
 #[cfg(feature = "pyo3")]
 pub use self::python::adapters;
 #[doc(hidden)]
-#[cfg(feature = "cuda")]
+#[cfg(all(feature = "cuda", feature = "pyo3", not(doctest)))]
 pub use self::python::cudacog;
 
 /// Modules for common traits
