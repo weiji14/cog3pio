@@ -206,7 +206,20 @@ class CudaCogReader:
         device : (int, int)
             A tuple (`device_type`, `device_id`) in DLPack format.
         """
-    def xy_coords(self) -> tuple[numpy.typing.NDArray[numpy.float64], numpy.typing.NDArray[numpy.float64]]: ...
+    def xy_coords(self) -> tuple[numpy.typing.NDArray[numpy.float64], numpy.typing.NDArray[numpy.float64]]:
+        r"""
+        Get list of x and y coordinates.
+        
+        Determined based on an Affine transformation matrix built from the
+        `ModelPixelScaleTag` and `ModelTiepointTag` TIFF tags. Note that non-zero
+        rotation (set by `ModelTransformationTag`) is currently unsupported.
+        
+        Returns
+        -------
+        coords : (numpy.ndarray, numpy.ndarray)
+            A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
+            GeoTIFF's x- and y-coordinates.
+        """
 
 def read_geotiff(path: builtins.str) -> numpy.typing.NDArray[numpy.float32]:
     r"""
