@@ -1,24 +1,23 @@
-[build-system]
-requires = ["maturin>=1.4,<2.0"]
-build-backend = "maturin"
-
 [project]
 name = "cog3pio"
 requires-python = ">=3.13"
 license = "MIT OR Apache-2.0"
-license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+license-files = ["LICENSE-APACHE", "LICENSE-MIT"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering",
-    "Topic :: Software Development :: Libraries",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Operating System :: Unix",
-    "Programming Language :: Rust",
     "Programming Language :: Python :: Free Threading",
     "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Rust",
+    "Topic :: File Formats",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
     "numpy>=2.0",
@@ -26,13 +25,16 @@ dependencies = [
 ]
 dynamic = ["version"]
 
+[project.entry-points."xarray.backends"]
+cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
+
 [project.optional-dependencies]
-cuda = [
-    "cupy-cuda13x",
-]
 benchmark = [
     "pytest-codspeed",
     "rioxarray",
+]
+cuda = [
+    "cupy-cuda13x",
 ]
 docs = [
     "mkdocstrings-python",
@@ -43,8 +45,9 @@ tests = [
     "pytest",
 ]
 
-[project.entry-points."xarray.backends"]
-cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
+[build-system]
+requires = ["maturin>=1.12,<2.0"]
+build-backend = "maturin"
 
 [tool.maturin]
 features = ["pyo3"]
