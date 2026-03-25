@@ -4,6 +4,61 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## Unreleased
+
+### <!-- 0 --> 🌈 Highlights
+
+- 💥 Read into CUDA memory DLPack tensor ([#57](https://github.com/weiji14/cog3pio/pull/57))
+- ⬆️ SPEC 0: Bump min version to Python 3.13, xarray 2024.10.0 ([#66](https://github.com/weiji14/cog3pio/pull/66))
+
+### <!-- 1 --> ✨ Features
+
+- ✨ Implement xy_coords method on PyCudaCogReader struct ([#82](https://github.com/weiji14/cog3pio/pull/82))
+- ✨ Handle dl_device and copy params in CudaCogReader `__dlpack__` method ([#77](https://github.com/weiji14/cog3pio/pull/77))
+- ✨ Create Transform trait to get AffineTransform and xy_coords ([#70](https://github.com/weiji14/cog3pio/pull/70))
+- ✨ Python bindings for CudaCogReader ([#58](https://github.com/weiji14/cog3pio/pull/58))
+- ✨ Decode GeoTIFF images to CUDA stream ([#27](https://github.com/weiji14/cog3pio/pull/27))
+
+### <!-- 2 --> 🐛 Bug Fixes
+
+- 🐛 Fix Cargo.toml metadata description to enable crates.io publishing ([#51](https://github.com/weiji14/cog3pio/pull/51))
+
+### <!-- 3 --> 🏭 Refactors
+
+- 🚚 Switch docs build to use Zensical ([#73](https://github.com/weiji14/cog3pio/pull/73))
+- ♻️ Refactor to pass in per-thread default stream to dlpack method ([#67](https://github.com/weiji14/cog3pio/pull/67))
+
+### <!-- 4 --> 📝 Documentation
+
+- 🏷️ Generate pyi stub files for type hints ([#72](https://github.com/weiji14/cog3pio/pull/72))
+- 🔍️ Add shield badges to main README.md ([#52](https://github.com/weiji14/cog3pio/pull/52))
+
+### <!-- 5 --> 🧰 Maintenance
+
+- 🚨 Tidy up Cargo.toml and pyproject.toml files ([#84](https://github.com/weiji14/cog3pio/pull/84))
+- 🔒️ Configure trusted publishing to crates.io ([#83](https://github.com/weiji14/cog3pio/pull/83))
+- 👷 Install zizmor directly through cargo ([#81](https://github.com/weiji14/cog3pio/pull/81))
+- 👷 Build wheels with cuda feat flag properly enabled ([#80](https://github.com/weiji14/cog3pio/pull/80))
+- 🚩 Set pyo3 and not(doctest) flags appropriately ([#78](https://github.com/weiji14/cog3pio/pull/78))
+- 👷 Use cheaper CI runners and set concurrency limits ([#76](https://github.com/weiji14/cog3pio/pull/76))
+- 🚨 Check building for docs.rs ([#75](https://github.com/weiji14/cog3pio/pull/75))
+- ⬆️ Bump nvtiff-sys from 0.2.0 to 0.2.1, tiff from 0.10.0 to 0.11.2 ([#68](https://github.com/weiji14/cog3pio/pull/68))
+- ⬆️ Bump gdal from 8b9e049 to 0.19.0 ([#65](https://github.com/weiji14/cog3pio/pull/65))
+- ⬆️ Bump nvtiff-sys from 0.1.2 to 0.2.0, cudarc from 0.17.7 to 0.18.2 ([#64](https://github.com/weiji14/cog3pio/pull/64))
+- ⬆️ Bump ndarray from 0.16.1 to 0.17.1 ([#63](https://github.com/weiji14/cog3pio/pull/63))
+- ➖ Turn tokio into optional dependency under pyo3 flag ([#62](https://github.com/weiji14/cog3pio/pull/62))
+- 👷 Track Rust performance benchmarks on CI ([#61](https://github.com/weiji14/cog3pio/pull/61))
+- ⬆️ Bump pyo3 from 0.25.0 to 0.27.1, numpy from 0.25.0 to 0.27.0 ([#54](https://github.com/weiji14/cog3pio/pull/54), [#60](https://github.com/weiji14/cog3pio/pull/60))
+- 🚩 Gate python bindings behind pyo3 feature flag ([#59](https://github.com/weiji14/cog3pio/pull/59))
+- 👷 Run CI on macos-15-intel and macos-14 ([#56](https://github.com/weiji14/cog3pio/pull/56))
+- ⬆️ Bump object_store from 0.9.0 to 0.12.3, url from 2.5.0 to 2.5.7 ([#55](https://github.com/weiji14/cog3pio/pull/55))
+
+### 🧑‍🤝‍🧑 Contributors
+
+- [@weiji14](https://github.com/weiji14)
+
+---
+
 ## [0.0.1] - 2025-06-28
 
 ### <!-- 0 --> 🌈 Highlights
