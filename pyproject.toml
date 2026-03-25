@@ -13,8 +13,11 @@ classifiers = [
     "Programming Language :: Python :: Free Threading",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Rust",
+    "Topic :: File Formats",
     "Topic :: Scientific/Engineering",
-    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Image Processing",
+    "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
     "numpy>=2.0",
