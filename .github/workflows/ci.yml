@@ -68,7 +68,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
 
@@ -76,7 +76,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --locked --compatibility pypi --features ${{ matrix.feat-flags || 'pyo3' }} --out dist --interpreter python3.13
+          args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
           before-script-linux: |
@@ -100,7 +100,7 @@ jobs:
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
         with:
           target: ${{ matrix.platform.target }}
-          args: --release --locked --compatibility pypi --features ${{ matrix.feat-flags || 'pyo3' }} --out dist --interpreter python3.13t
+          args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13t
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
           manylinux: "2_28"
           before-script-linux: |
@@ -134,7 +134,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-          pip install cog3pio[tests]
+          pip install cog3pio --group tests
           pytest --verbose
 
       - name: pytest
@@ -156,7 +156,7 @@ jobs:
             pip3 install -U pip
             ls -lh dist/
             pip3 install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-            pip3 install cog3pio[tests]
+            pip3 install cog3pio --group tests
             pytest --verbose
 
   windows:
@@ -173,7 +173,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
           architecture: ${{ matrix.target }}
@@ -188,7 +188,7 @@ jobs:
           args: --release --locked --compatibility pypi --out dist
           sccache: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.14t"
           architecture: ${{ matrix.target }}
@@ -212,7 +212,8 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/Scripts/activate
-          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
+          pip install cog3pio --group tests
           pytest --verbose
 
   macos:
@@ -233,7 +234,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
 
@@ -262,7 +263,8 @@ jobs:
           set -e
           python3 -m venv .venv
           source .venv/bin/activate
-          pip install cog3pio[tests] --find-links dist --force-reinstall
+          pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
+          pip install cog3pio --group tests
           pytest --verbose
 
   sdist:

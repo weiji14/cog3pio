@@ -44,6 +44,38 @@ def test_cudacogreader_to_dlpack():
     )
 
 
+def test_cudacogreader_xy_coords():
+    """
+    Ensure that the CudaCogReader class's `xy_coords` method produces two numpy.ndarray
+    objects representing the GeoTIFF's x- and y- coordinates.
+    """
+    cog = CudaCogReader(
+        path="https://github.com/blacha/cogeotiff/raw/core-v9.4.0/packages/core/data/DEM_BS28_2016_1000_1141.tif",
+        device_id=0,
+    )
+    x_coords, y_coords = cog.xy_coords()
+    np.testing.assert_equal(
+        actual=x_coords,
+        desired=np.linspace(
+            start=1679617.031,
+            stop=1679680.031,
+            num=63,
+            endpoint=False,
+            dtype=np.float64,
+        ),
+    )
+    np.testing.assert_equal(
+        actual=y_coords,
+        desired=np.linspace(
+            start=5362323.781,
+            stop=5362079.781,
+            num=244,
+            endpoint=False,
+            dtype=np.float64,
+        ),
+    )
+
+
 @pytest.mark.benchmark
 @pytest.mark.parametrize(
     "engine",

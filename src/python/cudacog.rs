@@ -239,9 +239,9 @@ impl PyCudaCogReader {
     ///
     /// Returns
     /// -------
-    /// coords : (np.ndarray, np.ndarray)
-    ///     A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
-    ///     x- and y-coordinates.
+    /// coords : (numpy.ndarray, numpy.ndarray)
+    ///     A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
+    ///     GeoTIFF's x- and y-coordinates.
     #[allow(clippy::type_complexity)]
     fn xy_coords<'py>(
         &self,

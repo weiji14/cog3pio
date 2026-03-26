@@ -99,21 +99,23 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-          pip install cog3pio[cuda,tests]
+          pip install cog3pio[cuda] --group tests
           stubtest cog3pio --ignore-missing-stub --ignore-disjoint-bases
 
   zizmor:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231 # v5.3.1
+      - name: Install zizmor
+        uses: taiki-e/install-action@42721ded7ddc3cd90f687527e8602066e4e1ff3a # v2.69.2
+        with:
+          tool: zizmor
 
       - name: Run zizmor 🌈
-        run: uvx zizmor --color=always .
+        run: zizmor --color=always .
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

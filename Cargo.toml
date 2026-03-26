@@ -1,13 +1,13 @@
 [package]
 name = "cog3pio"
-version = "0.0.1"
+version = "0.1.0-beta.1"
 edition = "2024"
+rust-version = "1.91.0"
 description = "Cloud-optimized GeoTIFF ... Parallel I/O"
 readme = "README.md"
 repository = "https://github.com/weiji14/cog3pio"
 license = "MIT OR Apache-2.0"
-rust-version = "1.91.0"
-authors = ["Wei Ji <23487320+weiji14@users.noreply.github.com>"]
+categories = ["science::geo"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -22,6 +22,10 @@ name = "cog3pio"
 doc = false
 name = "stub_gen"
 required-features = ["pyo3"]
+
+[[bench]]
+harness = false
+name = "read_cog"
 
 [dependencies]
 bytes = "1.5.0"
@@ -75,7 +79,3 @@ pedantic = "warn"
 
 [profile.test]
 opt-level = 2
-
-[[bench]]
-name = "read_cog"
-harness = false

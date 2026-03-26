@@ -216,9 +216,9 @@ class CudaCogReader:
         
         Returns
         -------
-        coords : (np.ndarray, np.ndarray)
-            A tuple (x_coords, y_coords) of np.ndarray objects representing the GeoTIFF's
-            x- and y-coordinates.
+        coords : (numpy.ndarray, numpy.ndarray)
+            A tuple (x_coords, y_coords) of numpy.ndarray objects representing the
+            GeoTIFF's x- and y-coordinates.
         """
 
 def read_geotiff(path: builtins.str) -> numpy.typing.NDArray[numpy.float32]:
