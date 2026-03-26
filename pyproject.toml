@@ -1,5 +1,7 @@
 [project]
 name = "cog3pio"
+description = "Cloud-optimized GeoTIFF ... Parallel I/O"
+readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT OR Apache-2.0"
 license-files = ["LICENSE-APACHE", "LICENSE-MIT"]
@@ -24,6 +26,11 @@ dependencies = [
     "xarray>=2024.10.0",
 ]
 dynamic = ["version"]
+
+[project.urls]
+"Changelog" = "https://cog3pio.readthedocs.io/en/latest/changelog"
+"Documentation" = "https://cog3pio.readthedocs.io"
+"Source Code" = "https://github.com/weiji14/cog3pio"
 
 [project.entry-points."xarray.backends"]
 cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
