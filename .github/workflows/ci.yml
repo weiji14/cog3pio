@@ -134,7 +134,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-          pip install cog3pio[tests]
+          pip install cog3pio --group tests
           pytest --verbose
 
       - name: pytest
@@ -156,7 +156,7 @@ jobs:
             pip3 install -U pip
             ls -lh dist/
             pip3 install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-            pip3 install cog3pio[tests]
+            pip3 install cog3pio --group tests
             pytest --verbose
 
   windows:
@@ -213,7 +213,7 @@ jobs:
           python3 -m venv .venv
           source .venv/Scripts/activate
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-          pip install cog3pio[tests]
+          pip install cog3pio --group tests
           pytest --verbose
 
   macos:
@@ -264,7 +264,7 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-          pip install cog3pio[tests]
+          pip install cog3pio --group tests
           pytest --verbose
 
   sdist:

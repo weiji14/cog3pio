@@ -29,12 +29,14 @@ dynamic = ["version"]
 cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
 
 [project.optional-dependencies]
+cuda = [
+    "cupy-cuda13x",
+]
+
+[dependency-groups]
 benchmark = [
     "pytest-codspeed",
     "rioxarray",
-]
-cuda = [
-    "cupy-cuda13x",
 ]
 docs = [
     "mkdocstrings-python",
