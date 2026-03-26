@@ -26,7 +26,7 @@ build:
         RUSTFLAGS="-L$CONDA_PREFIX/targets/x86_64-linux/lib"
         BINDGEN_EXTRA_CLANG_ARGS="-I $CONDA_PREFIX/targets/x86_64-linux/include"
         MATURIN_PEP517_ARGS="--features cuda,pyo3"
-        mamba run --prefix "$CONDA_PREFIX" pip install .[docs]
+        mamba run --prefix "$CONDA_PREFIX" pip install . --group docs
       - pip list
     post_install:
       - zensical --version
