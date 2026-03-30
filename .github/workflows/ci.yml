@@ -72,6 +72,12 @@ jobs:
           persist-credentials: false
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        if: ${{ matrix.platform.target != 'riscv64' }}
+        with:
+          python-version: "3.13"
+
+      - uses: gounthar/setup-python@cb5cf223af5f1712fe2914b9c669d2008e051022 # https://github.com/actions/setup-python/pull/1289
+        if: ${{ matrix.platform.target == 'riscv64' }}
         with:
           python-version: "3.13"
 
