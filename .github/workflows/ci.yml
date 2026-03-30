@@ -79,7 +79,7 @@ jobs:
       - uses: gounthar/setup-python@cb5cf223af5f1712fe2914b9c669d2008e051022 # https://github.com/actions/setup-python/pull/1289
         if: ${{ matrix.platform.target == 'riscv64' }}
         with:
-          python-version: "3.13"
+          python-version: "3.x"
 
       - name: Build wheels
         uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
