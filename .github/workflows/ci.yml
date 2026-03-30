@@ -60,7 +60,7 @@ jobs:
             arch: sbsa
             feat-flags: "cuda,pyo3"
           - target: riscv64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-24.04-riscv
             manylinux: "2_31"
           - target: armv7
           - target: s390x
