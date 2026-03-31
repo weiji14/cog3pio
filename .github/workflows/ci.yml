@@ -136,7 +136,7 @@ jobs:
           path: dist/
 
       - name: pytest
-        if: ${{ contains(fromJSON('["x86_64", "aarch64"]'), matrix.platform.target) }} # x86_64, aarch64
+        if: ${{ endswith(matrix.platform.target, '64') }} # x86_64, aarch64, and riscv64
         shell: bash
         run: |
           set -e
@@ -145,9 +145,11 @@ jobs:
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
           pip install cog3pio --group tests
           pytest --verbose
+        env:
+          PIP_EXTRA_INDEX_URL: ${{ 'https://gounthar.github.io/riscv64-python-wheels/simple/' && matrix.platform.target == 'riscv64' || '' }}
 
       - name: pytest
-        if: ${{ !contains(fromJSON('["x86_64", "aarch64"]'), matrix.platform.target) && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x, ppc64le, and riscv64
+        if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
         uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
         with:
           arch: ${{ matrix.platform.target }}
