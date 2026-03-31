@@ -82,7 +82,7 @@ jobs:
           python-version: "3.x"
 
       - name: Build wheels
-        uses: weiji14/maturin-action@e5aeb941d5e2aa7f56de9ee99057cd5b8119e2b6
+        uses: PyO3/maturin-action@3f475a463fd27ce2440c13988f39fd1312dc9381
         with:
           target: ${{ matrix.platform.target }}
           args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13
@@ -106,7 +106,7 @@ jobs:
             fi
 
       - name: Build free-threaded wheels
-        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
+        uses: PyO3/maturin-action@3f475a463fd27ce2440c13988f39fd1312dc9381
         with:
           target: ${{ matrix.platform.target }}
           args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13t
