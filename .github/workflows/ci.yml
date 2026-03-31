@@ -82,7 +82,7 @@ jobs:
           python-version: "3.x"
 
       - name: Build wheels
-        uses: PyO3/maturin-action@04ac600d27cdf7a9a280dadf7147097c42b757ad # v1.50.1
+        uses: weiji14/maturin-action@f3e4c889d5c86978d70ec44f3faea956ea9963bd
         with:
           target: ${{ matrix.platform.target }}
           args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13
