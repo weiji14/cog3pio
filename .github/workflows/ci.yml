@@ -90,7 +90,7 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux || '2_28' }}
           before-script-linux: |
             # Install nvTIFF and clang-devel
-            if command -v dnf &> /dev/null; then
+            if command -v dnf &> /dev/null && test $(uname -m) != "riscv64"; then
               # https://developer.nvidia.com/nvtiff-0-6-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
               dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
               dnf clean all
@@ -114,7 +114,7 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux || '2_28' }}
           before-script-linux: |
             # Install nvTIFF and clang-devel
-            if command -v dnf &> /dev/null; then
+            if command -v dnf &> /dev/null && test $(uname -m) != "riscv64"; then
               # https://developer.nvidia.com/nvtiff-0-5-0-download-archive?target_os=Linux&target_arch=x86_64&Distribution=Rocky&target_version=8&target_type=rpm_network
               dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/${{ matrix.platform.arch || 'x86_64' }}/cuda-rhel8.repo
               dnf clean all
