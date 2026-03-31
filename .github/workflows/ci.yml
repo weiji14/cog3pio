@@ -61,7 +61,7 @@ jobs:
             feat-flags: "cuda,pyo3"
           - target: riscv64
             runner: ubuntu-24.04-riscv
-            manylinux: "2_31"
+            manylinux: "2_39"
           - target: armv7
           - target: s390x
           - target: ppc64le
@@ -82,7 +82,7 @@ jobs:
           python-version: "3.x"
 
       - name: Build wheels
-        uses: weiji14/maturin-action@f3e4c889d5c86978d70ec44f3faea956ea9963bd
+        uses: weiji14/maturin-action@cd95c89b1d7a6b5d9377c6f26b76efdbaf516d8d
         with:
           target: ${{ matrix.platform.target }}
           args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13
