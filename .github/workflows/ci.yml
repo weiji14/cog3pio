@@ -76,10 +76,11 @@ jobs:
         with:
           python-version: "3.13"
 
-      - uses: gounthar/setup-python@cb5cf223af5f1712fe2914b9c669d2008e051022 # https://github.com/actions/setup-python/pull/1289
+      - uses: riseproject-dev/setup-python@8b57351c0f828145e2ac14bd328c731503361b7a # https://github.com/actions/setup-python/pull/1302
         if: ${{ matrix.platform.target == 'riscv64' }}
         with:
-          python-version: "3.x"
+          python-version: "3.13"
+          mirror: "https://raw.githubusercontent.com/riseproject-dev/python-versions/main"
 
       - name: Build wheels
         uses: PyO3/maturin-action@3f475a463fd27ce2440c13988f39fd1312dc9381
