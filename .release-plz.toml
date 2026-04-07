@@ -61,6 +61,7 @@ commit_preprocessors = [
     { pattern = ':boom:', replace = "💥" },
     { pattern = ':bug:', replace = "🐛" },
     { pattern = ':construction_worker:', replace = "👷" },
+    { pattern = ':fire:', replace = "🔥" },
     { pattern = ':heavy_minus_sign:', replace = "➖" },
     { pattern = ':heavy_plus_sign:', replace = "➕" },
     { pattern = ':label:', replace = "🏷️" },
@@ -85,7 +86,7 @@ commit_parsers = [
     { message = "^(💥|:boom:|🚀|:rocket:)", group = "<!-- 0 --> 🌈 Highlights" },
     { message = "^(✨|:sparkles:)", group = "<!-- 1 --> ✨ Features" },
     { message = "^(🐛|:bug:)", group = "<!-- 2 --> 🐛 Bug Fixes" },
-    { message = "^(♻️|:recycle:|🚚|:truck:|🎨|:art:)", group = "<!-- 3 --> 🏭 Refactors" },
+    { message = "^(♻️|:recycle:|🚚|:truck:|🎨|:art:|🔥|:fire:)", group = "<!-- 3 --> 🏭 Refactors" },
     { message = "^(📝|:memo:|🔍️|:mag:|🏷️|:label:)", group = "<!-- 4 --> 📝 Documentation" },
     { message = "^(👷|:construction_worker:|🔧|:wrench:|⬆️|:arrow_up:|➕|:heavy_plus_sign:|➖|:heavy_minus_sign:|⬇️|:arrow_down:|📦️|:package:|📌|:pushpin:|🚩|:triangular_flag_on_post:|🔒️|:lock:|🚨|:rotating_light:|🌱|:seedling:|🔊|:loud_sound:)", group = "<!-- 5 --> 🧰 Maintenance" },
 ]
