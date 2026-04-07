@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 ### <!-- 0 --> 🌈 Highlights
 
 - 💥 Read into CUDA memory DLPack tensor ([#57](https://github.com/weiji14/cog3pio/pull/57))
-- ⬆️ SPEC 0: Bump min version to Python 3.13, xarray 2024.10.0 ([#66](https://github.com/weiji14/cog3pio/pull/66))
+- ⬆️ SPEC 0: Bump min version to Python 3.13 ([#66](https://github.com/weiji14/cog3pio/pull/66))
 
 ### <!-- 1 --> ✨ Features
 

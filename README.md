@@ -20,8 +20,8 @@ Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
       [`object-store`](https://crates.io/crates/object_store))
 
 2024 Q2-Q4:
-- [x] Integration with `xarray` as a
-      [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
+- [x] ~Integration with `xarray` as a
+      [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)~ (removed)
 - [x] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (based
       on [`geotiff`](https://crates.io/crates/geotiff) crate)
 
