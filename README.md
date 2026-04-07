@@ -20,8 +20,8 @@ Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
       [`object-store`](https://crates.io/crates/object_store))
 
 2024 Q2-Q4:
-- [x] Integration with `xarray` as a
-      [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)
+- [x] ~Integration with `xarray` as a
+      [`BackendEntrypoint`](https://docs.xarray.dev/en/v2024.02.0/internals/how-to-add-new-backend.html)~ (removed)
 - [x] Implement single-band GeoTIFF reader for multiple dtypes (uint/int/float) (based
       on [`geotiff`](https://crates.io/crates/geotiff) crate)
 
@@ -34,9 +34,11 @@ Yet another attempt at creating a GeoTIFF reader, in Rust, with Python bindings.
 - [x] GPU-based decoding (via [`nvTIFF`](https://crates.io/crates/nvtiff-sys))
 
 2026:
-- [ ] Asynchronous I/O (refactor to [`async-tiff`](https://crates.io/crates/async-tiff))
 - [ ] Direct-to-GPU loading
+- [ ] Write support
 
+2027:
+- [ ] SIMD decoding
 
 ## Related crates
 
