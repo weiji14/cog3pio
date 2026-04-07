@@ -1,18 +1,16 @@
 # Quickstart
 
-There are three ways to read a GeoTIFF with `cog3pio`'s Python bindings into CPU memory.
+There are two ways to read a GeoTIFF with `cog3pio`'s Python bindings into CPU memory.
 Take your pick:
 
-|  Output   | DLPack protocol | coordinates | any dtype |
-|:---------:|:---------------:|:-----------:|:---------:|
-| PyCapsule |      ✅         |     ❌      |     ✅    |
-| xarray    |      ❓         |     ✅      |     ✅    |
-| numpy     |      ✅         |     ❌      |     ❌    |
+|  Output   | DLPack protocol | any dtype |
+|:---------:|:---------------:|:---------:|
+| PyCapsule |      ✅         |      ✅    |
+| numpy     |      ✅         |      ❌    |
 
 Notes:
 
 - [DLPack - an in-memory tensor structure](https://data-apis.org/array-api/latest/design_topics/data_interchange.html#dlpack-an-in-memory-tensor-structure)
-- Coordinates in xarray are computed from the GeoTIFF's affine transformation
 - Currently supported dtypes include uint (u8/u16/u32/u64), int (i8/i16/i32/i64) and
   float (f16/f32/f64).
 
@@ -44,24 +42,6 @@ assert array.dtype == "float16"
 # ...
 ```
 
-## Xarray
-
-Read GeoTIFF file from a HTTP url via the
-[`Cog3pioBackendEntrypoint`](api#cog3pio.xarray_backend.Cog3pioBackendEntrypoint) engine
-into an [xarray.DataArray][] object (akin to
-[`rioxarray`](https://corteva.github.io/rioxarray)).
-
-```python
-import xarray as xr
-
-# Read GeoTIFF into an xarray.DataArray
-dataarray: xr.DataArray = xr.open_dataarray(
-    filename_or_obj="https://github.com/cogeotiff/rio-tiler/raw/7.8.0/tests/fixtures/cog_dateline.tif",
-    engine="cog3pio",
-)
-assert dataarray.sizes == {'band': 1, 'y': 2355, 'x': 2325}
-assert dataarray.dtype == "uint16"
-```
 
 ## NumPy
 

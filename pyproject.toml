@@ -23,7 +23,6 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=2.0",
-    "xarray>=2024.10.0",
 ]
 dynamic = ["version"]
 
@@ -31,9 +30,6 @@ dynamic = ["version"]
 "Changelog" = "https://cog3pio.readthedocs.io/en/latest/changelog"
 "Documentation" = "https://cog3pio.readthedocs.io"
 "Source Code" = "https://github.com/weiji14/cog3pio"
-
-[project.entry-points."xarray.backends"]
-cog3pio = "cog3pio.xarray_backend:Cog3pioBackendEntrypoint"
 
 [project.optional-dependencies]
 cuda = [
@@ -43,7 +39,6 @@ cuda = [
 [dependency-groups]
 benchmark = [
     "pytest-codspeed",
-    "rioxarray",
 ]
 docs = [
     "mkdocstrings-python",
