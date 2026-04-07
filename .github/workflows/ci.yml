@@ -147,7 +147,8 @@ jobs:
           pip install cog3pio --group tests
           pytest --verbose
         env:
-          PIP_EXTRA_INDEX_URL: ${{ 'https://gounthar.github.io/riscv64-python-wheels/simple/' && matrix.platform.target == 'riscv64' || '' }}
+          PIP_EXTRA_INDEX_URL: ${{ matrix.platform.target == 'riscv64' && 'https://gounthar.github.io/riscv64-python-wheels/simple/' || '' }}
+          PIP_PRE: ${{ matrix.platform.target == 'riscv64' && '1' || '' }}
 
       - name: pytest
         if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
