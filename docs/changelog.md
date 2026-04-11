@@ -25,16 +25,21 @@ All notable changes to this project will be documented in this file.
 
 ### <!-- 3 --> 🏭 Refactors
 
+- 🔥 Remove cog3pio backend engine, drop xarray dependency ([#89](https://github.com/weiji14/cog3pio/pull/89))
+- 🚚 Move benchmark,docs,tests extras into dependency-groups ([#86](https://github.com/weiji14/cog3pio/pull/86))
 - 🚚 Switch docs build to use Zensical ([#73](https://github.com/weiji14/cog3pio/pull/73))
 - ♻️ Refactor to pass in per-thread default stream to dlpack method ([#67](https://github.com/weiji14/cog3pio/pull/67))
 
 ### <!-- 4 --> 📝 Documentation
 
+- 📝 More docs for nvTIFF/CUDA backend install and usage ([#90](https://github.com/weiji14/cog3pio/pull/90))
+- 🔍️ Add description, readme and urls to pyproject.toml metadata ([#87](https://github.com/weiji14/cog3pio/pull/87))
 - 🏷️ Generate pyi stub files for type hints ([#72](https://github.com/weiji14/cog3pio/pull/72))
 - 🔍️ Add shield badges to main README.md ([#52](https://github.com/weiji14/cog3pio/pull/52))
 
 ### <!-- 5 --> 🧰 Maintenance
 
+- 👷 Build wheels for riscv64 ([#88](https://github.com/weiji14/cog3pio/pull/88))
 - 🚨 Tidy up Cargo.toml and pyproject.toml files ([#84](https://github.com/weiji14/cog3pio/pull/84))
 - 🔒️ Configure trusted publishing to crates.io ([#83](https://github.com/weiji14/cog3pio/pull/83))
 - 👷 Install zizmor directly through cargo ([#81](https://github.com/weiji14/cog3pio/pull/81))
