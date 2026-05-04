@@ -220,7 +220,7 @@ checksum = "0b023947811758c97c59bf9d1c188fd619ad4718dcaa767947df1cadb14f39f4"
 dependencies = [
  "glob",
  "libc",
- "libloading",
+ "libloading 0.8.9",
 ]
 
 [[package]]
@@ -421,11 +421,11 @@ checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
 name = "cudarc"
-version = "0.18.2"
+version = "0.19.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3aa12038120eb13347a6ae2ffab1d34efe78150125108627fd85044dd4d6ff1e"
+checksum = "f071cd6a7b5d51607df76aa2d426aaabc7a74bc6bdb885b8afa63a880572ad9b"
 dependencies = [
- "libloading",
+ "libloading 0.9.0",
 ]
 
 [[package]]
@@ -451,7 +451,7 @@ dependencies = [
 [[package]]
 name = "dlpark"
 version = "0.6.0"
-source = "git+https://github.com/SunDoge/dlpark.git?rev=aff9c5d4b7726b4f66684e6fe0ac98ec58e263bd#aff9c5d4b7726b4f66684e6fe0ac98ec58e263bd"
+source = "git+https://github.com/SunDoge/dlpark.git?rev=3e8020eb26df64bffae538f132f920c6837daafa#3e8020eb26df64bffae538f132f920c6837daafa"
 dependencies = [
  "bitflags",
  "cudarc",
@@ -1341,6 +1341,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "libloading"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "754ca22de805bb5744484a5b151a9e1a8e837d5dc232c2d7d8c2e3492edc8b60"
+dependencies = [
+ "cfg-if",
+ "windows-link",
+]
+
+[[package]]
 name = "libm"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1558,9 +1568,9 @@ dependencies = [
 
 [[package]]
 name = "nvtiff-sys"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6768c93da631158690e04e0a18b5c8f6e90a73c33965bcf9616f652ed5d7433c"
+checksum = "eaa52ce67b0fd1ef6f06fc5758434765bc38ff54b9c70f11dfcbd4a6243b47a6"
 dependencies = [
  "bindgen",
  "thiserror",
