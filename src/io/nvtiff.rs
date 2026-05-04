@@ -12,9 +12,9 @@ use ndarray::{Array, Array1};
 use nvtiff_sys::result::{NvTiffError, NvTiffStatusError};
 use nvtiff_sys::{
     NvTiffResultCheck, nvtiffDecodeCheckSupported, nvtiffDecodeImage, nvtiffDecodeParams,
-    nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffImageInfo, nvtiffSampleFormat, nvtiffStatus_t,
-    nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetImageInfo, nvtiffStreamGetNumImages,
-    nvtiffStreamGetTagValue, nvtiffStreamParse, nvtiffTag,
+    nvtiffDecodeParamsCreate, nvtiffDecoder, nvtiffDecoderCreateSimple, nvtiffImageInfo,
+    nvtiffSampleFormat, nvtiffStatus, nvtiffStream, nvtiffStreamCreate, nvtiffStreamGetImageInfo,
+    nvtiffStreamGetNumImages, nvtiffStreamGetTagValue, nvtiffStreamParse, nvtiffTag,
 };
 
 use crate::traits::Transform;
@@ -90,14 +90,14 @@ impl CudaCogReader {
         let mut host_stream = std::mem::MaybeUninit::uninit();
         let mut tiff_stream: *mut nvtiffStream = host_stream.as_mut_ptr();
 
-        let status_cpustream: nvtiffStatus_t::Type =
+        let status_cpustream: nvtiffStatus::Type =
             unsafe { nvtiffStreamCreate(&raw mut tiff_stream) };
         // dbg!(status_cpustream);
         status_cpustream.result()?;
 
         // Step 1: Parse the TIFF data from byte stream buffer
         let status_parse: u32 =
-            unsafe { nvtiffStreamParse(byte_stream.as_ptr(), usize::MAX, tiff_stream) };
+            unsafe { nvtiffStreamParse(byte_stream.as_ptr(), byte_stream.len(), tiff_stream) };
         // dbg!(status_parse);
         status_parse.result()?;
 
@@ -181,9 +181,14 @@ impl CudaCogReader {
             panic!("Failed to allocate {num_bytes} bytes on CUDA device: {err}")
         });
 
-        // Step 3a: Check if image is supported first
+        // Step 3a: Create instance of decode parameters handle
         let mut params = std::mem::MaybeUninit::zeroed();
-        let decode_params: *mut nvtiffDecodeParams = params.as_mut_ptr();
+        let mut decode_params: *mut nvtiffDecodeParams = params.as_mut_ptr();
+        let status_param: u32 = unsafe { nvtiffDecodeParamsCreate(&raw mut decode_params) };
+        // dbg!(status_param);
+        status_param.result()?;
+
+        // Step 3b: Check if image is supported first
         let status_check: u32 = unsafe {
             nvtiffDecodeCheckSupported(
                 self.tiff_stream, // TODO keep lifetime on this?
@@ -195,7 +200,7 @@ impl CudaCogReader {
         // dbg!(status_check); // 4: NVTIFF_STATUS_TIFF_NOT_SUPPORTED; 2: NVTIFF_STATUS_INVALID_PARAMETER
         status_check.result()?;
 
-        // Step 3b: Prepare DLPack tensor container
+        // Step 3c: Prepare DLPack tensor container
         // Transmute from u8 to actual dtype before putting into DLPack tensor
         let len_elem: usize = num_bytes / (dtype.bits as usize / 8);
         let tensor: SafeManagedTensorVersioned = match dtype {

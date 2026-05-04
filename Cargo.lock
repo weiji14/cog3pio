@@ -1558,9 +1558,9 @@ dependencies = [
 
 [[package]]
 name = "nvtiff-sys"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6768c93da631158690e04e0a18b5c8f6e90a73c33965bcf9616f652ed5d7433c"
+checksum = "eaa52ce67b0fd1ef6f06fc5758434765bc38ff54b9c70f11dfcbd4a6243b47a6"
 dependencies = [
  "bindgen",
  "thiserror",
