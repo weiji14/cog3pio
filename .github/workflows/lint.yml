@@ -12,6 +12,10 @@ on:
     types: [opened, reopened, synchronize]
     branches: ["main"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions: {}
 
 # Make sure CI fails on all warnings, including Clippy lints

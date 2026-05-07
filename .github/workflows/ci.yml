@@ -23,6 +23,9 @@ permissions:
 jobs:
   rust:
     runs-on: ubuntu-24.04
+    concurrency:
+      group: rust-${{ matrix.toolchain }}-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
         toolchain:
@@ -176,7 +179,7 @@ jobs:
   windows:
     runs-on: windows-2025
     concurrency:
-      group: windows-${{ matrix.platform.target }}-${{ github.workflow }}-${{ github.ref }}
+      group: windows-${{ matrix.target }}-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
@@ -283,6 +286,9 @@ jobs:
 
   sdist:
     runs-on: ubuntu-24.04
+    concurrency:
+      group: sdist-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -306,6 +312,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [linux, windows, macos, sdist]
     runs-on: ubuntu-24.04
+    concurrency:
+      group: testpypi-${{ github.ref }}
+      cancel-in-progress: true
     environment:
       name: testpypi
       url: https://test.pypi.org/project/cog3pio
@@ -328,6 +337,9 @@ jobs:
   publish-to-pypi:
     name: Publish Python 🐍 distribution 📦 to PyPI
     runs-on: ubuntu-24.04
+    concurrency:
+      group: pypi-${{ github.ref }}
+      cancel-in-progress: true
     environment:
       name: pypi
       url: https://pypi.org/project/cog3pio/
