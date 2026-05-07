@@ -15,7 +15,7 @@ build:
       # Patch nvtiff.h (v0.7.0) to add missing enum tag
       - export CONDA_PREFIX="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV";
         unset CONDA_DEFAULT_ENV;
-        mamba env update --prefix "$CONDA_PREFIX" --file docs/environment.yml;
+        mamba create --prefix "$CONDA_PREFIX" --file docs/environment.yml;
         mamba list;
         sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" $CONDA_PREFIX/include/nvtiff.h
     install:
