@@ -6,16 +6,16 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: "ubuntu-24.04"
+  os: "ubuntu-26.04"
   tools:
-    python: "mambaforge-23.11"
+    python: "miniforge3-25.11"
     rust: "1.91"
   jobs:
     create_environment:
       # Patch nvtiff.h (v0.7.0) to add missing enum tag
       - export CONDA_PREFIX="$CONDA_ENVS_PATH/$CONDA_DEFAULT_ENV";
         unset CONDA_DEFAULT_ENV;
-        mamba env update --prefix "$CONDA_PREFIX" --file docs/environment.yml;
+        mamba create --prefix "$CONDA_PREFIX" --file docs/environment.yml;
         mamba list;
         sed --in-place "s/nvtiffTagDataType type/enum nvtiffTagDataType type/g" $CONDA_PREFIX/include/nvtiff.h
     install:

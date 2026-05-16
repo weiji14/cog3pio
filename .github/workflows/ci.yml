@@ -23,6 +23,9 @@ permissions:
 jobs:
   rust:
     runs-on: ubuntu-24.04
+    concurrency:
+      group: rust-${{ matrix.toolchain }}-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
         toolchain:
@@ -85,7 +88,7 @@ jobs:
           mirror: "https://raw.githubusercontent.com/riseproject-dev/python-versions/main"
 
       - name: Build wheels
-        uses: PyO3/maturin-action@3f475a463fd27ce2440c13988f39fd1312dc9381
+        uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           target: ${{ matrix.platform.target }}
           args: --release --locked --compatibility pypi --features ${{ matrix.platform.feat-flags || 'pyo3' }} --out dist --interpreter python3.13
@@ -146,14 +149,14 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           pip install cog3pio --no-index --no-deps --find-links dist --force-reinstall -vv
-          pip install cog3pio --prefer-binary --group tests
+          pip install cog3pio --prefer-binary pytest # --group tests
           pytest --verbose
         env:
           PIP_EXTRA_INDEX_URL: ${{ matrix.platform.target == 'riscv64' && 'https://gitlab.com/api/v4/projects/56254198/packages/pypi/simple/' || '' }}
 
       - name: pytest
         if: ${{ !endswith(matrix.platform.target, '64') && !startsWith(github.ref, 'refs/tags/') }} # armv7, s390x and ppc64le
-        uses: uraimo/run-on-arch-action@d94c13912ea685de38fccc1109385b83fd79427d # v3.0.1
+        uses: uraimo/run-on-arch-action@f9b26e3a1a408d5fd530d20c17b9f3f4428ff8d9 # v3.1.0
         with:
           arch: ${{ matrix.platform.target }}
           distro: ubuntu_devel
@@ -176,7 +179,7 @@ jobs:
   windows:
     runs-on: windows-2025
     concurrency:
-      group: windows-${{ matrix.platform.target }}-${{ github.workflow }}-${{ github.ref }}
+      group: windows-${{ matrix.target }}-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     strategy:
       matrix:
@@ -283,6 +286,9 @@ jobs:
 
   sdist:
     runs-on: ubuntu-24.04
+    concurrency:
+      group: sdist-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -306,6 +312,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     needs: [linux, windows, macos, sdist]
     runs-on: ubuntu-24.04
+    concurrency:
+      group: testpypi-${{ github.ref }}
+      cancel-in-progress: true
     environment:
       name: testpypi
       url: https://test.pypi.org/project/cog3pio
@@ -320,7 +329,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish distribution 📦 to TestPyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
@@ -328,6 +337,9 @@ jobs:
   publish-to-pypi:
     name: Publish Python 🐍 distribution 📦 to PyPI
     runs-on: ubuntu-24.04
+    concurrency:
+      group: pypi-${{ github.ref }}
+      cancel-in-progress: true
     environment:
       name: pypi
       url: https://pypi.org/project/cog3pio/
@@ -343,6 +355,6 @@ jobs:
           merge-multiple: true
 
       - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           verbose: true
